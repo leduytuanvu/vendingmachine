@@ -11,20 +11,20 @@ import com.leduytuanvu.vendingmachine.features.splash.presentation.screens.InitS
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = AppScreen.SplashScreenRoute.route) {
-        composable(AppScreen.SplashScreenRoute.route) {
+    NavHost(navController = navController, startDestination = Screens.SplashScreenRoute.route) {
+        composable(Screens.SplashScreenRoute.route) {
             SplashScreen(navController)
         }
 
-        composable(AppScreen.SettingScreenRoute.route) {
+        composable(Screens.SettingScreenRoute.route) {
             SettingScreen(navController)
         }
 
-        composable(AppScreen.HomeScreenRoute.route) {
+        composable(Screens.HomeScreenRoute.route) {
             HomeScreen(navController)
         }
 
-        composable(AppScreen.InitSettingScreenRoute.route) {
+        composable(Screens.InitSettingScreenRoute.route) {
             InitSettingScreen(navController)
         }
     }
