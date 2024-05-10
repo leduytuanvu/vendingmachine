@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.core.util
 
 import android.util.Base64
+import android.util.Log
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -31,17 +32,21 @@ object Constants {
         typeException: String = "Software",
         dataJson: String = "",
     ) {
-        val logException = LogException(
-            eventType = eventType,
-            eventTime = LocalDateTime.now().currentDateTimeString(),
-            message = exception.message,
-            inFunction = inFunction,
-            typeException = typeException,
-            eventData = dataJson,
-            isSent = false,
-        )
-        addLogExceptionIntoDatabase(logException)
-        sendEvent(Event.Toast(logException.message!!))
+        try {
+            val logException = LogException(
+                eventType = eventType,
+                eventTime = LocalDateTime.now().currentDateTimeString(),
+                message = exception.message,
+                inFunction = inFunction,
+                typeException = typeException,
+                eventData = dataJson,
+                isSent = false,
+            )
+            addLogExceptionIntoDatabase(logException)
+            sendEvent(Event.Toast(logException.message!!))
+        } catch (e: Exception) {
+            Log.d("tuanvulog", "error in exceptionHandling - ${e.toString()}")
+        }
     }
 
     // Add log exception into database

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [LogException::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class VendingMachineDatabase:RoomDatabase() {

@@ -58,6 +58,7 @@ fun ViewLogContent(
     var selectedItem by remember { mutableStateOf(AnnotatedString("ERROR LOG")) }
 
     LoadingDialogComposable(isLoading = state.isLoading)
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {  }

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import coil.Coil
 import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.core.room.Graph
+import com.leduytuanvu.vendingmachine.core.room.LogException
 import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
 import com.leduytuanvu.vendingmachine.core.util.Constants
@@ -450,16 +451,29 @@ class SettingsViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                when (typeLog) {
-                    "ERROR LOG" -> {
-                        val roomRepository: RoomRepository = Graph.repository
-                        val result = roomRepository.getAllLogException()
-                        Log.d("tuanvulog", "result: $result")
-                    }
+                val roomRepository: RoomRepository = Graph.repository
+                val listLogException: ArrayList<LogException> = arrayListOf()
+
+// Assuming this block of code is within a coroutine scope
+// You collect the Flow returned by getAllLogException() into listLogException
+                roomRepository.getAllLogException().collect { logExceptions ->
+                    listLogException.addAll(logExceptions)
                 }
+//                when (typeLog) {
+//                    "ERROR LOG" -> {
+//                        val roomRepository: RoomRepository = Graph.repository
+//                        val listLogException: ArrayList<LogException> = arrayListOf()
+//                        listLogException = roomRepository.getAllLogException().collect { logExceptions ->
+//                        }
+//                        Log.d("tuanvulog", "listLogException size - ${listLogException.size.toString()}")
+//                    }
+//                }
+//                throw Exception("This is a custom exception message")
             } catch (e: Exception) {
+                Log.d("tuanvulog", "error in getLog - ${e.toString()}")
                 Constants.exceptionHandling(exception = e, inFunction = "getLog()")
             } finally {
+                Log.d("tuanvulog", "done")
                 _state.update { it.copy(isLoading = false) }
             }
         }

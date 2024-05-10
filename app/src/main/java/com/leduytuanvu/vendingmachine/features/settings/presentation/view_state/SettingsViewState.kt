@@ -3,6 +3,7 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.view_state
 import androidx.compose.ui.graphics.ImageBitmap
 import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.core.errors.CustomError
+import com.leduytuanvu.vendingmachine.core.room.LogException
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 
@@ -14,6 +15,7 @@ data class SettingsViewState (
     val isConfirm: Boolean = false,
     val titleConfirm: String = "",
     val listSlot: ArrayList<Slot> = arrayListOf(),
+    val listLogException: ArrayList<LogException> = arrayListOf(),
     val listSlotAddMore: ArrayList<Slot> = arrayListOf(),
     val listProduct: ArrayList<Product> = arrayListOf(),
     val listImageProduct: ArrayList<ImageBitmap> = arrayListOf(),
