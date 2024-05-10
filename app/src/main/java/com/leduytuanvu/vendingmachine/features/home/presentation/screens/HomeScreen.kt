@@ -1,6 +1,5 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,12 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.leduytuanvu.vendingmachine.common.components.LoadingDialogComponent
+import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.view_model.HomeViewModel
 import com.leduytuanvu.vendingmachine.features.home.presentation.view_state.HomeViewState
-import com.leduytuanvu.vendingmachine.features.setting.presentation.components.ButtonComponent
-import com.leduytuanvu.vendingmachine.features.setting.presentation.view_state.SettingViewState
-import com.leduytuanvu.vendingmachine.features.splash.presentation.view_model.SplashViewModel
 
 @Composable
 internal fun HomeScreen(
@@ -26,12 +22,12 @@ internal fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeContent(HomeViewState())
+    HomeContent(state = state)
 }
 
 @Composable
 fun HomeContent(state: HomeViewState) {
-    LoadingDialogComponent(isLoading = state.isLoading)
+    LoadingDialogComposable(isLoading = state.isLoading)
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {  }

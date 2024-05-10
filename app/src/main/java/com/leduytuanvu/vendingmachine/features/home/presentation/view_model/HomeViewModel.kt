@@ -3,6 +3,7 @@ package com.leduytuanvu.vendingmachine.features.home.presentation.view_model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leduytuanvu.vendingmachine.core.errors.CustomError
+import com.leduytuanvu.vendingmachine.features.home.presentation.view_state.HomeViewState
 import com.leduytuanvu.vendingmachine.features.splash.domain.repository.SplashRepository
 import com.leduytuanvu.vendingmachine.features.splash.presentation.view_state.SplashViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor (
 //    private val splashRepository: SplashRepository
 ) : ViewModel() {
-    private val _state = MutableStateFlow(SplashViewState())
+    private val _state = MutableStateFlow(HomeViewState())
     val state = _state.asStateFlow()
 
 

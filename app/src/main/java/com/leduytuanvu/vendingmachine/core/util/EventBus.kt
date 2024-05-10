@@ -14,4 +14,5 @@ object EventBus {
 
 sealed interface Event {
     data class Toast(val message: String) : Event
+    data object NavigateToHomeScreen : Event
 }

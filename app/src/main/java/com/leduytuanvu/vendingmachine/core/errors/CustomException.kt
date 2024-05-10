@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.core.errors
 
+import com.leduytuanvu.vendingmachine.core.room.LogException
 import com.leduytuanvu.vendingmachine.core.util.currentDateTimeString
 import org.threeten.bp.LocalDateTime
 

@@ -20,6 +20,16 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+//        ndk {
+//            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+//        }
+//
+//        externalNativeBuild {
+//            cmake {
+//                cppFlags "-std=c++11"
+//            }
+//        }
     }
 
     buildTypes {
@@ -31,24 +41,36 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_9
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += "-Xlint:deprecation"
+        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
+        languageVersion = "1.9"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.3"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/gradle/incremental.annotation.processors"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path("src/main/java/com/leduytuanvu/vendingmachine/core/native/CMakeLists.txt")
         }
     }
 }
@@ -71,32 +93,41 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Arrow
-    implementation(libs.arrowCore)
-    implementation(libs.arrowFxCoroutines)
+    implementation(libs.arrow.core)
+    implementation(libs.arrow.fx.coroutines)
 
     // Retrofit
-    implementation(libs.retrofitCore)
-    implementation(libs.retrofitConverterGson)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
 
     // Coil
-    implementation(libs.coilCompose)
+    implementation(libs.coil.compose)
 
     // Android Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     // Dagger Hilt
-    implementation(libs.daggerHiltAndroid)
-    ksp(libs.daggerHiltAndroidCompiler)
-    implementation(libs.hiltNavigationCompose)
+    implementation(libs.dagger.hilt.android)
+    ksp(libs.dagger.hilt.android.compiler)
+    implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
 
     // Datetime
     implementation(libs.threetenabp)
 
-    val roomVersion = "2.6.1"
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    // Room database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    testImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.room.testing)
 
     // LiveData
-    implementation( "androidx.lifecycle:lifecycle-livedata-ktx:2.2.0")
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    coreLibraryDesugaring (libs.desugar.jdk.libs)
+
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
+
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
 }

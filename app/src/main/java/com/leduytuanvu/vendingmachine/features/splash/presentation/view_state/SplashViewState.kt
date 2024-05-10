@@ -4,7 +4,6 @@ import com.leduytuanvu.vendingmachine.core.errors.CustomError
 
 data class SplashViewState (
     val isLoading: Boolean = false,
-    val isVendCodeExists: Boolean = false,
-    val navigateTo: String = "",
     val error: CustomError? = null,
+    val isVendCodeExists: Boolean = false,
 )

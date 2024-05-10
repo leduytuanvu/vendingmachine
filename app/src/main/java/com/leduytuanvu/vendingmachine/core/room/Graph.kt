@@ -3,10 +3,10 @@ package com.leduytuanvu.vendingmachine.core.room
 import android.content.Context
 
 object Graph {
-    lateinit var database:VendingMachineDatabase private set
+    private lateinit var database:VendingMachineDatabase
 
     val repository by lazy {
-        Repository(
+        RoomRepository(
             logExceptionDao = database.logExceptionDao(),
         )
     }

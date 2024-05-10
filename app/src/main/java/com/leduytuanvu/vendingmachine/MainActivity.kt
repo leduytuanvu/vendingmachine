@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -11,15 +12,21 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.leduytuanvu.vendingmachine.core.util.AppNavigation
+import com.leduytuanvu.vendingmachine.core.util.Navigation
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
@@ -31,11 +38,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("tuanvulog", "on create main activity")
-//        Thread.setDefaultUncaughtExceptionHandler { _, _ ->
-//            restartApp()
-//        }
-
+        Thread.setDefaultUncaughtExceptionHandler { _, _ ->
+            restartApp()
+        }
         setContent {
             hideStatusBar()
             VendingmachineTheme {
@@ -45,19 +50,18 @@ class MainActivity : ComponentActivity() {
                         EventBus.events.collect { event ->
                             when (event) {
                                 is Event.Toast -> {
-                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_LONG).show()
                                 }
                             }
                         }
                     }
                 }
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    AppNavigation(navController)
+                    Navigation(navController)
                 }
             }
         }

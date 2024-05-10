@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 data class LogException(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val message: String?,
-    val dateTime: String?,
-    val function: String?,
-    val localizedMessage: String?,
-    val cause: String?,
+    var eventType: String?,
+    var eventTime: String?,
+    var eventData: String?,
+    var message: String?,
+    var typeException: String?,
+    var inFunction: String?,
+    var isSent: Boolean,
 )
