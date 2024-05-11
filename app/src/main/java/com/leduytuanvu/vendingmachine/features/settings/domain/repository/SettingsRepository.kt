@@ -13,4 +13,5 @@ interface SettingsRepository {
     suspend fun writeListSlotToLocal(listSlot: ArrayList<Slot>) : Boolean
     suspend fun loadImageFromLocal(context: Context) : ArrayList<ImageBitmap>
     suspend fun getProductByCode(productCode: String) : Product?
+    suspend fun getAndroidId(context: Context) : String
 }

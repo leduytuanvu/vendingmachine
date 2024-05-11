@@ -3,7 +3,9 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.view_model
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.provider.Settings
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,9 +16,9 @@ import com.leduytuanvu.vendingmachine.common.models.LogException
 //import com.leduytuanvu.vendingmachine.core.room.Graph
 //import com.leduytuanvu.vendingmachine.core.room.LogException
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
-import com.leduytuanvu.vendingmachine.core.util.Constants
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.exceptionHandling
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
@@ -24,6 +26,7 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +40,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor (
     private val settingRepository: SettingsRepository,
-    private val localStorage: LocalStorage,
+    private val localStorageDatasource: LocalStorageDatasource,
+    private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SettingsViewState())
     val state = _state.asStateFlow()
@@ -45,6 +49,7 @@ class SettingsViewModel @Inject constructor (
     init {
         loadSlotFromLocal()
         loadProductFromLocal()
+        loadAndroidId()
     }
 
     private fun loadSlotFromLocal() {
@@ -54,7 +59,7 @@ class SettingsViewModel @Inject constructor (
                 val listSlot = settingRepository.initLoadSlotFromLocal()
                 _state.update { it.copy(listSlot = listSlot) }
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListSlotFromLocal()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListSlotFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -68,7 +73,7 @@ class SettingsViewModel @Inject constructor (
                 val listProduct = settingRepository.loadListProductFromLocal()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListProductFromLocal()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListProductFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -82,7 +87,7 @@ class SettingsViewModel @Inject constructor (
                 val listProduct = settingRepository.loadProductFromServer()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListProductFromServer()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListProductFromServer()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -174,7 +179,7 @@ class SettingsViewModel @Inject constructor (
                 }
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "chooseNumber()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "chooseNumber()")
             } finally {
                 _state.update { it.copy(
                     isInventory = false,
@@ -212,7 +217,7 @@ class SettingsViewModel @Inject constructor (
                 }
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "addProductToListSlot()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "addProductToListSlot()")
             } finally {
                 _state.update { it.copy(
                     isChooseImage = false,
@@ -241,7 +246,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 _state.value.listSlotAddMore.clear()
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "addMoreProductToListSlot()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "addMoreProductToListSlot()")
             } finally {
                 _state.update { it.copy(
                     isChooseImage = false,
@@ -263,7 +268,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "fullInventory()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "fullInventory()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -293,7 +298,7 @@ class SettingsViewModel @Inject constructor (
                 sendEvent(Event.Toast("SUCCESS"))
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "loadLayoutFromServer()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadLayoutFromServer()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -336,7 +341,7 @@ class SettingsViewModel @Inject constructor (
             try {
                 _state.value.listSlotAddMore.add(slot)
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "addSlotToListAddMore()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "addSlotToListAddMore()")
             }
         }
     }
@@ -346,7 +351,7 @@ class SettingsViewModel @Inject constructor (
             try {
                 _state.value.listSlotAddMore.remove(slot)
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "addSlotToListAddMore()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "addSlotToListAddMore()")
             }
         }
 
@@ -378,7 +383,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "removeProduct()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "removeProduct()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -396,7 +401,7 @@ class SettingsViewModel @Inject constructor (
                 val listImageBitmap = settingRepository.loadImageFromLocal(context)
                 _state.update { it.copy(listImageProduct = listImageBitmap) }
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "loadImageFromLocal()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadImageFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -410,11 +415,11 @@ class SettingsViewModel @Inject constructor (
                     isLoading = true,
                     isConfirm = false,
                 ) }
-                val folderImage = File(localStorage.folderImage)
+                val folderImage = File(localStorageDatasource.folderImage)
                 if (folderImage.exists()) {
-                    localStorage.deleteFolder(folderImage)
+                    localStorageDatasource.deleteFolder(folderImage)
                 }
-                localStorage.createFolder(localStorage.folderImage)
+                localStorageDatasource.createFolder(localStorageDatasource.folderImage)
                 for (product in state.value.listProduct) {
                     if(!product.imageUrl.isNullOrEmpty()) {
                         var notHaveError = true
@@ -427,7 +432,7 @@ class SettingsViewModel @Inject constructor (
                                     Coil.imageLoader(context).execute(request).drawable
                                 }
                                 if (result != null) {
-                                    val file = File(localStorage.folderImage, "${product.productCode}.png")
+                                    val file = File(localStorageDatasource.folderImage, "${product.productCode}.png")
                                     withContext(Dispatchers.IO) {
                                         file.outputStream().use { outputStream ->
                                             result.toBitmap().compress(Bitmap.CompressFormat.PNG, 1, outputStream)
@@ -442,10 +447,10 @@ class SettingsViewModel @Inject constructor (
                         }
                     }
                 }
-                localStorage.writeData(localStorage.fileProductDetail, localStorage.gson.toJson(state.value.listProduct))
+                localStorageDatasource.writeData(localStorageDatasource.fileProductDetail, localStorageDatasource.gson.toJson(state.value.listProduct))
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                e.exceptionHandling(localStorage, exception = e, inFunction = "downloadProduct()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "downloadProduct()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -459,9 +464,9 @@ class SettingsViewModel @Inject constructor (
                 _state.update { it.copy(isLoading = true) }
                 var listLogException: ArrayList<LogException> = arrayListOf()
                 var listLogExceptionSorted: ArrayList<LogException> = arrayListOf()
-                if(localStorage.checkFileExists(localStorage.fileLogException)) {
-                    val json = localStorage.readData(localStorage.fileLogException)
-                    listLogException = localStorage.gson.fromJson(
+                if(localStorageDatasource.checkFileExists(localStorageDatasource.fileLogException)) {
+                    val json = localStorageDatasource.readData(localStorageDatasource.fileLogException)
+                    listLogException = localStorageDatasource.gson.fromJson(
                         json,
                         object : TypeToken<ArrayList<LogException>>() {}.type
                     ) ?: arrayListOf()
@@ -473,11 +478,25 @@ class SettingsViewModel @Inject constructor (
                 }
                 _state.update { it.copy(listLogException = listLogExceptionSorted) }
             } catch (e: Exception) {
-                Log.d("tuanvulog", "error in getLog - ${e.toString()}")
-                e.exceptionHandling(localStorage, exception = e, inFunction = "getLog()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getLog()")
             } finally {
-                Log.d("tuanvulog", "done")
                 _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+
+    fun loadAndroidId() {
+        viewModelScope.launch {
+            try {
+                val androidId = settingRepository.getAndroidId(context = context)
+                if(androidId.isNotEmpty()) {
+                    _state.update { it.copy(androidId = androidId) }
+                } else {
+                    sendEvent(Event.Toast("Android id is empty!"))
+                }
+            } catch (e: Exception) {
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getAndroidId()")
             }
         }
     }

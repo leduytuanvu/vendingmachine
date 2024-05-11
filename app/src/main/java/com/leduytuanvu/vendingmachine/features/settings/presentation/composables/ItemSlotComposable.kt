@@ -32,7 +32,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
@@ -43,7 +43,7 @@ fun ItemSlotComposable(
     function: (isChooseMoney: Boolean) -> Unit
 ) {
     val viewModel: SettingsViewModel = hiltViewModel()
-    val localStorage = LocalStorage()
+    val localStorageDatasource = LocalStorageDatasource()
     var isChecked by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -61,9 +61,9 @@ fun ItemSlotComposable(
                     .clickable {
                         viewModel.showDialogChooseImage(slot = slot)
                     }
-                val imagePainter = if (slot.productCode.isNotEmpty() && localStorage.checkFileExists(localStorage.folderImage+"/${slot.productCode}.png")) {
+                val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(localStorageDatasource.folderImage+"/${slot.productCode}.png")) {
                     val imageRequest = ImageRequest.Builder(LocalContext.current)
-                        .data(localStorage.folderImage+"/${slot.productCode}.png")
+                        .data(localStorageDatasource.folderImage+"/${slot.productCode}.png")
                         .build()
                     rememberAsyncImagePainter(imageRequest)
                 } else {

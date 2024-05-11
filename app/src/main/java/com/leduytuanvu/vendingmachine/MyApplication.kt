@@ -3,6 +3,7 @@ package com.leduytuanvu.vendingmachine
 import android.app.Application
 import android.util.Log
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.leduytuanvu.vendingmachine.core.util.Logger
 //import com.leduytuanvu.vendingmachine.core.room.Graph
 import dagger.hilt.android.HiltAndroidApp
 
@@ -18,6 +19,6 @@ class MyApplication : Application() {
 
 class CustomExceptionHandler : Thread.UncaughtExceptionHandler {
     override fun uncaughtException(thread: Thread, throwable: Throwable) {
-        Log.e("tuanvulog", "ERROR: ${throwable.message}, ${throwable.localizedMessage}")
+        Logger.error("Error in my application")
     }
 }

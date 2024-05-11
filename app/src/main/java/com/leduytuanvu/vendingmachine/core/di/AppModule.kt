@@ -5,8 +5,10 @@ import android.util.Log
 import com.leduytuanvu.vendingmachine.common.models.InitSetup
 //import com.leduytuanvu.vendingmachine.core.room.LogExceptionDao
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Constants.BASE_URL
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.remote.AuthApi
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
@@ -36,14 +38,21 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideLocalStorage(): LocalStorage {
-        return LocalStorage()
+    fun provideLocalStorageDatasource(): LocalStorageDatasource {
+        return LocalStorageDatasource()
     }
+
+    @Provides
+    @Singleton
+    fun provideLogger(): Logger = Logger
+
+    @Provides
+    @Singleton
+    fun providePortConnectionDataSource(): PortConnectionDatasource = PortConnectionDatasource()
 
     private var accessToken: String = ""
     private val authInterceptor = Interceptor { chain ->
         val request = chain.request().newBuilder()
-        Log.d("tuanvulog", "access: $accessToken")
         accessToken.let {
             request.addHeader("Authorization", "Bearer $it")
         }
@@ -51,8 +60,8 @@ object AppModule {
         if (response.code == 401) {
             try {
                 runBlocking {
-                    val localStorage = LocalStorage()
-                    val initSetup: InitSetup = localStorage.getDataFromPath(localStorage.fileInitSetup)!!
+                    val localStorageDatasource = LocalStorageDatasource()
+                    val initSetup: InitSetup = localStorageDatasource.getDataFromPath(localStorageDatasource.fileInitSetup)!!
                     val loginResponse = authApi.login(
                         initSetup.vendCode,
                         LoginRequest(
@@ -60,7 +69,6 @@ object AppModule {
                             initSetup.password!!.substringBefore("_leduytuanvu", "")
                         )
                     )
-                    Log.d("tuanvulog", "Access token: ${loginResponse.accessToken}")
                     accessToken = loginResponse.accessToken!!
                     response.close()
                     val newRequest = chain.request().newBuilder()
@@ -69,7 +77,7 @@ object AppModule {
                     response = chain.proceed(newRequest)
                 }
             } catch (e: Exception) {
-                Log.e("tuanvulog", "Error: ${e.message}")
+                Logger.error("Error in authInterceptor", e)
             }
         }
         response

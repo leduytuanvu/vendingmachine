@@ -14,22 +14,23 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
 
-//        ndk {
-//            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-//        }
-//
-//        externalNativeBuild {
-//            cmake {
-//                cppFlags "-std=c++11"
-//            }
-//        }
+        ndk {
+            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
+
+        @Suppress("UnstableApiUsage")
+        externalNativeBuild {
+            cmake {
+                cppFlags("-std=c++11")
+            }
+        }
     }
 
     buildTypes {
@@ -115,19 +116,14 @@ dependencies {
     // Datetime
     implementation(libs.threetenabp)
 
-    // Room database
-//    implementation(libs.androidx.room.runtime)
-//    implementation(libs.androidx.room.ktx)
-//    ksp(libs.androidx.room.compiler)
-//    testImplementation(libs.androidx.room.testing)
-//    androidTestImplementation(libs.androidx.room.testing)
-
     // LiveData
     implementation(libs.androidx.lifecycle.livedata.ktx)
     coreLibraryDesugaring (libs.desugar.jdk.libs)
 
-    implementation("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
+    // Glide
+    implementation(libs.glide)
+    annotationProcessor(libs.compiler)
 
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    // Interceptor
+    implementation(libs.logging.interceptor)
 }

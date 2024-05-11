@@ -1,22 +1,24 @@
 package com.leduytuanvu.vendingmachine.features.settings.data.repository
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.models.InitSetup
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toSlot
-import com.leduytuanvu.vendingmachine.features.auth.data.remote.AuthApi
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
+import kotlinx.coroutines.flow.update
 import java.io.File
 import java.lang.reflect.Type
 import javax.inject.Inject
@@ -24,14 +26,14 @@ import javax.inject.Inject
 class SettingsRepositoryImpl @Inject constructor(
     private val settingsApi: SettingsApi
 ) : SettingsRepository {
-    private val localStorage = LocalStorage()
+    private val localStorageDatasource = LocalStorageDatasource()
     override suspend fun initLoadSlotFromLocal(): ArrayList<Slot> {
         try {
             var listSlot = arrayListOf<Slot>()
-            if(localStorage.checkFileExists(localStorage.fileSlot)) {
+            if(localStorageDatasource.checkFileExists(localStorageDatasource.fileSlot)) {
                 val type: Type = object : TypeToken<ArrayList<Slot>>() {}.type
-                val json = localStorage.readData(localStorage.fileSlot)
-                listSlot = localStorage.gson.fromJson(json, type)
+                val json = localStorageDatasource.readData(localStorageDatasource.fileSlot)
+                listSlot = localStorageDatasource.gson.fromJson(json, type)
             } else {
                 for(i in 1..60) {
                     listSlot.add(
@@ -50,7 +52,7 @@ class SettingsRepositoryImpl @Inject constructor(
                         )
                     )
                 }
-                localStorage.writeData(localStorage.fileSlot, localStorage.gson.toJson(listSlot))
+                localStorageDatasource.writeData(localStorageDatasource.fileSlot, localStorageDatasource.gson.toJson(listSlot))
             }
             return listSlot
         } catch (e: Exception) {
@@ -60,7 +62,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun loadLayoutFromServer(): ArrayList<Slot> {
         try {
-            val initSetup: InitSetup = localStorage.getDataFromPath(localStorage.fileInitSetup) ?: return arrayListOf()
+            val initSetup: InitSetup = localStorageDatasource.getDataFromPath(localStorageDatasource.fileInitSetup) ?: return arrayListOf()
             val response = settingsApi.loadLayout(initSetup.vendCode)
             val listSlot: ArrayList<Slot> = arrayListOf()
             for(item in response.data!!) {
@@ -74,7 +76,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun loadProductFromServer(): ArrayList<Product> {
         try {
-            val initSetup: InitSetup = localStorage.getDataFromPath(localStorage.fileInitSetup) ?: return arrayListOf()
+            val initSetup: InitSetup = localStorageDatasource.getDataFromPath(localStorageDatasource.fileInitSetup) ?: return arrayListOf()
             val response = settingsApi.loadProduct(initSetup.vendCode)
             val listTmp: ArrayList<Product> = arrayListOf()
             for (item in response.data!!) {
@@ -94,10 +96,10 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun loadListProductFromLocal(): ArrayList<Product> {
         try {
             var listProduct = arrayListOf<Product>()
-            if(localStorage.checkFileExists(localStorage.fileProductDetail)) {
+            if(localStorageDatasource.checkFileExists(localStorageDatasource.fileProductDetail)) {
                 val type: Type = object : TypeToken<ArrayList<Product>>() {}.type
-                val json = localStorage.readData(localStorage.fileProductDetail)
-                listProduct = localStorage.gson.fromJson(json, type)
+                val json = localStorageDatasource.readData(localStorageDatasource.fileProductDetail)
+                listProduct = localStorageDatasource.gson.fromJson(json, type)
             }
             return listProduct
         } catch (e: Exception) {
@@ -107,7 +109,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun writeListSlotToLocal(listSlot: ArrayList<Slot>): Boolean {
         try {
-            return localStorage.writeData(localStorage.fileSlot, localStorage.gson.toJson(listSlot))
+            return localStorageDatasource.writeData(localStorageDatasource.fileSlot, localStorageDatasource.gson.toJson(listSlot))
         } catch (e: Exception) {
             throw e
         }
@@ -115,8 +117,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun loadImageFromLocal(context: Context): ArrayList<ImageBitmap> {
         try {
-            val folder = File(localStorage.folderImage)
-            Log.d("tuanvulog", "folder ${folder.isDirectory} - ${folder.absolutePath}")
+            val folder = File(localStorageDatasource.folderImage)
             val imageBitmapList = ArrayList<ImageBitmap>()
             if (folder.exists() && folder.isDirectory) {
                 folder.listFiles()?.forEach { file ->
@@ -139,10 +140,10 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun getProductByCode(productCode: String): Product? {
         try {
             var listProduct = arrayListOf<Product>()
-            if(localStorage.checkFileExists(localStorage.fileProductDetail)) {
+            if(localStorageDatasource.checkFileExists(localStorageDatasource.fileProductDetail)) {
                 val type: Type = object : TypeToken<ArrayList<Product>>() {}.type
-                val json = localStorage.readData(localStorage.fileProductDetail)
-                listProduct = localStorage.gson.fromJson(json, type)
+                val json = localStorageDatasource.readData(localStorageDatasource.fileProductDetail)
+                listProduct = localStorageDatasource.gson.fromJson(json, type)
             }
             for(item in listProduct) {
                 if(item.productCode == productCode) {
@@ -150,6 +151,14 @@ class SettingsRepositoryImpl @Inject constructor(
                 }
             }
             return null
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getAndroidId(context: Context): String {
+        try {
+            return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         } catch (e: Exception) {
             throw e
         }

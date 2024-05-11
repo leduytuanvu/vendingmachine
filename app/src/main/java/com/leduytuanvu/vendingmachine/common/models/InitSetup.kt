@@ -6,7 +6,9 @@ data class InitSetup (
     val username: String?,
     val password: String?,
     val portVendingMachine: String?,
+    val baudRateVendingMachine: String?,
     val portCashBox: String?,
+    val baudRateCashBox: String?,
     val typeVendingMachine: String?,
     val role: String?,
 )

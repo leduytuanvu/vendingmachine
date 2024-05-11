@@ -1,18 +1,15 @@
 package com.leduytuanvu.vendingmachine.core.util
 
 import android.util.Log
-import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.leduytuanvu.vendingmachine.common.models.InitSetup
 import com.leduytuanvu.vendingmachine.common.models.LogException
 import com.leduytuanvu.vendingmachine.core.errors.CustomError
 //import com.leduytuanvu.vendingmachine.core.room.LogException
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.SlotResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.format.DateTimeFormatter
-import java.lang.reflect.Type
 
 fun LocalDateTime.currentDateTimeString(pattern: String = "yyyy-MM-dd HH:mm:ss"): String {
     try {
@@ -66,7 +63,7 @@ fun Exception.exceptionToCustomError(function: String): CustomError {
 }
 
 suspend fun Exception.exceptionHandling(
-    localStorage: LocalStorage,
+    localStorageDatasource: LocalStorageDatasource,
     exception: Exception,
     inFunction: String,
     eventType: String = "Other",
@@ -84,19 +81,19 @@ suspend fun Exception.exceptionHandling(
             isSent = false
         )
         var listLogException: ArrayList<LogException> = arrayListOf()
-        if(localStorage.checkFileExists(localStorage.fileLogException)) {
-            val json = localStorage.readData(localStorage.fileLogException)
-            listLogException = localStorage.gson.fromJson(
+        if(localStorageDatasource.checkFileExists(localStorageDatasource.fileLogException)) {
+            val json = localStorageDatasource.readData(localStorageDatasource.fileLogException)
+            listLogException = localStorageDatasource.gson.fromJson(
                 json,
                 object : TypeToken<ArrayList<LogException>>() {}.type
             ) ?: arrayListOf()
         }
         listLogException.add(logException)
-        localStorage.writeData(localStorage.fileLogException, localStorage.gson.toJson(listLogException))
+        localStorageDatasource.writeData(localStorageDatasource.fileLogException, localStorageDatasource.gson.toJson(listLogException))
         EventBus.sendEvent(Event.Toast(logException.message!!))
         return true
     } catch (e: Exception) {
-        Log.d("tuanvulog", "Error in exception handling: ${e.toString()}")
+        Logger.error("Error in exception handling: ${e.toString()}")
     }
     return false
 }

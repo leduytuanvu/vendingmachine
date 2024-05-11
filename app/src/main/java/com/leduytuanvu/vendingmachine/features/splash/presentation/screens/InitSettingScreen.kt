@@ -54,14 +54,14 @@ fun InitSettingContent(
     var inputUsername by remember { mutableStateOf("") }
     var inputPassword by remember { mutableStateOf("") }
     var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
-    var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("TTYS2")) }
-    var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("TTYS1")) }
+    var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS2")) }
+    var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("ttyS1")) }
 
     val itemsPort = listOf(
-        AnnotatedString("TTYS1"),
-        AnnotatedString("TTYS2"),
-        AnnotatedString("TTYS3"),
-        AnnotatedString("TTYS4")
+        AnnotatedString("ttyS1"),
+        AnnotatedString("ttyS2"),
+        AnnotatedString("ttyS3"),
+        AnnotatedString("ttyS4")
     )
     val itemsTypeVendingMachine = listOf(
         AnnotatedString("XY"),

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 //import androidx.room.Room
 //import com.leduytuanvu.vendingmachine.core.room.VendingMachineDatabase
 import com.leduytuanvu.vendingmachine.core.util.Navigation
@@ -33,11 +34,13 @@ import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var portConnectionDataSource: PortConnectionDatasource
     private val crashHandler = Thread.getDefaultUncaughtExceptionHandler()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
@@ -67,6 +70,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        closePort()
+    }
+
+    private fun closePort() {
+        portConnectionDataSource.closeVendingMachinePort()
+        portConnectionDataSource.closeCashBoxPort()
     }
 
     private fun hideStatusBar() {

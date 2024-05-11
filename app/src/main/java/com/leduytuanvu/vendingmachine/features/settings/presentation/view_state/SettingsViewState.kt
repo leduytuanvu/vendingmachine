@@ -25,4 +25,5 @@ data class SettingsViewState (
     val isCapacity: Boolean = false,
     val nameFunction: String = "",
     val error: CustomError? = null,
+    val androidId: String = "",
 )

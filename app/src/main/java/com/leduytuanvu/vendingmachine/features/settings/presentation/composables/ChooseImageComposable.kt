@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
-import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 import java.io.File
@@ -45,7 +45,7 @@ fun ChooseImageComposable(
                     contentPadding = PaddingValues(10.dp)
                 ) {
                     items(state.listProduct.size) { index ->
-                        val imageFile = File(LocalStorage().folderImage+"/${state.listProduct[index].productCode}.png")
+                        val imageFile = File(LocalStorageDatasource().folderImage+"/${state.listProduct[index].productCode}.png")
                         val painter = rememberAsyncImagePainter(imageFile)
                         Image(
                             painter = painter,
@@ -54,10 +54,8 @@ fun ChooseImageComposable(
                                 .fillMaxWidth()
                                 .height(200.dp).clickable {
                                     if(state.listSlotAddMore.size>0 && state.slot==null) {
-                                        Log.d("tuanvulog", "add more")
                                         viewModel.addMoreProductToListSlot(state.listProduct[index])
                                     } else {
-                                        Log.d("tuanvulog", "add one")
                                         viewModel.addProductToListSlot(state.listProduct[index])
                                     }
                                 }

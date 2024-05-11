@@ -11,7 +11,7 @@ static int serialPortVendingMachine = -1;
 static int serialPortCashBox = -1;
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_openPortVendingMachine(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_openPortVendingMachine(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {
     // Convert jstring to const char*
     const char *nativePath = env->GetStringUTFChars(path, JNI_FALSE);
     const char *nativePortName = env->GetStringUTFChars(portName, JNI_FALSE);
@@ -48,7 +48,7 @@ Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_Por
 }
 
 extern "C" JNIEXPORT jint
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_writeDataPortVendingMachine(JNIEnv *env, jobject, jbyteArray data) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_writeDataPortVendingMachine(JNIEnv *env, jobject, jbyteArray data) {
 if (serialPortVendingMachine == -1) return -1;
 // Convert jbyteArray to a native byte array
 jsize length = env->GetArrayLength(data);
@@ -61,7 +61,7 @@ return bytesWritten;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_readDataPortVendingMachine(JNIEnv *env, jobject, jint bufferSize, jobject callback) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_readDataPortVendingMachine(JNIEnv *env, jobject, jint bufferSize, jobject callback) {
 if (serialPortVendingMachine == -1) return;
 // Create a byte array to store the received data
 jbyteArray data = env->NewByteArray(512);
@@ -95,7 +95,7 @@ env->ReleaseByteArrayElements(data, dataPtr, 0);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_closePortVendingMachine(JNIEnv *env, jobject) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_closePortVendingMachine(JNIEnv *env, jobject) {
 if (serialPortVendingMachine != -1) {
 close(serialPortVendingMachine);
 serialPortVendingMachine = -1;
@@ -103,7 +103,7 @@ serialPortVendingMachine = -1;
 }
 
 extern "C" JNIEXPORT jint
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_openPortCashBox(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_openPortCashBox(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {
 // Convert jstring to const char* for path and portName
 const char *pathStr = env->GetStringUTFChars(path, nullptr);
 const char *portNameStr = env->GetStringUTFChars(portName, nullptr);
@@ -147,7 +147,7 @@ return 0; // Return 0 on success
 }
 
 extern "C" JNIEXPORT jint
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_writeDataPortCashBox(JNIEnv *env, jobject, jbyteArray data) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_writeDataPortCashBox(JNIEnv *env, jobject, jbyteArray data) {
 if (serialPortCashBox == -1) return -1;
 // Convert jbyteArray to a native byte array
 jsize length = env->GetArrayLength(data);
@@ -160,7 +160,7 @@ return bytesWritten;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_readDataPortCashBox(JNIEnv *env, jobject, jint bufferSize, jobject callback) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_readDataPortCashBox(JNIEnv *env, jobject, jint bufferSize, jobject callback) {
 if (serialPortCashBox == -1) return;
 // Create a byte array to store the received data
 jbyteArray data = env->NewByteArray(bufferSize);
@@ -194,7 +194,7 @@ env->ReleaseByteArrayElements(data, dataPtr, 0);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_closePortCashBox(JNIEnv *env, jobject) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_closePortCashBox(JNIEnv *env, jobject) {
 if (serialPortCashBox != -1) {
 close(serialPortCashBox);
 serialPortCashBox = -1;
@@ -202,7 +202,7 @@ serialPortCashBox = -1;
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_getAllSerialPorts(JNIEnv *env, jobject) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_getAllSerialPorts(JNIEnv *env, jobject) {
     std::vector<std::string> portNames;
     DIR *dir;
     struct dirent *ent;
@@ -228,7 +228,7 @@ Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_Por
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDataSource_PortConnectionHelperDataSource_getAllSerialPortsStatus(JNIEnv *env, jobject) {
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_getAllSerialPortsStatus(JNIEnv *env, jobject) {
     std::vector<std::pair<jstring, jobject>> portStatuses;
     DIR *dir;
     struct dirent *ent;
