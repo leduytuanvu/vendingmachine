@@ -116,11 +116,11 @@ dependencies {
     implementation(libs.threetenabp)
 
     // Room database
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-    testImplementation(libs.androidx.room.testing)
-    androidTestImplementation(libs.androidx.room.testing)
+//    implementation(libs.androidx.room.runtime)
+//    implementation(libs.androidx.room.ktx)
+//    ksp(libs.androidx.room.compiler)
+//    testImplementation(libs.androidx.room.testing)
+//    androidTestImplementation(libs.androidx.room.testing)
 
     // LiveData
     implementation(libs.androidx.lifecycle.livedata.ktx)

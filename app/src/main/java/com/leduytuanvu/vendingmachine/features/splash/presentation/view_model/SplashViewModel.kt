@@ -8,6 +8,7 @@ import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
 import com.leduytuanvu.vendingmachine.core.util.Constants
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.exceptionHandling
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
@@ -42,7 +43,7 @@ class SplashViewModel @Inject constructor (
                     navController.navigate(Screens.InitSettingScreenRoute.route)
                 }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "fileInitSetupExists()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "fileInitSetupExists()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -95,7 +96,7 @@ class SplashViewModel @Inject constructor (
                     }
                 }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "saveInitSetup()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "saveInitSetup()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }

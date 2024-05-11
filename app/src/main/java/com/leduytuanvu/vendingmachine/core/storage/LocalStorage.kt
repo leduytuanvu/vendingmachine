@@ -14,13 +14,15 @@ class LocalStorage {
     val gson = Gson()
 
     @SuppressLint("SdCardPath")
-    val fileInitSetup = "/sdcard/VendingMachineData/Json/InitSetup.json"
+    val fileInitSetup = "/sdcard/VendingMachineData/Setup/InitSetup.json"
     @SuppressLint("SdCardPath")
-    val fileSlot = "/sdcard/VendingMachineData/Json/Slot.json"
+    val fileSlot = "/sdcard/VendingMachineData/Slot/Slot.json"
     @SuppressLint("SdCardPath")
-    val fileProductDetail = "/sdcard/VendingMachineData/Product/Json/ProductDetail.json"
+    val fileProductDetail = "/sdcard/VendingMachineData/Product/ProductDetail.json"
     @SuppressLint("SdCardPath")
     val folderImage = "/sdcard/VendingMachineData/Product/Image"
+    @SuppressLint("SdCardPath")
+    val fileLogException = "/sdcard/VendingMachineData/Log/LogException.json"
 
     fun checkFileExists(path: String): Boolean {
         try {

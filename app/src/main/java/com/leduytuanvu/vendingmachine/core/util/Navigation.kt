@@ -7,9 +7,11 @@ import com.leduytuanvu.vendingmachine.features.splash.presentation.screens.Splas
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.leduytuanvu.vendingmachine.features.home.presentation.screens.HomeScreen
+import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.SetupPaymentScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.SetupPortScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.SetupProductScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.SetupSlotScreen
+import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.SetupSystemScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.screens.ViewLogScreen
 import com.leduytuanvu.vendingmachine.features.splash.presentation.screens.InitSettingScreen
 
@@ -46,6 +48,14 @@ fun Navigation(navController: NavHostController) {
 
         composable(Screens.ViewLogScreenRoute.route) {
             ViewLogScreen(navController)
+        }
+
+        composable(Screens.SetupPaymentScreenRoute.route) {
+            SetupPaymentScreen(navController)
+        }
+
+        composable(Screens.SetupSystemScreenRoute.route) {
+            SetupSystemScreen(navController)
         }
     }
 }

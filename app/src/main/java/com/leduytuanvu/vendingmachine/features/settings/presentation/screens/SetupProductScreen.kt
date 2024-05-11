@@ -23,7 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.R
-import com.leduytuanvu.vendingmachine.common.composables.ButtonComposable
+import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.composables.ItemProductComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
@@ -75,7 +75,7 @@ fun SetupProductContent(
                 Row(
                     modifier = Modifier.padding(top = 10.dp)
                 ) {
-                    ButtonComposable(
+                    CustomButtonComposable(
                         title = "BACK",
                         wrap = true,
                         height = 65.dp,

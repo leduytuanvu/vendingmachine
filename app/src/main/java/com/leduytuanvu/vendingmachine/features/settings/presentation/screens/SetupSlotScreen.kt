@@ -1,7 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.screens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,13 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.leduytuanvu.vendingmachine.common.composables.ButtonComposable
+import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,7 +69,7 @@ fun SetupSlotContent(
                         .padding(bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ButtonComposable(
+                    CustomButtonComposable(
                         title = "BACK",
                         wrap = true,
                         height = 65.dp,
@@ -114,7 +112,7 @@ fun SetupSlotContent(
 
 @Composable
 fun ButtonSetupSlotComposable(title: String, function: () -> Unit) {
-    ButtonComposable(
+    CustomButtonComposable(
         title = title,
         titleAlignment = TextAlign.Start,
         cornerRadius = 4.dp,

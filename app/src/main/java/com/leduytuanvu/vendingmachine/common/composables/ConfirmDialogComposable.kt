@@ -72,7 +72,7 @@ fun ConfirmDialogComposable(isConfirm: Boolean, state: SettingsViewState, viewMo
                         )
                         Spacer(modifier = Modifier.height(40.dp))
                         Row {
-                            ButtonComposable(
+                            CustomButtonComposable(
                                 title = "OK",
                                 height = 65.dp,
                                 width = 160.dp,
@@ -89,7 +89,7 @@ fun ConfirmDialogComposable(isConfirm: Boolean, state: SettingsViewState, viewMo
                                 }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            ButtonComposable(
+                            CustomButtonComposable(
                                 title = "CANCEL",
                                 height = 65.dp,
                                 width = 160.dp,

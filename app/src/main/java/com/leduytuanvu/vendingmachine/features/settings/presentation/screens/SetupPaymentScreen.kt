@@ -16,25 +16,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.leduytuanvu.vendingmachine.common.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
-import com.leduytuanvu.vendingmachine.common.composables.TitleAndDropdownComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 
 @Composable
-internal fun SetupPortScreen(
+internal fun SetupPaymentScreen(
     navController: NavHostController,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SetupPortContent(
+    SetupPaymentContent(
         state = state,
         navController = navController
     )
@@ -42,7 +41,7 @@ internal fun SetupPortScreen(
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SetupPortContent(
+fun SetupPaymentContent(
     state: SettingsViewState,
     navController: NavHostController,
 ) {
@@ -86,43 +85,31 @@ fun SetupPortContent(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                TitleAndDropdownComposable(
-                    title = "Choose the type of vending machine",
-                    items = itemsTypeVendingMachine,
-                    selectedItem = selectedItemTypeVendingMachine,
-                ) {
-                    selectedItemTypeVendingMachine = it
-                }
-
-                TitleAndDropdownComposable(
-                    title = "Select the port to connect to vending machine",
-                    items = itemsPort,
-                    selectedItem = selectedItemPortVendingMachine,
-                ) {
-                    selectedItemPortVendingMachine = it
-                }
-
-                TitleAndDropdownComposable(
-                    title = "Select the port to connect to cash box",
-                    items = itemsPort,
-                    selectedItem = selectedItemPortCashBox,
-                ) {
-                    selectedItemPortCashBox = it
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                CustomButtonComposable(
-                    title = "SAVE SETUP PORT",
-                    titleAlignment = TextAlign.Center,
-                    paddingBottom = 20.dp,
-                    cornerRadius = 4.dp,
-                    height = 65.dp,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                ) {
+                BodyTextComposable(title = "Current cash")
+                BodyTextComposable(title = "100000: ")
+                CustomButtonComposable(title = "Reset current cash") {
 
                 }
+
+                BodyTextComposable(title = "Rotten box balance")
+                BodyTextComposable(title = "Version")
+                CustomButtonComposable(title = "Refresh") {
+
+                }
+
+                BodyTextComposable(title = "Time out payment online")
+                BodyTextComposable(title = "30,60,90,120,180,300")
+                CustomButtonComposable(title = "Save") {
+
+                }
+
+                BodyTextComposable(title = "Set time reset on everyday")
+                BodyTextComposable(title = "Id: ")
+                CustomButtonComposable(title = "SAVE") {
+
+                }
+
+
             }
         )
     }

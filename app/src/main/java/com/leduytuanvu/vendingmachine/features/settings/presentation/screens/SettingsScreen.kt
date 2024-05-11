@@ -2,29 +2,23 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.composables.TitleTextComposable
 import com.leduytuanvu.vendingmachine.core.util.Screens
-import com.leduytuanvu.vendingmachine.common.composables.ButtonComposable
+import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 
@@ -67,8 +61,12 @@ fun SettingsContent(
                 ButtonSettingsComposable("SET UP SLOT", function = {
                     navController.navigate(Screens.SetupSlotScreenRoute.route)
                 })
-                ButtonSettingsComposable("SET UP SYSTEM", function = {})
-                ButtonSettingsComposable("SET UP PAYMENT", function = {})
+                ButtonSettingsComposable("SET UP SYSTEM", function = {
+                    navController.navigate(Screens.SetupSystemScreenRoute.route)
+                })
+                ButtonSettingsComposable("SET UP PAYMENT", function = {
+                    navController.navigate(Screens.SetupPaymentScreenRoute.route)
+                })
                 ButtonSettingsComposable("VIEW LOG", function = {
                     navController.navigate(Screens.ViewLogScreenRoute.route)
                 })
@@ -79,7 +77,7 @@ fun SettingsContent(
 
 @Composable
 fun ButtonSettingsComposable(title: String, function: () -> Unit) {
-    ButtonComposable(
+    CustomButtonComposable(
         title = title,
         titleAlignment = TextAlign.Start,
         paddingBottom = 10.dp,

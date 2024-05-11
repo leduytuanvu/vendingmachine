@@ -1,10 +1,12 @@
 package com.leduytuanvu.vendingmachine.core.util
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.models.InitSetup
+import com.leduytuanvu.vendingmachine.common.models.LogException
 import com.leduytuanvu.vendingmachine.core.errors.CustomError
-import com.leduytuanvu.vendingmachine.core.room.LogException
+//import com.leduytuanvu.vendingmachine.core.room.LogException
 import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.SlotResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -61,6 +63,42 @@ fun Exception.exceptionToCustomError(function: String): CustomError {
     } catch (e: Exception) {
         throw e
     }
+}
+
+suspend fun Exception.exceptionHandling(
+    localStorage: LocalStorage,
+    exception: Exception,
+    inFunction: String,
+    eventType: String = "Other",
+    typeException: String = "Software",
+    dataJson: String = "",
+): Boolean {
+    try {
+        val logException = LogException(
+            eventType = eventType,
+            eventTime = LocalDateTime.now().currentDateTimeString(),
+            message = exception.message ?: "",
+            inFunction = inFunction,
+            typeException = typeException,
+            eventData = dataJson,
+            isSent = false
+        )
+        var listLogException: ArrayList<LogException> = arrayListOf()
+        if(localStorage.checkFileExists(localStorage.fileLogException)) {
+            val json = localStorage.readData(localStorage.fileLogException)
+            listLogException = localStorage.gson.fromJson(
+                json,
+                object : TypeToken<ArrayList<LogException>>() {}.type
+            ) ?: arrayListOf()
+        }
+        listLogException.add(logException)
+        localStorage.writeData(localStorage.fileLogException, localStorage.gson.toJson(listLogException))
+        EventBus.sendEvent(Event.Toast(logException.message!!))
+        return true
+    } catch (e: Exception) {
+        Log.d("tuanvulog", "Error in exception handling: ${e.toString()}")
+    }
+    return false
 }
 
 fun SlotResponse?.toSlot(): Slot {

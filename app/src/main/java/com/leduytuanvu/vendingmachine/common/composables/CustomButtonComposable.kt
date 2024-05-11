@@ -20,10 +20,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leduytuanvu.vendingmachine.core.util.Constants
 
 @Composable
-fun ButtonComposable(
+fun CustomButtonComposable(
     title: String,
     backgroundColor: Color = Color(0xFFE72B28),
     titleAlignment: TextAlign = TextAlign.Start,
@@ -75,10 +74,4 @@ fun ButtonComposable(
             }
         )
     }
-}
-
-@Preview
-@Composable
-fun ButtonComponentPreview() {
-    ButtonComposable(title = "HOME") {}
 }

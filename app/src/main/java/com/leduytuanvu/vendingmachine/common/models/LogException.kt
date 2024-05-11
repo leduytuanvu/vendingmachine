@@ -1,11 +1,8 @@
-package com.leduytuanvu.vendingmachine.core.room
+package com.leduytuanvu.vendingmachine.common.models
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+//import androidx.room.PrimaryKey
 
-@Entity(tableName = "log_exception")
 data class LogException(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     var eventType: String?,
     var eventTime: String?,

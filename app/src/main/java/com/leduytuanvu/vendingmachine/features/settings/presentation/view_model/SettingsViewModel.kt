@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.view_model
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -8,12 +9,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.Coil
 import coil.request.ImageRequest
-import com.leduytuanvu.vendingmachine.core.room.Graph
-import com.leduytuanvu.vendingmachine.core.room.LogException
-import com.leduytuanvu.vendingmachine.core.room.RoomRepository
+import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.common.models.LogException
+//import com.leduytuanvu.vendingmachine.core.room.Graph
+//import com.leduytuanvu.vendingmachine.core.room.LogException
+//import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
 import com.leduytuanvu.vendingmachine.core.util.Constants
 import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.exceptionHandling
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,7 +54,7 @@ class SettingsViewModel @Inject constructor (
                 val listSlot = settingRepository.initLoadSlotFromLocal()
                 _state.update { it.copy(listSlot = listSlot) }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "loadListSlotFromLocal()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListSlotFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -63,7 +68,7 @@ class SettingsViewModel @Inject constructor (
                 val listProduct = settingRepository.loadListProductFromLocal()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "loadListProductFromLocal()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListProductFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -77,7 +82,7 @@ class SettingsViewModel @Inject constructor (
                 val listProduct = settingRepository.loadProductFromServer()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "loadListProductFromServer()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "loadListProductFromServer()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -169,7 +174,7 @@ class SettingsViewModel @Inject constructor (
                 }
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "chooseNumber()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "chooseNumber()")
             } finally {
                 _state.update { it.copy(
                     isInventory = false,
@@ -207,7 +212,7 @@ class SettingsViewModel @Inject constructor (
                 }
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "addProductToListSlot()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "addProductToListSlot()")
             } finally {
                 _state.update { it.copy(
                     isChooseImage = false,
@@ -236,7 +241,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 _state.value.listSlotAddMore.clear()
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "addMoreProductToListSlot()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "addMoreProductToListSlot()")
             } finally {
                 _state.update { it.copy(
                     isChooseImage = false,
@@ -258,7 +263,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "fullInventory()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "fullInventory()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -288,7 +293,7 @@ class SettingsViewModel @Inject constructor (
                 sendEvent(Event.Toast("SUCCESS"))
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "loadLayoutFromServer()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "loadLayoutFromServer()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -331,7 +336,7 @@ class SettingsViewModel @Inject constructor (
             try {
                 _state.value.listSlotAddMore.add(slot)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "addSlotToListAddMore()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "addSlotToListAddMore()")
             }
         }
     }
@@ -341,7 +346,7 @@ class SettingsViewModel @Inject constructor (
             try {
                 _state.value.listSlotAddMore.remove(slot)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "addSlotToListAddMore()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "addSlotToListAddMore()")
             }
         }
 
@@ -373,7 +378,7 @@ class SettingsViewModel @Inject constructor (
                 settingRepository.writeListSlotToLocal(_state.value.listSlot)
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "removeProduct()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "removeProduct()")
             } finally {
                 _state.update { it.copy(
                     nameFunction = "",
@@ -391,7 +396,7 @@ class SettingsViewModel @Inject constructor (
                 val listImageBitmap = settingRepository.loadImageFromLocal(context)
                 _state.update { it.copy(listImageProduct = listImageBitmap) }
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "loadImageFromLocal()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "loadImageFromLocal()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -440,38 +445,36 @@ class SettingsViewModel @Inject constructor (
                 localStorage.writeData(localStorage.fileProductDetail, localStorage.gson.toJson(state.value.listProduct))
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "downloadProduct()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "downloadProduct()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
+
     fun getLog(typeLog: String) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val roomRepository: RoomRepository = Graph.repository
-                val listLogException: ArrayList<LogException> = arrayListOf()
-
-// Assuming this block of code is within a coroutine scope
-// You collect the Flow returned by getAllLogException() into listLogException
-                roomRepository.getAllLogException().collect { logExceptions ->
-                    listLogException.addAll(logExceptions)
+                var listLogException: ArrayList<LogException> = arrayListOf()
+                var listLogExceptionSorted: ArrayList<LogException> = arrayListOf()
+                if(localStorage.checkFileExists(localStorage.fileLogException)) {
+                    val json = localStorage.readData(localStorage.fileLogException)
+                    listLogException = localStorage.gson.fromJson(
+                        json,
+                        object : TypeToken<ArrayList<LogException>>() {}.type
+                    ) ?: arrayListOf()
+                    @SuppressLint("SimpleDateFormat")
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                    listLogExceptionSorted = ArrayList(listLogException.sortedByDescending {
+                        dateFormat.parse(it.eventTime!!)
+                    })
                 }
-//                when (typeLog) {
-//                    "ERROR LOG" -> {
-//                        val roomRepository: RoomRepository = Graph.repository
-//                        val listLogException: ArrayList<LogException> = arrayListOf()
-//                        listLogException = roomRepository.getAllLogException().collect { logExceptions ->
-//                        }
-//                        Log.d("tuanvulog", "listLogException size - ${listLogException.size.toString()}")
-//                    }
-//                }
-//                throw Exception("This is a custom exception message")
+                _state.update { it.copy(listLogException = listLogExceptionSorted) }
             } catch (e: Exception) {
                 Log.d("tuanvulog", "error in getLog - ${e.toString()}")
-                Constants.exceptionHandling(exception = e, inFunction = "getLog()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "getLog()")
             } finally {
                 Log.d("tuanvulog", "done")
                 _state.update { it.copy(isLoading = false) }

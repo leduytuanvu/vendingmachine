@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.leduytuanvu.vendingmachine.common.composables.ButtonComposable
+import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.core.util.toChooseNumber
 import com.leduytuanvu.vendingmachine.core.util.toChooseNumberMoney
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
@@ -50,7 +50,7 @@ fun ChooseNumberComposable(
                             contentPadding = PaddingValues(10.dp)
                         ) {
                             items(50) { index ->
-                                ButtonComposable(
+                                CustomButtonComposable(
                                     title = if (state.isChooseMoney) {
                                         (index + 1).toChooseNumberMoney()
                                     } else {

@@ -2,9 +2,14 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,11 +25,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.leduytuanvu.vendingmachine.common.composables.ButtonComposable
+import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.composables.TitleAndDropdownComposable
-import com.leduytuanvu.vendingmachine.common.composables.TitleTextComposable
-import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 
@@ -35,7 +38,7 @@ internal fun ViewLogScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(key1 = viewModel) {
-        viewModel.getLog("ERROR LOG")
+        viewModel.getLog("Error log")
     }
     ViewLogContent(
         state = state,
@@ -52,10 +55,10 @@ fun ViewLogContent(
     navController: NavHostController,
 ) {
     val itemsLog = listOf(
-        AnnotatedString("ERROR LOG"),
+        AnnotatedString("Error log"),
     )
 
-    var selectedItem by remember { mutableStateOf(AnnotatedString("ERROR LOG")) }
+    var selectedItem by remember { mutableStateOf(AnnotatedString("Error log")) }
 
     LoadingDialogComposable(isLoading = state.isLoading)
 
@@ -66,7 +69,7 @@ fun ViewLogContent(
         Column(
             modifier = Modifier.padding(20.dp),
             content = {
-                ButtonComposable(
+                CustomButtonComposable(
                     title = "BACK",
                     wrap = true,
                     height = 65.dp,
@@ -80,6 +83,12 @@ fun ViewLogContent(
                 TitleAndDropdownComposable(title = "", items = itemsLog, selectedItem = selectedItem) {
 
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyColumn {
+                    items(state.listLogException.size) {
+                        index -> Text("${state.listLogException[index].eventTime}: ${state.listLogException[index].message} - Exception in ${state.listLogException[index].inFunction}")
+                    }
+                }
             }
         )
     }
@@ -87,7 +96,7 @@ fun ViewLogContent(
 
 @Composable
 fun ButtonViewLogComposable(title: String, function: () -> Unit) {
-    ButtonComposable(
+    CustomButtonComposable(
         title = title,
         titleAlignment = TextAlign.Start,
         paddingBottom = 10.dp,

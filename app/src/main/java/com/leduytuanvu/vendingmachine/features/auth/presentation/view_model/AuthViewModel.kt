@@ -3,11 +3,13 @@ package com.leduytuanvu.vendingmachine.features.auth.presentation.view_model
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leduytuanvu.vendingmachine.core.room.Graph
-import com.leduytuanvu.vendingmachine.core.room.LogException
-import com.leduytuanvu.vendingmachine.core.room.RoomRepository
+import com.leduytuanvu.vendingmachine.core.storage.LocalStorage
+//import com.leduytuanvu.vendingmachine.core.room.Graph
+//import com.leduytuanvu.vendingmachine.core.room.LogException
+//import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.util.Constants
 import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.exceptionHandling
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
@@ -22,6 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor (
     private val authRepository: AuthRepository,
+    private val localStorage: LocalStorage,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AuthViewState())
     val state = _state.asStateFlow()
@@ -32,7 +35,7 @@ class AuthViewModel @Inject constructor (
                 _state.update { it.copy(isLoading = true) }
                 authRepository.login(vendCode, loginRequest)
             } catch (e: Exception) {
-                Constants.exceptionHandling(exception = e, inFunction = "login()")
+                e.exceptionHandling(localStorage, exception = e, inFunction = "login()")
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
