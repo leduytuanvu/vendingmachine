@@ -33,6 +33,7 @@ import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
@@ -61,9 +62,10 @@ fun ItemSlotComposable(
                     .clickable {
                         viewModel.showDialogChooseImage(slot = slot)
                     }
-                val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(localStorageDatasource.folderImage+"/${slot.productCode}.png")) {
+                val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                        pathFolderImage+"/${slot.productCode}.png")) {
                     val imageRequest = ImageRequest.Builder(LocalContext.current)
-                        .data(localStorageDatasource.folderImage+"/${slot.productCode}.png")
+                        .data(pathFolderImage+"/${slot.productCode}.png")
                         .build()
                     rememberAsyncImagePainter(imageRequest)
                 } else {
@@ -98,9 +100,9 @@ fun ItemSlotComposable(
                             .height(34.dp)
                             .clickable {
                                 if(isChecked) {
-                                    viewModel.removeSlotToListAddMore(slot)
+                                    viewModel.removeSlotToStateListAddMore(slot)
                                 } else {
-                                    viewModel.addSlotToListAddMore(slot)
+                                    viewModel.addSlotToStateListAddMore(slot)
                                 }
                                 isChecked = !isChecked
                             },

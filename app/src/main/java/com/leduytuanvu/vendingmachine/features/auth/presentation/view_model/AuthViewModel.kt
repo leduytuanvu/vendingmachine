@@ -25,16 +25,16 @@ class AuthViewModel @Inject constructor (
     private val _state = MutableStateFlow(AuthViewState())
     val state = _state.asStateFlow()
 
-    fun login(vendCode: String, loginRequest: LoginRequest) {
-        viewModelScope.launch {
-            try {
-                _state.update { it.copy(isLoading = true) }
-                authRepository.login(vendCode, loginRequest)
-            } catch (e: Exception) {
-                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "login()")
-            } finally {
-                _state.update { it.copy(isLoading = false) }
-            }
-        }
-    }
+//    fun login(vendCode: String, loginRequest: LoginRequest) {
+//        viewModelScope.launch {
+//            try {
+//                _state.update { it.copy(isLoading = true) }
+//                authRepository.login(vendCode, loginRequest)
+//            } catch (e: Exception) {
+//                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "login()")
+//            } finally {
+//                _state.update { it.copy(isLoading = false) }
+//            }
+//        }
+//    }
 }

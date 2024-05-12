@@ -23,7 +23,7 @@ internal fun SplashScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     DisposableEffect(Unit) {
-        viewModel.fileInitSetupExists(navController = navController)
+        viewModel.checkFileInitSetupExists(navController = navController)
         onDispose { }
     }
     SplashContent(state = state)

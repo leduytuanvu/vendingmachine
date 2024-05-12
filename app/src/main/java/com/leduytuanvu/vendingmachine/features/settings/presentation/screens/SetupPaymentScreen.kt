@@ -24,6 +24,7 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.common.composables.TitleAndDropdownComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 
@@ -85,29 +86,66 @@ fun SetupPaymentContent(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                BodyTextComposable(title = "Current cash")
-                BodyTextComposable(title = "100000: ")
-                CustomButtonComposable(title = "Reset current cash") {
+                BodyTextComposable(title = "Current cash: 10.000 vnđ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+
+                CustomButtonComposable(
+                    title = "REFRESH",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) { }
+
+                BodyTextComposable(title = "Rotten box balance: 20.000 vnđ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                CustomButtonComposable(
+                    title = "REFRESH",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) { }
+
+                BodyTextComposable(title = "Time out payment online", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("30s"),
+                    AnnotatedString("60s"),
+                    AnnotatedString("90s"),
+                    AnnotatedString("120s"),
+                    AnnotatedString("150s"),
+                    AnnotatedString("180s"),
+                    AnnotatedString("210s"),
+                    AnnotatedString("240s"),
+                    AnnotatedString("270s"),
+                    AnnotatedString("300s"),
+                ), selectedItem = AnnotatedString("30s"), paddingTop = 2.dp, paddingBottom = 12.dp) {
 
                 }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) { }
 
-                BodyTextComposable(title = "Rotten box balance")
-                BodyTextComposable(title = "Version")
-                CustomButtonComposable(title = "Refresh") {
-
-                }
-
-                BodyTextComposable(title = "Time out payment online")
-                BodyTextComposable(title = "30,60,90,120,180,300")
-                CustomButtonComposable(title = "Save") {
-
-                }
 
                 BodyTextComposable(title = "Set time reset on everyday")
                 BodyTextComposable(title = "Id: ")
-                CustomButtonComposable(title = "SAVE") {
-
-                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) { }
 
 
             }

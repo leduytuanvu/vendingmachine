@@ -42,7 +42,7 @@ internal fun SetupProductScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     HandlePermissionsComposable()
     LaunchedEffect(key1 = viewModel) {
-        viewModel.loadProductFromServer()
+        viewModel.getProductFromServer()
     }
     SetupProductContent(
         state = state,

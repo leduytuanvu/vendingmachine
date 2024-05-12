@@ -3,31 +3,36 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.view_model
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.provider.Settings
-import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import coil.Coil
 import coil.request.ImageRequest
 import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.features.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.models.LogException
 //import com.leduytuanvu.vendingmachine.core.room.Graph
 //import com.leduytuanvu.vendingmachine.core.room.LogException
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
-import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.exceptionHandling
+import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
+import com.leduytuanvu.vendingmachine.core.util.pathFileLogException
+import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -38,25 +43,46 @@ import java.text.SimpleDateFormat
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor (
+@SuppressLint("StaticFieldLeak")
+class SettingsViewModel
+@Inject constructor (
     private val settingRepository: SettingsRepository,
     private val localStorageDatasource: LocalStorageDatasource,
+    private val portConnectionDataSource: PortConnectionDatasource,
     private val context: Context,
+    private val logger: Logger,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SettingsViewState())
     val state = _state.asStateFlow()
 
     init {
-        loadSlotFromLocal()
-        loadProductFromLocal()
-        loadAndroidId()
+        getSlotFromLocal()
+        getProductFromLocal()
+        getInitSetupFromLocal()
+        getSerialSimId()
+
+        getInformationOfMachineInit()
     }
 
-    private fun loadSlotFromLocal() {
+    private fun getInitSetupFromLocal() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val listSlot = settingRepository.initLoadSlotFromLocal()
+                val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup)!!
+                _state.update { it.copy(initSetup = initSetup) }
+            } catch (e: Exception) {
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListSlotFromLocal()")
+            } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    private fun getSlotFromLocal() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val listSlot = settingRepository.getListSlotFromLocal()
                 _state.update { it.copy(listSlot = listSlot) }
             } catch (e: Exception) {
                 e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListSlotFromLocal()")
@@ -66,11 +92,11 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    private fun loadProductFromLocal() {
+    private fun getProductFromLocal() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val listProduct = settingRepository.loadListProductFromLocal()
+                val listProduct = settingRepository.getListProductFromLocal()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
                 e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListProductFromLocal()")
@@ -80,11 +106,11 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun loadProductFromServer() {
+    fun getProductFromServer() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val listProduct = settingRepository.loadProductFromServer()
+                val listProduct = settingRepository.getListProductFromServer()
                 _state.update { it.copy(listProduct = listProduct) }
             } catch (e: Exception) {
                 e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadListProductFromServer()")
@@ -151,7 +177,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun showMess(mess: String) {
+    fun showToast(mess: String) {
         viewModelScope.launch {
             sendEvent(Event.Toast(mess))
         }
@@ -191,7 +217,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun addProductToListSlot(product: Product) {
+    fun addSlotToLocalListSlot(product: Product) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -227,7 +253,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun addMoreProductToListSlot(product: Product) {
+    fun addMoreProductToLocalListSlot(product: Product) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -256,7 +282,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun fullInventory() {
+    fun setFullInventoryForLocalListSlot() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -279,16 +305,16 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun loadLayoutFromServer() {
+    fun getLayoutFromServer() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(
                     isLoading = true,
                     isConfirm = false,
                 ) }
-                val listSlot = settingRepository.loadLayoutFromServer()
+                val listSlot = settingRepository.getListLayoutFromServer()
                 for(item in listSlot) {
-                    val product = settingRepository.getProductByCode(item.productCode)
+                    val product = settingRepository.getProductByCodeFromLocal(item.productCode)
                     if(product!=null) {
                         item.price = product.price!!
                         item.productName = product.productName!!
@@ -336,7 +362,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun addSlotToListAddMore(slot: Slot) {
+    fun addSlotToStateListAddMore(slot: Slot) {
         viewModelScope.launch {
             try {
                 _state.value.listSlotAddMore.add(slot)
@@ -346,7 +372,7 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun removeSlotToListAddMore(slot: Slot) {
+    fun removeSlotToStateListAddMore(slot: Slot) {
         viewModelScope.launch {
             try {
                 _state.value.listSlotAddMore.remove(slot)
@@ -357,7 +383,7 @@ class SettingsViewModel @Inject constructor (
 
     }
 
-    fun removeProduct() {
+    fun removeProductToLocalListSlot() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -398,7 +424,7 @@ class SettingsViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val listImageBitmap = settingRepository.loadImageFromLocal(context)
+                val listImageBitmap = settingRepository.getListImageBitmapFromLocal(context)
                 _state.update { it.copy(listImageProduct = listImageBitmap) }
             } catch (e: Exception) {
                 e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "loadImageFromLocal()")
@@ -408,18 +434,18 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun downloadProduct(context: Context) {
+    fun downloadProductFromServer(context: Context) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(
                     isLoading = true,
                     isConfirm = false,
                 ) }
-                val folderImage = File(localStorageDatasource.folderImage)
-                if (folderImage.exists()) {
-                    localStorageDatasource.deleteFolder(folderImage)
+                val folder = File(pathFolderImage)
+                if (folder.exists()) {
+                    localStorageDatasource.deleteFolder(folder)
                 }
-                localStorageDatasource.createFolder(localStorageDatasource.folderImage)
+                localStorageDatasource.createFolder(pathFolderImage)
                 for (product in state.value.listProduct) {
                     if(!product.imageUrl.isNullOrEmpty()) {
                         var notHaveError = true
@@ -432,7 +458,7 @@ class SettingsViewModel @Inject constructor (
                                     Coil.imageLoader(context).execute(request).drawable
                                 }
                                 if (result != null) {
-                                    val file = File(localStorageDatasource.folderImage, "${product.productCode}.png")
+                                    val file = File(pathFolderImage, "${product.productCode}.png")
                                     withContext(Dispatchers.IO) {
                                         file.outputStream().use { outputStream ->
                                             result.toBitmap().compress(Bitmap.CompressFormat.PNG, 1, outputStream)
@@ -447,7 +473,7 @@ class SettingsViewModel @Inject constructor (
                         }
                     }
                 }
-                localStorageDatasource.writeData(localStorageDatasource.fileProductDetail, localStorageDatasource.gson.toJson(state.value.listProduct))
+                localStorageDatasource.writeData(pathFileProductDetail, localStorageDatasource.gson.toJson(state.value.listProduct))
                 sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
                 e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "downloadProduct()")
@@ -457,15 +483,14 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-
-    fun getLog(typeLog: String) {
+    fun getAllLogException(typeLog: String) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
                 var listLogException: ArrayList<LogException> = arrayListOf()
                 var listLogExceptionSorted: ArrayList<LogException> = arrayListOf()
-                if(localStorageDatasource.checkFileExists(localStorageDatasource.fileLogException)) {
-                    val json = localStorageDatasource.readData(localStorageDatasource.fileLogException)
+                if(localStorageDatasource.checkFileExists(pathFileLogException)) {
+                    val json = localStorageDatasource.readData(pathFileLogException)
                     listLogException = localStorageDatasource.gson.fromJson(
                         json,
                         object : TypeToken<ArrayList<LogException>>() {}.type
@@ -485,18 +510,85 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-
-    fun loadAndroidId() {
+    fun getInformationOfMachineInit() {
         viewModelScope.launch {
             try {
-                val androidId = settingRepository.getAndroidId(context = context)
-                if(androidId.isNotEmpty()) {
-                    _state.update { it.copy(androidId = androidId) }
+                val informationOfMachine = settingRepository.getInformationOfMachine()
+                _state.update { it.copy(informationOfMachine = informationOfMachine) }
+            } catch (e: Exception) {
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getInformationOfMachine()")
+            }
+        }
+    }
+
+    fun getInformationOfMachine() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val informationOfMachine = settingRepository.getInformationOfMachine()
+                _state.update { it.copy(informationOfMachine = informationOfMachine) }
+            } catch (e: Exception) {
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getInformationOfMachine()")
+            } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun getSerialSimId() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val serialSimId = settingRepository.getSerialSimId(context)
+                _state.update { it.copy(serialSimId = serialSimId) }
+            } catch (e: Exception) {
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getInformationOfMachine()")
+            } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun saveSetupPort(
+        typeVendingMachine: String,
+        portCashBox: String,
+        portVendingMachine: String,
+        navController: NavHostController,
+    ) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                if(portCashBox == portVendingMachine) {
+                    sendEvent(Event.Toast("Port cash box and port vending machine must not same!"))
                 } else {
-                    sendEvent(Event.Toast("Android id is empty!"))
+                    delay(1000)
+                    if (portConnectionDataSource.openPortCashBox(portCashBox) == -1) {
+                        throw Exception("Open port cash box is error!")
+                    } else {
+                        portConnectionDataSource.startReadingCashBox()
+                    }
+                    if (portConnectionDataSource.openPortVendingMachine(portVendingMachine) == -1) {
+                        throw Exception("Open port vending machine is error!")
+                    } else {
+                        portConnectionDataSource.startReadingVendingMachine()
+                    }
+                    val initSetup: InitSetup? = localStorageDatasource.getDataFromPath(pathFileInitSetup)
+                    if(initSetup != null) {
+                        initSetup.typeVendingMachine = typeVendingMachine
+                        initSetup.portCashBox = portCashBox
+                        initSetup.portVendingMachine = portVendingMachine
+                        settingRepository.writeInitSetupToLocal(initSetup)
+                        _state.update { it.copy(initSetup = initSetup) }
+                        sendEvent(Event.Toast("Setup port success"))
+                    } else {
+                        navController.popBackStack()
+                        navController.navigate(Screens.InitSettingScreenRoute.route)
+                    }
                 }
             } catch (e: Exception) {
-                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "getAndroidId()")
+                e.exceptionHandling(localStorageDatasource, exception = e, inFunction = "saveSetupPort()")
+            } finally {
+                _state.update { it.copy(isLoading = false) }
             }
         }
     }

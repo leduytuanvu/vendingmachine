@@ -1,6 +1,5 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.composables
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
-import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 import java.io.File
@@ -45,7 +44,7 @@ fun ChooseImageComposable(
                     contentPadding = PaddingValues(10.dp)
                 ) {
                     items(state.listProduct.size) { index ->
-                        val imageFile = File(LocalStorageDatasource().folderImage+"/${state.listProduct[index].productCode}.png")
+                        val imageFile = File(pathFolderImage+"/${state.listProduct[index].productCode}.png")
                         val painter = rememberAsyncImagePainter(imageFile)
                         Image(
                             painter = painter,
@@ -54,9 +53,9 @@ fun ChooseImageComposable(
                                 .fillMaxWidth()
                                 .height(200.dp).clickable {
                                     if(state.listSlotAddMore.size>0 && state.slot==null) {
-                                        viewModel.addMoreProductToListSlot(state.listProduct[index])
+                                        viewModel.addMoreProductToLocalListSlot(state.listProduct[index])
                                     } else {
-                                        viewModel.addProductToListSlot(state.listProduct[index])
+                                        viewModel.addSlotToLocalListSlot(state.listProduct[index])
                                     }
                                 }
                         )

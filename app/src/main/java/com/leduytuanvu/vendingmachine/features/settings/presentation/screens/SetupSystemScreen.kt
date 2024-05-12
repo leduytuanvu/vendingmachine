@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,8 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.common.composables.TitleAndDropdownComposable
+import com.leduytuanvu.vendingmachine.common.composables.TitleAndEditTextComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_model.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.view_state.SettingsViewState
 
@@ -41,6 +44,9 @@ internal fun SetupSystemScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.getInformationOfMachine()
+    }
     SetupSystemContent(
         state = state,
         navController = navController,
@@ -90,7 +96,9 @@ fun SetupSystemContent(
 
 @Composable
 fun SetupSystemBackContentComposable(navController: NavHostController) {
-    Box (modifier = Modifier.background(Color.White).fillMaxWidth()) {
+    Box (modifier = Modifier
+        .background(Color.White)
+        .fillMaxWidth()) {
         CustomButtonComposable(
             title = "BACK",
             wrap = true,
@@ -109,64 +117,144 @@ fun SetupSystemBackContentComposable(navController: NavHostController) {
 fun SetupSystemMainContentComposable(navController: NavHostController, context: Context, state: SettingsViewState) {
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     val appVersionName = packageInfo.versionName
+    val itemsPort = listOf(
+        AnnotatedString("TTYS1"),
+        AnnotatedString("TTYS2"),
+        AnnotatedString("TTYS3"),
+        AnnotatedString("TTYS4")
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(top = 100.dp)
     ) {
-        BodyTextComposable(title = "Application version: $appVersionName", fontWeight = FontWeight.Bold)
+        BodyTextComposable(title = "Application version: $appVersionName", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 
-        BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold)
-        BodyTextComposable(title = "Id: ")
-        BodyTextComposable(title = "Code: ")
-        BodyTextComposable(title = "Company name: ")
-        BodyTextComposable(title = "Hotline: ")
-        BodyTextComposable(title = "Description: ")
+        BodyTextComposable(title = "Id: ${state.informationOfMachine?.id ?: ""}", paddingBottom = 8.dp)
+        BodyTextComposable(title = "Code: ${state.informationOfMachine?.code ?: ""}", paddingBottom = 8.dp)
+        BodyTextComposable(title = "Company name: ${state.informationOfMachine?.companyName ?: ""}", paddingBottom = 8.dp)
+        BodyTextComposable(title = "Hotline: ${state.informationOfMachine?.hotline ?: ""}", paddingBottom = 8.dp)
+        BodyTextComposable(title = "Description: ${state.informationOfMachine?.description ?: ""}", paddingBottom = 10.dp)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
-        BodyTextComposable(title = "Serial sim id: ${state.androidId}", fontWeight = FontWeight.Bold)
+        BodyTextComposable(title = "Serial sim id: ${state.serialSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
-        BodyTextComposable(title = "Vending machine code")
-        BodyTextComposable(title = "Id: ")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Vending machine code")
-        BodyTextComposable(title = "Turn on")
-        BodyTextComposable(title = "Turn off")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Withdrawal allowed")
-        BodyTextComposable(title = "Turn on")
-        BodyTextComposable(title = "Turn off")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Automatically start the application")
-        BodyTextComposable(title = "Turn on")
-        BodyTextComposable(title = "Turn off")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Layout screen")
-        BodyTextComposable(title = "3")
-        BodyTextComposable(title = "4")
-        BodyTextComposable(title = "5")
-        BodyTextComposable(title = "6")
-        CustomButtonComposable(title = "SAVE") {
+        BodyTextComposable(title = "Vending machine code", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(12.dp))
+        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp) {
 
         }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = AnnotatedString("ON"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Withdrawal allowed", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = AnnotatedString("ON"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Automatically start the application", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = AnnotatedString("ON"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Layout screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("3"),
+            AnnotatedString("4"),
+            AnnotatedString("5"),
+            AnnotatedString("6"),
+        ), selectedItem = AnnotatedString("3"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
 
         BodyTextComposable(title = "Time to turn on the light")
         BodyTextComposable(title = "Time to turn off the light")
@@ -174,40 +262,95 @@ fun SetupSystemMainContentComposable(navController: NavHostController, context: 
 
         }
 
-        CustomButtonComposable(title = "Check the drop sensor") {
+        CustomButtonComposable(
+            title = "CHECK THE DROP SENSOR",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Drop sensor", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = AnnotatedString("ON"), paddingTop = 2.dp, paddingBottom = 12.dp) {
 
         }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
-        BodyTextComposable(title = "Drop sensor")
-        BodyTextComposable(title = "Time to turn on the light")
-        BodyTextComposable(title = "Time to turn off the light")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Inching mode")
-        BodyTextComposable(title = "0,1,2,3,4,5")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Time to jump to the advertising screen")
-        BodyTextComposable(title = "30-120s")
-        CustomButtonComposable(title = "SAVE") {
-
-        }
-
-        BodyTextComposable(title = "Glass heating mode")
-        BodyTextComposable(title = "on,off")
-        CustomButtonComposable(title = "SAVE") {
+        BodyTextComposable(title = "Inching mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("0"),
+            AnnotatedString("1"),
+            AnnotatedString("2"),
+            AnnotatedString("3"),
+            AnnotatedString("4"),
+            AnnotatedString("5"),
+        ), selectedItem = AnnotatedString("0"), paddingTop = 2.dp, paddingBottom = 12.dp) {
 
         }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
-        BodyTextComposable(title = "Glass heating mode")
-        BodyTextComposable(title = "on,off")
-        CustomButtonComposable(title = "SAVE") {
+        BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("30s"),
+            AnnotatedString("60s"),
+            AnnotatedString("90s"),
+            AnnotatedString("120s"),
+            AnnotatedString("150s"),
+            AnnotatedString("180s"),
+            AnnotatedString("210s"),
+            AnnotatedString("240s"),
+            AnnotatedString("270s"),
+            AnnotatedString("300s"),
+        ), selectedItem = AnnotatedString("30s"), paddingTop = 2.dp, paddingBottom = 12.dp) {
 
         }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
+
+        BodyTextComposable(title = "Glass heating mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = AnnotatedString("ON"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) { }
 
         BodyTextComposable(title = "Temperature warning")
         BodyTextComposable(title = "thấp nhất, cao nhất,off")

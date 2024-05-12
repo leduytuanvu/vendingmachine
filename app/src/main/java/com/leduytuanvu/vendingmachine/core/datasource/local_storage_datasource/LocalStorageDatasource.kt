@@ -13,17 +13,6 @@ import javax.inject.Inject
 class LocalStorageDatasource @Inject constructor() {
     val gson = Gson()
 
-    @SuppressLint("SdCardPath")
-    val fileInitSetup = "/sdcard/VendingMachineData/Setup/InitSetup.json"
-    @SuppressLint("SdCardPath")
-    val fileSlot = "/sdcard/VendingMachineData/Slot/Slot.json"
-    @SuppressLint("SdCardPath")
-    val fileProductDetail = "/sdcard/VendingMachineData/Product/ProductDetail.json"
-    @SuppressLint("SdCardPath")
-    val folderImage = "/sdcard/VendingMachineData/Product/Image"
-    @SuppressLint("SdCardPath")
-    val fileLogException = "/sdcard/VendingMachineData/Log/LogException.json"
-
     fun checkFileExists(path: String): Boolean {
         try {
             val file = File(path)

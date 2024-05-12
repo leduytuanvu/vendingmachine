@@ -1,9 +1,10 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.view_state
 
 import androidx.compose.ui.graphics.ImageBitmap
-import coil.request.ImageRequest
+import com.leduytuanvu.vendingmachine.features.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.models.LogException
 import com.leduytuanvu.vendingmachine.core.errors.CustomError
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 //import com.leduytuanvu.vendingmachine.core.room.LogException
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -24,6 +25,8 @@ data class SettingsViewState (
     val isInventory: Boolean = false,
     val isCapacity: Boolean = false,
     val nameFunction: String = "",
+    val serialSimId: String = "",
     val error: CustomError? = null,
-    val androidId: String = "",
+    val informationOfMachine: DataInformationMachineResponse? = null,
+    val initSetup: InitSetup? = null,
 )

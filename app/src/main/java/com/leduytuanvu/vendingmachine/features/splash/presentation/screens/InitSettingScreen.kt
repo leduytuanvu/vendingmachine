@@ -27,6 +27,8 @@ import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequ
 import com.leduytuanvu.vendingmachine.common.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.composables.TitleAndDropdownComposable
 import com.leduytuanvu.vendingmachine.common.composables.TitleAndEditTextComposable
+import com.leduytuanvu.vendingmachine.core.util.itemsPort
+import com.leduytuanvu.vendingmachine.core.util.itemsTypeVendingMachine
 import com.leduytuanvu.vendingmachine.features.splash.presentation.view_model.SplashViewModel
 import com.leduytuanvu.vendingmachine.features.splash.presentation.view_state.SplashViewState
 
@@ -56,18 +58,6 @@ fun InitSettingContent(
     var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
     var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS2")) }
     var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("ttyS1")) }
-
-    val itemsPort = listOf(
-        AnnotatedString("ttyS1"),
-        AnnotatedString("ttyS2"),
-        AnnotatedString("ttyS3"),
-        AnnotatedString("ttyS4")
-    )
-    val itemsTypeVendingMachine = listOf(
-        AnnotatedString("XY"),
-        AnnotatedString("TCN"),
-        AnnotatedString("TCN INTEGRATED CIRCUITS"),
-    )
 
     LoadingDialogComposable(isLoading = state.isLoading)
 
@@ -127,7 +117,7 @@ fun InitSettingContent(
                     fontSize = 20.sp,
                 ) {
                     val loginRequest = LoginRequest(inputUsername, inputPassword)
-                    viewModel.saveInitSetup(
+                    viewModel.writeInitSetupToLocal(
                         inputVendingMachineCode,
                         selectedItemPortCashBox.toString(),
                         selectedItemPortVendingMachine.toString(),

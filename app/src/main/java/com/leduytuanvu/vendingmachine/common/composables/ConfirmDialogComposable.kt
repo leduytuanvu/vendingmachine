@@ -82,10 +82,10 @@ fun ConfirmDialogComposable(isConfirm: Boolean, state: SettingsViewState, viewMo
                                 fontWeight = FontWeight.Bold,
                             ) {
                                 when(state.nameFunction) {
-                                    "removeProduct" -> viewModel.removeProduct()
-                                    "fullInventory" -> viewModel.fullInventory()
-                                    "loadLayoutFromServer" -> viewModel.loadLayoutFromServer()
-                                    "downloadProduct" -> viewModel.downloadProduct(context)
+                                    "removeProduct" -> viewModel.removeProductToLocalListSlot()
+                                    "fullInventory" -> viewModel.setFullInventoryForLocalListSlot()
+                                    "loadLayoutFromServer" -> viewModel.getLayoutFromServer()
+                                    "downloadProduct" -> viewModel.downloadProductFromServer(context)
                                 }
                             }
                             Spacer(modifier = Modifier.width(8.dp))

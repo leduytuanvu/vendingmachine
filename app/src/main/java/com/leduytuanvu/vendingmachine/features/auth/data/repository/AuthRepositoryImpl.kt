@@ -8,7 +8,7 @@ import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthReposi
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
-    private val authApi: AuthApi
+    private val authApi: AuthApi,
 ) : AuthRepository {
 
     override suspend fun login(vendCode: String, loginRequest: LoginRequest) : LoginResponse {
@@ -20,13 +20,21 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun decodePassword(password: String): String {
-        val data = Base64.decode(password, Base64.DEFAULT)
-        return String(data, Charsets.UTF_8)
+        try {
+            val data = Base64.decode(password, Base64.DEFAULT)
+            return String(data, Charsets.UTF_8)
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     override suspend fun encodePassword(decodeString: String): String {
-        val tmpString = decodeString + "_leduytuanvu"
-        val data = tmpString.toByteArray(Charsets.UTF_8)
-        return Base64.encodeToString(data, Base64.DEFAULT)
+        try {
+            val tmpString = decodeString + "_leduytuanvu"
+            val data = tmpString.toByteArray(Charsets.UTF_8)
+            return Base64.encodeToString(data, Base64.DEFAULT)
+        } catch (e: Exception) {
+            throw e
+        }
     }
 }

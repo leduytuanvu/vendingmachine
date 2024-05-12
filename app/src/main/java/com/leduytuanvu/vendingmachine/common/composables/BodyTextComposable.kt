@@ -16,11 +16,12 @@ import androidx.compose.ui.unit.sp
 fun BodyTextComposable(
     title: String,
     fontSize: TextUnit = 20.sp,
+    paddingBottom: Dp = 0.dp,
     textAlign: TextAlign = TextAlign.Start,
     fontWeight: FontWeight = FontWeight.Normal,
 ) {
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = paddingBottom),
         text = title,
         textAlign = textAlign,
         fontSize = fontSize,

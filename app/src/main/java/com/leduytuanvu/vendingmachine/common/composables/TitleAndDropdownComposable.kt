@@ -15,10 +15,12 @@ fun TitleAndDropdownComposable(
     title: String,
     items: List<AnnotatedString>,
     selectedItem: AnnotatedString,
+    paddingTop: Dp = 8.dp,
+    paddingBottom: Dp = 20.dp,
     onItemSelected: (AnnotatedString) -> Unit,
 ) {
     if(title.isEmpty()) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(paddingTop))
     } else {
         Spacer(modifier = Modifier.height(12.dp))
         BodyTextComposable(title = title)
@@ -30,5 +32,5 @@ fun TitleAndDropdownComposable(
     ) {
         onItemSelected(it)
     }
-    Spacer(modifier = Modifier.height(20.dp))
+    Spacer(modifier = Modifier.height(paddingBottom))
 }

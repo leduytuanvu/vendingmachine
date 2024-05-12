@@ -87,7 +87,7 @@ fun SetupSlotContent(
                         if(state.listSlotAddMore.size > 0) {
                             viewModel.showDialogChooseImage(slot = null)
                         } else {
-                            viewModel.showMess("Please choose slot to add more!")
+                            viewModel.showToast("Please choose slot to add more!")
                         }
                     })
                     ButtonSetupSlotComposable("FULL INVENTORY", function = {

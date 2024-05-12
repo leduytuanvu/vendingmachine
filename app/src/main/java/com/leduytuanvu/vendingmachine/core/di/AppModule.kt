@@ -1,14 +1,14 @@
 package com.leduytuanvu.vendingmachine.core.di
 
 import android.content.Context
-import android.util.Log
-import com.leduytuanvu.vendingmachine.common.models.InitSetup
+import com.leduytuanvu.vendingmachine.features.base.domain.model.InitSetup
 //import com.leduytuanvu.vendingmachine.core.room.LogExceptionDao
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
-import com.leduytuanvu.vendingmachine.core.util.Constants.BASE_URL
+import com.leduytuanvu.vendingmachine.core.util.BASE_URL
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.remote.AuthApi
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
@@ -44,7 +44,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideLogger(): Logger = Logger
+    fun provideLogger() : Logger {
+        return Logger()
+    }
 
     @Provides
     @Singleton
@@ -60,8 +62,7 @@ object AppModule {
         if (response.code == 401) {
             try {
                 runBlocking {
-                    val localStorageDatasource = LocalStorageDatasource()
-                    val initSetup: InitSetup = localStorageDatasource.getDataFromPath(localStorageDatasource.fileInitSetup)!!
+                    val initSetup: InitSetup = LocalStorageDatasource().getDataFromPath(pathFileInitSetup)!!
                     val loginResponse = authApi.login(
                         initSetup.vendCode,
                         LoginRequest(
@@ -77,7 +78,7 @@ object AppModule {
                     response = chain.proceed(newRequest)
                 }
             } catch (e: Exception) {
-                Logger.error("Error in authInterceptor", e)
+                Logger().error("Error in authInterceptor", e)
             }
         }
         response
