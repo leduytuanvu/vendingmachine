@@ -126,4 +126,6 @@ dependencies {
 
     // Interceptor
     implementation(libs.logging.interceptor)
+
+    implementation("androidx.compose.material:material:1.6.7")
 }

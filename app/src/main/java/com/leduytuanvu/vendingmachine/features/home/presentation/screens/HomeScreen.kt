@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.leduytuanvu.vendingmachine.common.composables.LoadingDialogComposable
-import com.leduytuanvu.vendingmachine.features.home.presentation.view_model.HomeViewModel
-import com.leduytuanvu.vendingmachine.features.home.presentation.view_state.HomeViewState
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.HomeViewModel
+import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
 
 @Composable
 internal fun HomeScreen(

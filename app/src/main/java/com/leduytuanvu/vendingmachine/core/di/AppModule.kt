@@ -1,10 +1,11 @@
 package com.leduytuanvu.vendingmachine.core.di
 
 import android.content.Context
-import com.leduytuanvu.vendingmachine.features.base.domain.model.InitSetup
+import com.google.gson.Gson
+import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 //import com.leduytuanvu.vendingmachine.core.room.LogExceptionDao
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
-import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.BASE_URL
 import com.leduytuanvu.vendingmachine.core.util.Logger
@@ -38,14 +39,20 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun provideGson(): Gson {
+        return Gson()
+    }
+
+    @Singleton
+    @Provides
     fun provideLocalStorageDatasource(): LocalStorageDatasource {
         return LocalStorageDatasource()
     }
 
     @Provides
     @Singleton
-    fun provideLogger() : Logger {
-        return Logger()
+    fun provideLogger(): Logger {
+        return Logger
     }
 
     @Provides
@@ -66,11 +73,11 @@ object AppModule {
                     val loginResponse = authApi.login(
                         initSetup.vendCode,
                         LoginRequest(
-                            initSetup.username!!,
-                            initSetup.password!!.substringBefore("_leduytuanvu", "")
+                            initSetup.username,
+                            initSetup.password.substringBefore("_leduytuanvu", "")
                         )
                     )
-                    accessToken = loginResponse.accessToken!!
+                    accessToken = loginResponse.accessToken
                     response.close()
                     val newRequest = chain.request().newBuilder()
                         .header("Authorization", "Bearer ${loginResponse.accessToken}")
@@ -78,7 +85,7 @@ object AppModule {
                     response = chain.proceed(newRequest)
                 }
             } catch (e: Exception) {
-                Logger().error("Error in authInterceptor", e)
+                Logger.error("Error in authInterceptor", e)
             }
         }
         response

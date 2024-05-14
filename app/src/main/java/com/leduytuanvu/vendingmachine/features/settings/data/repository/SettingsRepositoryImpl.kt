@@ -10,9 +10,10 @@ import android.telephony.TelephonyManager
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
+import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.leduytuanvu.vendingmachine.features.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.core.datasource.local_storage_datasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
+import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
@@ -31,9 +32,12 @@ import javax.inject.Inject
 
 class SettingsRepositoryImpl @Inject constructor(
     private val settingsApi: SettingsApi,
+    private val context: Context,
     private val localStorageDatasource: LocalStorageDatasource,
+    private val gson: Gson,
 ) : SettingsRepository {
 
+    // DONE
     override suspend fun getListSlotFromLocal(): ArrayList<Slot> {
         try {
             var listSlot = arrayListOf<Slot>()
@@ -72,7 +76,7 @@ class SettingsRepositoryImpl @Inject constructor(
             val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup) ?: return arrayListOf()
             val response = settingsApi.getLayout(initSetup.vendCode)
             val listSlot = arrayListOf<Slot>()
-            for(item in response.data!!) {
+            for(item in response.data) {
                 listSlot.add(item.slot.toSlot())
             }
             return listSlot
@@ -86,7 +90,7 @@ class SettingsRepositoryImpl @Inject constructor(
             val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup) ?: return arrayListOf()
             val response = settingsApi.getListProduct(initSetup.vendCode)
             val listTmp = arrayListOf<Product>()
-            for (item in response.data!!) {
+            for (item in response.data) {
                 if (item.imageUrl.isNullOrEmpty() || item.imageUrl.contains(".jfif")) {
                     listTmp.add(item)
                 }
@@ -100,6 +104,7 @@ class SettingsRepositoryImpl @Inject constructor(
         }
     }
 
+    // DONE
     override suspend fun getListProductFromLocal(): ArrayList<Product> {
         try {
             var listProduct = arrayListOf<Product>()
@@ -117,36 +122,6 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun writeListSlotToLocal(listSlot: ArrayList<Slot>): Boolean {
         try {
             return localStorageDatasource.writeData(pathFileSlot, localStorageDatasource.gson.toJson(listSlot))
-        } catch (e: Exception) {
-            throw e
-        }
-    }
-
-    override suspend fun writeInitSetupToLocal(initSetup: InitSetup): Boolean {
-        try {
-            return localStorageDatasource.writeData(pathFileInitSetup, localStorageDatasource.gson.toJson(initSetup))
-        } catch (e: Exception) {
-            throw e
-        }
-    }
-
-    override suspend fun getListImageBitmapFromLocal(context: Context): ArrayList<ImageBitmap> {
-        try {
-            val folder = File(pathFolderImage)
-            val imageBitmapList = ArrayList<ImageBitmap>()
-            if (localStorageDatasource.checkFolderExists(pathFolderImage)) {
-                folder.listFiles()?.forEach { file ->
-                    if (file.isFile) {
-                        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                        bitmap?.let {
-                            imageBitmapList.add(it.asImageBitmap())
-                        }
-                    }
-                }
-            } else {
-                EventBus.sendEvent(Event.Toast("Not have any image product!"))
-            }
-            return imageBitmapList
         } catch (e: Exception) {
             throw e
         }
@@ -175,14 +150,14 @@ class SettingsRepositoryImpl @Inject constructor(
         try {
             val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup)!!
             val response = settingsApi.getInformationOfMachine(initSetup.vendCode)
-            return response.data!!
+            return response.data
         } catch (e: Exception) {
             throw e
         }
     }
 
     @SuppressLint("HardwareIds")
-    override suspend fun getSerialSimId(context: Context): String {
+    override suspend fun getSerialSimId(): String {
         try {
             if (ContextCompat.checkSelfPermission(
                     context,
@@ -198,6 +173,15 @@ class SettingsRepositoryImpl @Inject constructor(
             } else {
                 telephonyManager.simSerialNumber
             }
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getListFileNameInFolder(folderPath: String): ArrayList<String> {
+        try {
+            val listFileNameInFolder = localStorageDatasource.listFileNamesInFolder(folderPath)
+            return listFileNameInFolder ?: arrayListOf()
         } catch (e: Exception) {
             throw e
         }

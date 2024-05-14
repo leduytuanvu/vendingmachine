@@ -36,18 +36,12 @@ class PortConnectionDatasource {
     // Open port vending machine
     fun openPortVendingMachine(port: String) : Int {
         fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
-        var status = "open"
-        if (fdPortVendingMachine == -1) status = "close"
-        Logger.info("PortConnectionDataSource: port vending machine is $status")
         return fdPortVendingMachine
     }
 
     // Open port cash box
     fun openPortCashBox(port: String) : Int {
         fdPortCashBox = portConnectionHelperDataSource.openPortCashBox("/dev/", port, 9600)
-        var status = "open"
-        if (fdPortCashBox == -1) status = "close"
-        Logger.info("PortConnectionDataSource: port cash box is $status")
         return fdPortCashBox
     }
 
@@ -91,7 +85,6 @@ class PortConnectionDatasource {
         override fun run() {
             Logger.info("PortConnectionDataSource: start read thread vending machine")
             while (!currentThread().isInterrupted) {
-                Logger.info("111")
                 try {
                     portConnectionHelperDataSource.startReadingVendingMachine(512) { data ->
                         val dataHexString = byteArrayToHexString(data)
@@ -113,7 +106,6 @@ class PortConnectionDatasource {
         override fun run() {
             Logger.info("PortConnectionDataSource: start read thread cash box")
             while (!currentThread().isInterrupted) {
-                Logger.info("222")
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
                         val dataHexString = byteArrayToHexString(data)
