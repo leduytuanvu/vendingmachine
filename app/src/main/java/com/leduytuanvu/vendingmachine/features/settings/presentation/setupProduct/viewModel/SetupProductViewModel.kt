@@ -38,7 +38,7 @@ import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
 @HiltViewModel
-class SetupProductViewModel @Inject constructor (
+class SetupProductViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val baseRepository: BaseRepository,
     private val logger: Logger,
@@ -54,20 +54,24 @@ class SetupProductViewModel @Inject constructor (
     // DONE
     private fun showDialogWarning(mess: String) {
         viewModelScope.launch {
-            _state.update { it.copy (
-                titleDialogWarning = mess,
-                isWarning = true,
-            ) }
+            _state.update {
+                it.copy(
+                    titleDialogWarning = mess,
+                    isWarning = true,
+                )
+            }
         }
     }
 
     // DONE
     fun hideDialogWarning(navController: NavHostController) {
         viewModelScope.launch {
-            _state.update { it.copy (
-                isWarning = false,
-                titleDialogWarning = "",
-            ) }
+            _state.update {
+                it.copy(
+                    isWarning = false,
+                    titleDialogWarning = "",
+                )
+            }
             navController.popBackStack()
         }
     }
@@ -75,20 +79,24 @@ class SetupProductViewModel @Inject constructor (
     // DONE
     fun showDialogConfirm(mess: String) {
         viewModelScope.launch {
-            _state.update { it.copy (
-                titleDialogConfirm = mess,
-                isConfirm = true,
-            ) }
+            _state.update {
+                it.copy(
+                    titleDialogConfirm = mess,
+                    isConfirm = true,
+                )
+            }
         }
     }
 
     // DONE
     fun hideDialogConfirm() {
         viewModelScope.launch {
-            _state.update { it.copy (
-                isConfirm = false,
-                titleDialogConfirm = "",
-            ) }
+            _state.update {
+                it.copy(
+                    isConfirm = false,
+                    titleDialogConfirm = "",
+                )
+            }
         }
     }
 
@@ -100,10 +108,12 @@ class SetupProductViewModel @Inject constructor (
                 if (baseRepository.isHaveNetwork(context)) {
                     _state.update { it.copy(isLoading = true) }
                     val listProduct = settingsRepository.getListProductFromServer()
-                    _state.update { it.copy (
-                        listProduct = listProduct,
-                        isLoading = false,
-                    ) }
+                    _state.update {
+                        it.copy(
+                            listProduct = listProduct,
+                            isLoading = false,
+                        )
+                    }
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
                     _state.update { it.copy(isLoading = false) }
@@ -135,20 +145,23 @@ class SetupProductViewModel @Inject constructor (
         logger.debug("downloadProductFromServer")
         viewModelScope.launch {
             try {
-                if(baseRepository.isHaveNetwork(context = context)) {
-                    _state.update { it.copy (
-                        isLoading = true,
-                        isConfirm = false,
-                    ) }
-                    val listFileNameInFolder = settingsRepository.getListFileNameInFolder(pathFolderImage)
+                if (baseRepository.isHaveNetwork(context = context)) {
+                    _state.update {
+                        it.copy(
+                            isLoading = true,
+                            isConfirm = false,
+                        )
+                    }
+                    val listFileNameInFolder =
+                        settingsRepository.getListFileNameInFolder(pathFolderImage)
                     if (!baseRepository.isFolderExists(pathFolderImage)) {
                         baseRepository.createFolder(pathFolderImage)
                     }
                     for (product in state.value.listProduct) {
-                        if(product.imageUrl!!.isNotEmpty()) {
-                            if(!listFileNameInFolder.contains(product.productCode)) {
+                        if (product.imageUrl!!.isNotEmpty()) {
+                            if (!listFileNameInFolder.contains(product.productCode)) {
                                 var notHaveError = true
-                                for(i in 1..3) {
+                                for (i in 1..3) {
                                     try {
                                         val request = ImageRequest.Builder(context = context)
                                             .data(product.imageUrl)
@@ -157,17 +170,22 @@ class SetupProductViewModel @Inject constructor (
                                             Coil.imageLoader(context).execute(request).drawable
                                         }
                                         if (result != null) {
-                                            val file = File(pathFolderImage, "${product.productCode}.png")
+                                            val file =
+                                                File(pathFolderImage, "${product.productCode}.png")
                                             withContext(Dispatchers.IO) {
                                                 file.outputStream().use { outputStream ->
-                                                    result.toBitmap().compress(Bitmap.CompressFormat.PNG, 1, outputStream)
+                                                    result.toBitmap().compress(
+                                                        Bitmap.CompressFormat.PNG,
+                                                        1,
+                                                        outputStream
+                                                    )
                                                 }
                                             }
                                         }
                                     } catch (e: Exception) {
                                         notHaveError = false
                                     } finally {
-                                        if(notHaveError) break
+                                        if (notHaveError) break
                                     }
                                 }
                             }

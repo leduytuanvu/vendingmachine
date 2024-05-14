@@ -59,9 +59,9 @@ fun ChooseImageComposable(
                                 .fillMaxWidth()
                                 .height(200.dp).clickable {
                                     if(listSlotAddMore.size>0 && slot==null) {
-                                        onClickAddOneProduct(listProduct[index])
-                                    } else {
                                         onClickAddMoreProduct(listProduct[index])
+                                    } else {
+                                        onClickAddOneProduct(listProduct[index])
                                     }
                                 }
                         )

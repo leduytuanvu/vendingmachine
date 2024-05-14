@@ -39,7 +39,7 @@ internal fun SetupPortScreen(
     viewModel: SetupPortViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    Logger.info("init setup screen")
+    Logger.info("SetupPortScreen")
     SetupPortContent(
         state = state,
         viewModel = viewModel,

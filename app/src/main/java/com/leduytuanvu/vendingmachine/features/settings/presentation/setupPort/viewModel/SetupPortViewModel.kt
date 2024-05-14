@@ -1,7 +1,5 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.viewModel
 
-import android.annotation.SuppressLint
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.reflect.TypeToken
@@ -15,7 +13,6 @@ import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
-import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.viewState.SetupPortViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -27,19 +24,16 @@ import org.threeten.bp.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
-class SetupPortViewModel @Inject constructor (
+class SetupPortViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
     private val portConnectionDataSource: PortConnectionDatasource,
     private val logger: Logger,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SetupPortViewState())
     val state = _state.asStateFlow()
-
     init {
         getInitSetupFromLocal()
     }
-
-    // DONE
     private fun getInitSetupFromLocal() {
         logger.debug("getInitSetupFromLocal")
         viewModelScope.launch {
@@ -49,11 +43,13 @@ class SetupPortViewModel @Inject constructor (
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )
-                if(initSetup != null) {
-                    _state.update { it.copy (
-                        initSetup = initSetup,
-                        isLoading = false
-                    ) }
+                if (initSetup != null) {
+                    _state.update {
+                        it.copy(
+                            initSetup = initSetup,
+                            isLoading = false
+                        )
+                    }
                 } else {
                     val logError = LogError(
                         machineCode = "",
@@ -95,7 +91,7 @@ class SetupPortViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                if(portCashBox == portVendingMachine) {
+                if (portCashBox == portVendingMachine) {
                     sendEvent(Event.Toast("Port cash box and port vending machine must not same!"))
                 } else {
                     delay(1000)
@@ -133,10 +129,12 @@ class SetupPortViewModel @Inject constructor (
                         eventData = logSetup,
                     )
                     sendEvent(Event.Toast("Setup port success"))
-                    _state.update { it.copy (
-                        initSetup = initSetup,
-                        isLoading = false
-                    ) }
+                    _state.update {
+                        it.copy(
+                            initSetup = initSetup,
+                            isLoading = false
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(

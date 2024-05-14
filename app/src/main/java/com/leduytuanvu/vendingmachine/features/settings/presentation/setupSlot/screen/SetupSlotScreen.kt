@@ -38,12 +38,12 @@ import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseNumberComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
-import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ItemSlotComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewModel.SetupSlotViewModel
@@ -71,8 +71,12 @@ fun SetupSlotContent(
     navController: NavHostController,
 ) {
     val localStorageDatasource = LocalStorageDatasource()
-    var isChecked by remember { mutableStateOf(false) }
     LoadingDialogComposable(isLoading = state.isLoading)
+    WarningDialogComposable(
+        isWarning = state.isWarning,
+        titleDialogWarning = state.titleDialogWarning,
+        onClickClose = { viewModel.hideDialogWarning() },
+    )
     ChooseNumberComposable(
         isChooseNumber = state.isChooseNumber,
         isChooseMoney = state.isChooseMoney,
@@ -151,13 +155,8 @@ fun SetupSlotContent(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.listSlot.size) { index ->
-                        var slot = state.listSlot[index]
-//                        ItemSlotComposable(
-//                            slot = state.slot!!,
-////                            showDialogChooseImage = { viewModel.showDialogChooseImage(state.slot) },
-////                            removeSlotToStateListAddMore = { viewModel.removeSlotToStateListAddMore(state.slot) },
-////                            addSlotToStateListAddMore = { viewModel.removeSlotToStateListAddMore(state.slot) }
-//                        )
+                        val slot = state.listSlot[index]
+                        var isChecked by remember { mutableStateOf(false) }
                         Box(
                             modifier = Modifier
                                 .height(560.dp)
@@ -166,18 +165,16 @@ fun SetupSlotContent(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    Text(text = "${state.listSlot[index].slot}", fontSize = 24.sp)
+                                    Text(text = "${slot.slot}", fontSize = 24.sp)
                                     Spacer(modifier = Modifier.weight(1f))
                                     val imageModifier = Modifier
                                         .width(150.dp)
                                         .height(150.dp)
-                                        .clickable {
-//                        showDialogChooseImage(slot)
-                                        }
-                                    val imagePainter = if (state.listSlot[index].productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                            pathFolderImage +"/${state.listSlot[index].productCode}.png")) {
+                                        .clickable { viewModel.showDialogChooseImage(slot) }
+                                    val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                            pathFolderImage +"/${slot.productCode}.png")) {
                                         val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                            .data(pathFolderImage +"/${state.listSlot[index].productCode}.png")
+                                            .data(pathFolderImage +"/${slot.productCode}.png")
                                             .build()
                                         rememberAsyncImagePainter(imageRequest)
                                     } else {
@@ -189,17 +186,17 @@ fun SetupSlotContent(
                                         contentDescription = ""
                                     )
                                     Spacer(modifier = Modifier.weight(1f))
-                                    if(state.listSlot[index].productCode.isNotEmpty()) {
+                                    if(slot.productCode.isNotEmpty()) {
                                         Image(
                                             modifier = Modifier
                                                 .width(34.dp)
                                                 .height(34.dp)
                                                 .clickable {
-//                                viewModel.showDialogConfirm(
-//                                    mess = "Are you sure to delete this product?",
-//                                    slot,
-//                                    "removeProduct"
-//                                )
+                                                    viewModel.showDialogConfirm(
+                                                        mess = "Are you sure to delete this product?",
+                                                        slot = slot,
+                                                        nameFunction = "removeSlot"
+                                                    )
                                                     isChecked = false
                                                 },
                                             painter = painterResource(id = R.drawable.close),
@@ -212,9 +209,9 @@ fun SetupSlotContent(
                                                 .height(34.dp)
                                                 .clickable {
                                                     if(isChecked) {
-//                                    removeSlotToStateListAddMore(slot)
+                                                        viewModel.removeSlotToStateListAddMore(slot)
                                                     } else {
-//                                    addSlotToStateListAddMore(slot)
+                                                        viewModel.addSlotToStateListAddMore(slot)
                                                     }
                                                     isChecked = !isChecked
                                                 },
@@ -225,7 +222,7 @@ fun SetupSlotContent(
                                 }
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Text(
-                                    state.listSlot[index].productName.ifEmpty { "Not have product" },
+                                    slot.productName.ifEmpty { "Not have product" },
                                     modifier = Modifier.height(50.dp),
                                     maxLines = 2,
                                     fontSize = 18.sp,
@@ -237,7 +234,7 @@ fun SetupSlotContent(
                                     Column {
                                         Text("Inventory", fontSize = 18.sp)
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = "${state.listSlot[index].inventory}/${state.listSlot[index].capacity}", fontSize = 20.sp)
+                                        Text(text = "${slot.inventory}/${slot.capacity}", fontSize = 20.sp)
                                     }
                                     Spacer(modifier = Modifier.weight(1f))
                                     CustomButtonComposable(
@@ -246,7 +243,9 @@ fun SetupSlotContent(
                                         height = 60.dp,
                                         cornerRadius = 4.dp
                                     ) {
-//                    viewModel.showDialogChooseNumber(slot = slot, isInventory = true)
+                                        if(slot.productCode.isNotEmpty()) {
+                                            viewModel.showDialogChooseNumber(slot = slot, isInventory = true)
+                                        }
                                     }
                                 }
 
@@ -256,7 +255,7 @@ fun SetupSlotContent(
                                     Column {
                                         Text("Price", fontSize = 18.sp)
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = state.listSlot[index].price.toVietNamDong(), fontSize = 20.sp)
+                                        Text(text = slot.price.toVietNamDong(), fontSize = 20.sp)
                                     }
                                     Spacer(modifier = Modifier.weight(1f))
                                     CustomButtonComposable(
@@ -265,7 +264,9 @@ fun SetupSlotContent(
                                         height = 60.dp,
                                         cornerRadius = 4.dp
                                     ) {
-//                    viewModel.showDialogChooseNumber(isChooseMoney = true, slot = slot)
+                                        if(slot.productCode.isNotEmpty()) {
+                                            viewModel.showDialogChooseNumber(isChooseMoney = true, slot = slot)
+                                        }
                                     }
                                 }
 
@@ -275,7 +276,7 @@ fun SetupSlotContent(
                                     Column {
                                         Text("Capacity", fontSize = 18.sp)
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = "${state.listSlot[index].capacity}", fontSize = 20.sp)
+                                        Text(text = "${slot.capacity}", fontSize = 20.sp)
                                     }
                                     Spacer(modifier = Modifier.weight(1f))
                                     CustomButtonComposable(
@@ -284,7 +285,9 @@ fun SetupSlotContent(
                                         height = 60.dp,
                                         cornerRadius = 4.dp
                                     ) {
-//                    viewModel.showDialogChooseNumber(slot = slot, isCapacity = true)
+                                        if(slot.productCode.isNotEmpty()) {
+                                            viewModel.showDialogChooseNumber(slot = slot, isCapacity = true)
+                                        }
                                     }
                                 }
 

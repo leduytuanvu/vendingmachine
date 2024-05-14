@@ -2,7 +2,7 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.
 
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 
-data class SetupPortViewState (
+data class SetupPortViewState(
     val isLoading: Boolean = false,
     val initSetup: InitSetup? = null,
 )

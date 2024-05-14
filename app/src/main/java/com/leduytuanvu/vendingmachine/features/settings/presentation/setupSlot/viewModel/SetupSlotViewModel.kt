@@ -33,7 +33,6 @@ import javax.inject.Inject
 class SetupSlotViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val baseRepository: BaseRepository,
-    private val portConnectionDataSource: PortConnectionDatasource,
     private val logger: Logger,
     private val context: Context,
 ) : ViewModel() {
@@ -61,6 +60,83 @@ class SetupSlotViewModel @Inject constructor(
                     titleDialogConfirm = "mess",
                     isConfirm = false,
                 )
+            }
+        }
+    }
+
+    fun showDialogChooseNumber(
+        isChooseMoney: Boolean = false,
+        slot: Slot,
+        isInventory: Boolean = false,
+        isCapacity: Boolean = false,
+    ) {
+        logger.debug("showDialogChooseNumber")
+        viewModelScope.launch {
+            if(isChooseMoney) {
+                _state.update { it.copy(
+                    isChooseMoney = true,
+                    isCapacity = false,
+                    isInventory = false,
+                ) }
+            }
+            if(isCapacity) {
+                _state.update { it.copy(
+                    isChooseMoney = false,
+                    isCapacity = true,
+                    isInventory = false,
+                ) }
+            }
+            if(isInventory) {
+                _state.update { it.copy(
+                    isChooseMoney = false,
+                    isCapacity = false,
+                    isInventory = true,
+                ) }
+            }
+            _state.update { it.copy(
+                isChooseNumber = true,
+                slot = slot,
+            ) }
+        }
+    }
+
+    fun showDialogConfirm(mess: String, slot: Slot?, nameFunction: String) {
+        viewModelScope.launch {
+            if (baseRepository.isHaveNetwork(context)) {
+                _state.update { it.copy(
+                    isConfirm = true,
+                    titleDialogConfirm = mess,
+                    slot = slot,
+                    nameFunction = nameFunction,
+                ) }
+            } else {
+                showDialogWarning("Not have internet, please connect with internet!")
+            }
+        }
+    }
+
+    fun addSlotToStateListAddMore(slot: Slot) {
+        logger.debug("addSlotToStateListAddMore")
+        viewModelScope.launch {
+            try {
+                _state.value.listSlotAddMore.add(slot)
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "add slot to state list add more fail: ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
             }
         }
     }
@@ -167,7 +243,7 @@ class SetupSlotViewModel @Inject constructor(
 
     }
 
-    fun removeProductToLocalListSlot() {
+    fun removeSlot() {
         logger.debug("removeProductToLocalListSlot")
         viewModelScope.launch {
             try {
@@ -241,7 +317,7 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isChooseImage = true,
-                        slot = slot
+                        slot = slot,
                     )
                 }
             } else {
@@ -508,7 +584,7 @@ class SetupSlotViewModel @Inject constructor(
                         item.productName = product.productName
                     }
                 }
-                settingsRepository.writeListSlotToLocal(_state.value.listSlot)
+                settingsRepository.writeListSlotToLocal(listSlot)
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
@@ -567,6 +643,7 @@ class SetupSlotViewModel @Inject constructor(
                 "setFullInventory" -> setFullInventory()
                 "loadLayoutFromServer" -> loadLayoutFromServer()
                 "getLayout" -> logger.info("fullInventory")
+                "removeSlot" -> removeSlot()
             }
         }
     }
@@ -584,7 +661,7 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     // DONE
-    fun hideDialogWarning(navController: NavHostController) {
+    fun hideDialogWarning() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -592,19 +669,37 @@ class SetupSlotViewModel @Inject constructor(
                     titleDialogWarning = "",
                 )
             }
-            navController.popBackStack()
         }
     }
 
     // DONE
     fun showDialogConfirm(mess: String, nameFunction: String) {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    titleDialogConfirm = mess,
-                    isConfirm = true,
-                    nameFunction = nameFunction,
-                )
+            if(nameFunction == "loadLayoutFromServer") {
+                if(baseRepository.isHaveNetwork(context)) {
+                    _state.update {
+                        it.copy(
+                            titleDialogConfirm = mess,
+                            isConfirm = true,
+                            nameFunction = nameFunction,
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            titleDialogWarning = "Not have internet, please connect with internet!",
+                            isWarning = true,
+                        )
+                    }
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        titleDialogConfirm = mess,
+                        isConfirm = true,
+                        nameFunction = nameFunction,
+                    )
+                }
             }
         }
     }
