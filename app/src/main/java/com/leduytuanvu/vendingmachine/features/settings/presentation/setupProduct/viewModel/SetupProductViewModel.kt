@@ -14,7 +14,6 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
@@ -23,7 +22,6 @@ import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.viewState.SetupProductViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +49,6 @@ class SetupProductViewModel @Inject constructor(
         getListProductFromServer()
     }
 
-    // DONE
     private fun showDialogWarning(mess: String) {
         viewModelScope.launch {
             _state.update {
@@ -63,8 +60,7 @@ class SetupProductViewModel @Inject constructor(
         }
     }
 
-    // DONE
-    fun hideDialogWarning(navController: NavHostController) {
+    fun hideDialogWarning() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -72,23 +68,24 @@ class SetupProductViewModel @Inject constructor(
                     titleDialogWarning = "",
                 )
             }
-            navController.popBackStack()
         }
     }
 
-    // DONE
     fun showDialogConfirm(mess: String) {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    titleDialogConfirm = mess,
-                    isConfirm = true,
-                )
+            if(baseRepository.isHaveNetwork(context)) {
+                _state.update {
+                    it.copy(
+                        titleDialogConfirm = mess,
+                        isConfirm = true,
+                    )
+                }
+            } else {
+                showDialogWarning("Not have internet, please connect with internet!")
             }
         }
     }
 
-    // DONE
     fun hideDialogConfirm() {
         viewModelScope.launch {
             _state.update {
@@ -100,7 +97,6 @@ class SetupProductViewModel @Inject constructor(
         }
     }
 
-    // DONE
     private fun getListProductFromServer() {
         logger.debug("getListProductFromServer")
         viewModelScope.launch {
@@ -126,7 +122,7 @@ class SetupProductViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "get product from server fail: ${e.message}",
+                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -140,7 +136,6 @@ class SetupProductViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun downloadProductFromServer() {
         logger.debug("downloadProductFromServer")
         viewModelScope.launch {
@@ -222,7 +217,7 @@ class SetupProductViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "download product from server to local fail: ${e.message}",
+                    errorContent = "download product from server to local fail in SetupProductViewModel/downloadProductFromServer(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(

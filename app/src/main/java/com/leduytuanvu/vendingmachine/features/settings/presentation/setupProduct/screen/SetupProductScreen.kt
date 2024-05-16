@@ -59,7 +59,7 @@ fun SetupProductContent(
     WarningDialogComposable(
         isWarning = state.isWarning,
         titleDialogWarning = state.titleDialogWarning,
-        onClickClose = { viewModel.hideDialogWarning(navController) },
+        onClickClose = { viewModel.hideDialogWarning() },
     )
     ConfirmDialogComposable(
         isConfirm = state.isConfirm,
@@ -90,7 +90,7 @@ fun SetupProductContent(
                             .width(60.dp)
                             .height(60.dp)
                             .clickable { viewModel.showDialogConfirm("Do you want to download all product from server to local?") },
-                        painter = painterResource(id = R.drawable.download),
+                        painter = painterResource(id = R.drawable.image_download),
                         contentDescription = ""
                     )
                 }

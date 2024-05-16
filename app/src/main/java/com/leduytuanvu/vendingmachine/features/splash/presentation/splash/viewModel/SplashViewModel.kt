@@ -1,26 +1,19 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.splash.viewModel
 
-import android.annotation.SuppressLint
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogAuthy
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
-import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
-import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
-import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
-import com.leduytuanvu.vendingmachine.features.splash.domain.repository.SplashRepository
 import com.leduytuanvu.vendingmachine.features.splash.presentation.splash.viewState.SplashViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +24,7 @@ import org.threeten.bp.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
-class SplashViewModel @Inject constructor (
+class SplashViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
     private val portConnectionDataSource: PortConnectionDatasource,
     private val logger: Logger,
@@ -39,8 +32,7 @@ class SplashViewModel @Inject constructor (
     private val _state = MutableStateFlow(SplashViewState())
     val state = _state.asStateFlow()
 
-    // DONE
-    fun handleInit(navController: NavHostController) {
+    fun handleInit (navController: NavHostController) {
         logger.info("handleInit")
         viewModelScope.launch {
             try {
@@ -52,7 +44,7 @@ class SplashViewModel @Inject constructor (
                         type = object : TypeToken<InitSetup>() {}.type,
                         path = pathFileInitSetup
                     )
-                    if(initSetup != null && initSetup.portCashBox.isNotEmpty() && initSetup.portVendingMachine.isNotEmpty()) {
+                    if (initSetup != null && initSetup.portCashBox.isNotEmpty() && initSetup.portVendingMachine.isNotEmpty()) {
                         if (portConnectionDataSource.openPortCashBox(initSetup.portCashBox) == -1) {
                             logger.info("Open port cash box is error!")
                         } else {
@@ -65,7 +57,7 @@ class SplashViewModel @Inject constructor (
                             logger.info("Open port vending machine success")
                             portConnectionDataSource.startReadingVendingMachine()
                         }
-                        navController.navigate(Screens.SettingScreenRoute.route)
+                        navController.navigate(Screens.HomeScreenRoute.route)
                     } else {
                         navController.navigate(Screens.InitSettingScreenRoute.route)
                     }
@@ -76,7 +68,7 @@ class SplashViewModel @Inject constructor (
                 val logError = LogError(
                     machineCode = "",
                     errorType = "application",
-                    errorContent = "handle init fail: ${e.message}",
+                    errorContent = "handle init fail in SetupViewModel/handleInit(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(

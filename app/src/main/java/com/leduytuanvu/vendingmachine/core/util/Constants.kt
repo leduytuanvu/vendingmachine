@@ -15,6 +15,8 @@ const val pathFileProductDetail = "/sdcard/VendingMachineData/Product/ProductDet
 const val pathFolderImage = "/sdcard/VendingMachineData/Product/Image"
 @SuppressLint("SdCardPath")
 const val pathFileLogServer = "/sdcard/VendingMachineData/Log/LogServer.json"
+@SuppressLint("SdCardPath")
+const val pathFolderAds = "/sdcard/VendingMachineData/Ads"
 
 val itemsPort = listOf(
     AnnotatedString("ttyS1"),

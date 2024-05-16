@@ -14,6 +14,7 @@ import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.P
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
+import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
@@ -21,6 +22,7 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -45,14 +47,12 @@ class SetupSlotViewModel @Inject constructor(
         getListProductFromLocal()
     }
 
-    // DONE
     fun showToast(mess: String) {
         viewModelScope.launch {
             sendEvent(Event.Toast(mess))
         }
     }
 
-    // DONE
     fun resetAllSlot() {
         viewModelScope.launch {
             _state.update {
@@ -128,7 +128,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "add slot to state list add more fail: ${e.message}",
+                    errorContent = "add slot to state list add more fail in SetupSlotViewModel/addSlotToStateListAddMore(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -165,7 +165,7 @@ class SetupSlotViewModel @Inject constructor(
                         )!!
                         val logFill = LogFill(
                             machineCode = initSetup.vendCode,
-                            fillType = "edit slot",
+                            fillType = "update slot",
                             content = _state.value.slot.toString(),
                             eventTime = LocalDateTime.now().toDateTimeString(),
                         )
@@ -187,7 +187,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "choose number inventory, capacity or money fail: ${e.message}",
+                    errorContent = "choose number inventory, capacity or money fail in SetupSlotViewModel/chooseNumber(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -229,7 +229,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "remove slot to state list add more fail: ${e.message}",
+                    errorContent = "remove slot to state list add more fail in SetupSlotViewModel/removeSlotToStateListAddMore(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -244,7 +244,7 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun removeSlot() {
-        logger.debug("removeProductToLocalListSlot")
+        logger.debug("removeSlot")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -292,7 +292,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "remove slot to local list slot fail: ${e.message}",
+                    errorContent = "remove slot to local list slot fail in SetupSlotViewModel/removeSlot(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -348,7 +348,7 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun setFullInventory() {
-        logger.debug("setFullInventoryForLocalListSlot")
+        logger.debug("setFullInventory")
         viewModelScope.launch {
             try {
                 _state.update {
@@ -369,7 +369,7 @@ class SetupSlotViewModel @Inject constructor(
                 )!!
                 val logFill = LogFill(
                     machineCode = initSetup.vendCode,
-                    fillType = "edit slot",
+                    fillType = "update slot",
                     content = "set full inventory for all slot",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
@@ -387,7 +387,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "set full inventory for local list slot fail: ${e.message}",
+                    errorContent = "set full inventory for local list slot fail in SetupSlotViewModel/setFullInventory(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -408,7 +408,7 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun getListProductFromLocal() {
-        logger.debug("getProductFromLocal")
+        logger.debug("getListProductFromLocal")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -422,7 +422,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "get product from local fail: ${e.message}",
+                    errorContent = "get product from local fail in SetupSlotViewModel/getListProductFromLocal(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -432,6 +432,90 @@ class SetupSlotViewModel @Inject constructor(
                 )
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun splitSlot(slot: Slot) {
+        logger.debug("splitSlot")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(1)
+                val tmpListSlot = _state.value.listSlot
+                for(index in 0..tmpListSlot.size) {
+                    if(tmpListSlot[index].slot == slot.slot) {
+                        tmpListSlot[index].isCombine = "no"
+                        tmpListSlot[index].slotCombine = 0
+                        tmpListSlot[index+1].status = 1
+                        break
+                    }
+                }
+                baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
+                _state.update { it.copy (
+                    listSlot = tmpListSlot,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "get product from local fail in SetupSlotViewModel/getListProductFromLocal(): ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun mergeSlot(slot: Slot) {
+        logger.debug("mergeSlot")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(1)
+                val tmpListSlot = _state.value.listSlot
+                for(index in 0..tmpListSlot.size) {
+                    if(tmpListSlot[index].slot == slot.slot) {
+                        tmpListSlot[index].isCombine = "yes"
+                        tmpListSlot[index].slotCombine = tmpListSlot[index].slot
+                        tmpListSlot[index+1].status = 0
+                        break
+                    }
+                }
+                baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
+                _state.update { it.copy (
+                    listSlot = tmpListSlot,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "get product from local fail in SetupSlotViewModel/getListProductFromLocal(): ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
                 _state.update { it.copy(isLoading = false) }
             }
         }
@@ -465,7 +549,7 @@ class SetupSlotViewModel @Inject constructor(
                         )!!
                         val logFill = LogFill(
                             machineCode = initSetup.vendCode,
-                            fillType = "add slot",
+                            fillType = "add product",
                             content = slot.toString(),
                             eventTime = LocalDateTime.now().toDateTimeString(),
                         )
@@ -487,7 +571,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "add slot to local list slot fail: ${e.message}",
+                    errorContent = "add slot to local list slot fail in SetupSlotViewModel/addSlotToLocalListSlot(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -525,7 +609,7 @@ class SetupSlotViewModel @Inject constructor(
                             )!!
                             val logFill = LogFill(
                                 machineCode = initSetup.vendCode,
-                                fillType = "add slot",
+                                fillType = "add more product",
                                 content = item.slot.toString(),
                                 eventTime = LocalDateTime.now().toDateTimeString(),
                             )
@@ -548,7 +632,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "add more slot to local list slot fail: ${e.message}",
+                    errorContent = "add more slot to local list slot fail in SetupSlotViewModel/addMoreProductToLocalListSlot(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -570,44 +654,48 @@ class SetupSlotViewModel @Inject constructor(
         logger.debug("loadLayoutFromServer")
         viewModelScope.launch {
             try {
-                _state.update {
-                    it.copy(
-                        isLoading = true,
-                        isConfirm = false,
-                    )
-                }
-                val listSlot = settingsRepository.getListLayoutFromServer()
-                for (item in listSlot) {
-                    val product = settingsRepository.getProductByCodeFromLocal(item.productCode)
-                    if (product != null) {
-                        item.price = product.price
-                        item.productName = product.productName
+                if(baseRepository.isHaveNetwork(context)) {
+                    _state.update {
+                        it.copy(
+                            isLoading = true,
+                            isConfirm = false,
+                        )
                     }
-                }
-                settingsRepository.writeListSlotToLocal(listSlot)
-                val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<InitSetup>() {}.type,
-                    path = pathFileInitSetup
-                )!!
-                val logFill = LogFill(
-                    machineCode = initSetup.vendCode,
-                    fillType = "load layout from server",
-                    content = listSlot.toString(),
-                    eventTime = LocalDateTime.now().toDateTimeString(),
-                )
-                baseRepository.addNewLogToLocal(
-                    eventType = "fill",
-                    severity = "normal",
-                    eventData = logFill,
-                )
-                _state.update {
-                    it.copy(
-                        listSlot = listSlot,
-                        nameFunction = "",
-                        isLoading = false,
+                    val listSlot = settingsRepository.getListLayoutFromServer()
+                    for (item in listSlot) {
+                        val product = settingsRepository.getProductByCodeFromLocal(item.productCode)
+                        if (product != null) {
+                            item.price = product.price
+                            item.productName = product.productName
+                        }
+                    }
+                    settingsRepository.writeListSlotToLocal(listSlot)
+                    val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<InitSetup>() {}.type,
+                        path = pathFileInitSetup
+                    )!!
+                    val logFill = LogFill(
+                        machineCode = initSetup.vendCode,
+                        fillType = "load layout from server",
+                        content = listSlot.toString(),
+                        eventTime = LocalDateTime.now().toDateTimeString(),
                     )
+                    baseRepository.addNewLogToLocal(
+                        eventType = "fill",
+                        severity = "normal",
+                        eventData = logFill,
+                    )
+                    _state.update {
+                        it.copy(
+                            listSlot = listSlot,
+                            nameFunction = "",
+                            isLoading = false,
+                        )
+                    }
+                    sendEvent(Event.Toast("SUCCESS"))
+                } else {
+                    showDialogWarning("Not have internet, please connect with internet!")
                 }
-                sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -616,7 +704,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "get layout from fail: ${e.message}",
+                    errorContent = "get layout from fail in SetupSlotViewModel/loadLayoutFromServer(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -635,20 +723,17 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun selectFunction() {
         viewModelScope.launch {
             when (state.value.nameFunction) {
                 "resetAllSlot" -> resetAllSlot()
                 "setFullInventory" -> setFullInventory()
                 "loadLayoutFromServer" -> loadLayoutFromServer()
-                "getLayout" -> logger.info("fullInventory")
                 "removeSlot" -> removeSlot()
             }
         }
     }
 
-    // DONE
     private fun showDialogWarning(mess: String) {
         viewModelScope.launch {
             _state.update {
@@ -660,7 +745,6 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun hideDialogWarning() {
         viewModelScope.launch {
             _state.update {
@@ -672,7 +756,6 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun showDialogConfirm(mess: String, nameFunction: String) {
         viewModelScope.launch {
             if(nameFunction == "loadLayoutFromServer") {
@@ -704,7 +787,6 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun hideDialogConfirm() {
         viewModelScope.launch {
             _state.update {
@@ -717,7 +799,6 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun hideDialogChooseImage() {
         viewModelScope.launch {
             _state.update {
@@ -730,7 +811,7 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun getListSlotFromLocal() {
-        logger.debug("getSlotFromLocal")
+        logger.debug("getListSlotFromLocal")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -749,7 +830,7 @@ class SetupSlotViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "get slot from local fail: ${e.message}",
+                    errorContent = "get slot from local fail in SetupSlotViewModel/getListSlotFromLocal: ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(

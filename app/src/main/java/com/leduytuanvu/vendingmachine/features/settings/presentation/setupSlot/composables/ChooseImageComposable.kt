@@ -40,7 +40,9 @@ fun ChooseImageComposable(
             properties = DialogProperties(dismissOnClickOutside = true),
         ) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(910.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(910.dp)
                     .background(Color.White),
             ) {
                 LazyVerticalGrid(
@@ -57,7 +59,8 @@ fun ChooseImageComposable(
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp).clickable {
+                                .height(200.dp)
+                                .clickable {
                                     if(listSlotAddMore.size>0 && slot==null) {
                                         onClickAddMoreProduct(listProduct[index])
                                     } else {

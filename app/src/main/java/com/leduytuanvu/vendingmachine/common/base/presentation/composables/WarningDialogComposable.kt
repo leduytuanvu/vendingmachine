@@ -59,7 +59,7 @@ fun WarningDialogComposable(
                                         onClickClose()
                                     },
                                 alignment = Alignment.TopEnd,
-                                painter = painterResource(id = R.drawable.close),
+                                painter = painterResource(id = R.drawable.image_close),
                                 contentDescription = ""
                             )
                         }

@@ -4,29 +4,22 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.telephony.TelephonyManager
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
-import com.leduytuanvu.vendingmachine.core.util.Event
-import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.toSlot
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
-import java.io.File
 import java.lang.reflect.Type
 import javax.inject.Inject
 
@@ -180,8 +173,8 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun getListFileNameInFolder(folderPath: String): ArrayList<String> {
         try {
-            val listFileNameInFolder = localStorageDatasource.listFileNamesInFolder(folderPath)
-            return listFileNameInFolder ?: arrayListOf()
+            val listFileNameInFolder = localStorageDatasource.getListFileNamesInFolder(folderPath)
+            return listFileNameInFolder
         } catch (e: Exception) {
             throw e
         }

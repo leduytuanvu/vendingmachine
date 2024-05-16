@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogAuthy
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
@@ -20,9 +19,7 @@ import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
-import com.leduytuanvu.vendingmachine.features.splash.domain.repository.SplashRepository
 import com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewState.InitSetupViewState
-import com.leduytuanvu.vendingmachine.features.splash.presentation.splash.viewState.SplashViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +30,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 @SuppressLint("StaticFieldLeak")
-class InitSetupViewModel @Inject constructor (
+class InitSetupViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
     private val authRepository: AuthRepository,
     private val portConnectionDataSource: PortConnectionDatasource,
@@ -43,27 +40,28 @@ class InitSetupViewModel @Inject constructor (
     private val _state = MutableStateFlow(InitSetupViewState())
     val state = _state.asStateFlow()
 
-    // DONE
     private fun showDialogWarning(mess: String) {
         viewModelScope.launch {
-            _state.update { it.copy (
-                titleDialogWarning = mess,
-                isWarning = true,
-            ) }
+            _state.update {
+                it.copy(
+                    titleDialogWarning = mess,
+                    isWarning = true,
+                )
+            }
         }
     }
 
-    // DONE
     fun hideDialogWarning() {
         viewModelScope.launch {
-            _state.update { it.copy (
-                isWarning = false,
-                titleDialogWarning = "",
-            ) }
+            _state.update {
+                it.copy(
+                    isWarning = false,
+                    titleDialogWarning = "",
+                )
+            }
         }
     }
 
-    // DONE
     fun writeInitSetupToLocal(
         inputVendingMachineCode: String,
         portCashBox: String,
@@ -79,15 +77,15 @@ class InitSetupViewModel @Inject constructor (
                     _state.update { it.copy(isLoading = true) }
                     if (inputVendingMachineCode.trim().isEmpty()) {
                         sendEvent(Event.Toast("Vending machine code must not empty!"))
-                    } else if(portCashBox.isEmpty()) {
+                    } else if (portCashBox.isEmpty()) {
                         sendEvent(Event.Toast("Port cash box must not empty!"))
-                    } else if(portVendingMachine.isEmpty()) {
+                    } else if (portVendingMachine.isEmpty()) {
                         sendEvent(Event.Toast("Port vending machine must not empty!"))
-                    } else if(typeVendingMachine.isEmpty()) {
+                    } else if (typeVendingMachine.isEmpty()) {
                         sendEvent(Event.Toast("Type vending machine must not empty!"))
-                    } else if(loginRequest.username.isEmpty()) {
+                    } else if (loginRequest.username.isEmpty()) {
                         sendEvent(Event.Toast("Username must not empty!"))
-                    } else if(loginRequest.password.isEmpty()) {
+                    } else if (loginRequest.password.isEmpty()) {
                         sendEvent(Event.Toast("Password must not empty!"))
                     } else {
                         val passwordEncode = authRepository.encodePassword(loginRequest.password)
@@ -111,7 +109,7 @@ class InitSetupViewModel @Inject constructor (
                             val baudRateVendingMachine = "9600"
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
-                                androidId = baseRepository.getAndroidId() ?: "",
+                                androidId = baseRepository.getAndroidId(),
                                 username = loginRequest.username,
                                 password = passwordDecode,
                                 portVendingMachine = portVendingMachine,
@@ -135,7 +133,10 @@ class InitSetupViewModel @Inject constructor (
                                 timeoutPayment = "60",
                                 role = ""
                             )
-                            baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                            baseRepository.writeDataToLocal(
+                                data = initSetup,
+                                path = pathFileInitSetup
+                            )
                             if (portConnectionDataSource.openPortCashBox(initSetup.portCashBox) == -1) {
                                 logger.info("Open port cash box is error!")
                             } else {
@@ -150,8 +151,8 @@ class InitSetupViewModel @Inject constructor (
                             }
                             val logSetup = LogSetup(
                                 machineCode = inputVendingMachineCode,
-                                operationContent = "set: $initSetup",
-                                operationType = "setup init",
+                                operationContent = "setup init: $initSetup",
+                                operationType = "setup",
                                 username = loginRequest.username,
                                 eventTime = LocalDateTime.now().toDateTimeString(),
                             )
@@ -167,7 +168,7 @@ class InitSetupViewModel @Inject constructor (
                             val logError = LogError(
                                 machineCode = inputVendingMachineCode,
                                 errorType = "application",
-                                errorContent = "access token get from api is empty",
+                                errorContent = "access token get from api is empty in InitSetupViewModel/writeInitSetupToLocal()",
                                 eventTime = LocalDateTime.now().toDateTimeString(),
                             )
                             baseRepository.addNewLogToLocal(
@@ -185,7 +186,7 @@ class InitSetupViewModel @Inject constructor (
                 val logError = LogError(
                     machineCode = "",
                     errorType = "application",
-                    errorContent = "write init setup to local in the first time fail: ${e.message}",
+                    errorContent = "write init setup to local in the first time fail in InitSetupViewModel/writeInitSetupToLocal(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(

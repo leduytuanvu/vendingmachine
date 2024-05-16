@@ -4,6 +4,8 @@ import com.leduytuanvu.vendingmachine.common.base.data.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.features.auth.data.repository.AuthRepositoryImpl
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
+import com.leduytuanvu.vendingmachine.features.home.data.repository.HomeRepositoryImpl
+import com.leduytuanvu.vendingmachine.features.home.domain.repository.HomeRepository
 import com.leduytuanvu.vendingmachine.features.settings.data.repository.SettingsRepositoryImpl
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.splash.data.repository.SplashRepositoryImpl
@@ -20,6 +22,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun provideBaseRepository(impl: BaseRepositoryImpl) : BaseRepository
+
+    @Binds
+    @Singleton
+    abstract fun provideHomeRepository(impl: HomeRepositoryImpl) : HomeRepository
 
     @Binds
     @Singleton

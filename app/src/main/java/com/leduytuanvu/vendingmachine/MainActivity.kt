@@ -32,6 +32,7 @@ import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.P
 import com.leduytuanvu.vendingmachine.core.util.Navigation
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             hideStatusBar()
             VendingmachineTheme {
+                val navController = rememberNavController()
                 val lifecycleOwner = LocalLifecycleOwner.current.lifecycle
                 LaunchedEffect(key1 = lifecycleOwner) {
                     lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -56,6 +58,9 @@ class MainActivity : ComponentActivity() {
                             when (event) {
                                 is Event.Toast -> {
                                     Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_LONG).show()
+                                }
+                                is Event.NavigateToHomeScreen -> {
+                                    navController.navigate(Screens.SettingScreenRoute.route)
                                 }
                             }
                         }
@@ -65,7 +70,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navController = rememberNavController()
                     Navigation(navController)
                 }
             }

@@ -40,12 +40,11 @@ import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.c
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewModel.SetupSlotViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 
@@ -56,6 +55,7 @@ internal fun SetupSlotScreen(
     viewModel: SetupSlotViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    Logger.info("SetupSlotScreen")
     SetupSlotContent(
         state = state,
         viewModel = viewModel,
@@ -157,150 +157,185 @@ fun SetupSlotContent(
                     items(state.listSlot.size) { index ->
                         val slot = state.listSlot[index]
                         var isChecked by remember { mutableStateOf(false) }
-                        Box(
-                            modifier = Modifier
-                                .height(560.dp)
-                                .padding(bottom = 10.dp)
-                                .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    Text(text = "${slot.slot}", fontSize = 24.sp)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    val imageModifier = Modifier
-                                        .width(150.dp)
-                                        .height(150.dp)
-                                        .clickable { viewModel.showDialogChooseImage(slot) }
-                                    val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                            pathFolderImage +"/${slot.productCode}.png")) {
-                                        val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                            .data(pathFolderImage +"/${slot.productCode}.png")
-                                            .build()
-                                        rememberAsyncImagePainter(imageRequest)
-                                    } else {
-                                        painterResource(id = R.drawable.add_slot)
+                        if(slot.status==1) {
+                            Box(
+                                modifier = Modifier
+                                    .height(546.dp)
+                                    .padding(bottom = 10.dp)
+                                    .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                        Text(
+                                            text = if(slot.isCombine == "yes") "${slot.slot}+${slot.slot+1}" else "${slot.slot}",
+                                            fontSize = 24.sp,
+                                        )
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        val imageModifier = Modifier
+                                            .width(150.dp)
+                                            .height(150.dp)
+                                            .clickable { viewModel.showDialogChooseImage(slot) }
+                                        val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                pathFolderImage +"/${slot.productCode}.png")) {
+                                            val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                                .data(pathFolderImage +"/${slot.productCode}.png")
+                                                .build()
+                                            rememberAsyncImagePainter(imageRequest)
+                                        } else {
+                                            painterResource(id = R.drawable.image_add_slot)
+                                        }
+                                        Image(
+                                            modifier = imageModifier,
+                                            painter = imagePainter,
+                                            contentDescription = ""
+                                        )
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        if(slot.productCode.isNotEmpty()) {
+                                            Image(
+                                                modifier = Modifier
+                                                    .width(34.dp)
+                                                    .height(34.dp)
+                                                    .clickable {
+                                                        viewModel.showDialogConfirm(
+                                                            mess = "Are you sure to delete this product?",
+                                                            slot = slot,
+                                                            nameFunction = "removeSlot"
+                                                        )
+                                                        isChecked = false
+                                                    },
+                                                painter = painterResource(id = R.drawable.image_close),
+                                                contentDescription = ""
+                                            )
+                                        } else {
+                                            Image(
+                                                modifier = Modifier
+                                                    .width(34.dp)
+                                                    .height(34.dp)
+                                                    .clickable {
+                                                        if(isChecked) {
+                                                            viewModel.removeSlotToStateListAddMore(slot)
+                                                        } else {
+                                                            viewModel.addSlotToStateListAddMore(slot)
+                                                        }
+                                                        isChecked = !isChecked
+                                                    },
+                                                painter = painterResource(id = if (isChecked) R.drawable.image_check_box else R.drawable.image_un_check_box),
+                                                contentDescription = ""
+                                            )
+                                        }
                                     }
-                                    Image(
-                                        modifier = imageModifier,
-                                        painter = imagePainter,
-                                        contentDescription = ""
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Text(
+                                        slot.productName.ifEmpty { "Not have product" },
+                                        modifier = Modifier.height(50.dp),
+                                        maxLines = 2,
+                                        fontSize = 18.sp,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    if(slot.productCode.isNotEmpty()) {
-                                        Image(
-                                            modifier = Modifier
-                                                .width(34.dp)
-                                                .height(34.dp)
-                                                .clickable {
-                                                    viewModel.showDialogConfirm(
-                                                        mess = "Are you sure to delete this product?",
-                                                        slot = slot,
-                                                        nameFunction = "removeSlot"
-                                                    )
-                                                    isChecked = false
-                                                },
-                                            painter = painterResource(id = R.drawable.close),
-                                            contentDescription = ""
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                        Column {
+                                            Text("Inventory", fontSize = 18.sp)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(text = "${slot.inventory}/${slot.capacity}", fontSize = 20.sp)
+                                        }
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        CustomButtonComposable(
+                                            title = "Edit",
+                                            wrap = true,
+                                            height = 60.dp,
+                                            cornerRadius = 4.dp
+                                        ) {
+                                            if(slot.productCode.isNotEmpty()) {
+                                                viewModel.showDialogChooseNumber(slot = slot, isInventory = true)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                        Column {
+                                            Text("Price", fontSize = 18.sp)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(text = slot.price.toVietNamDong(), fontSize = 20.sp)
+                                        }
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        CustomButtonComposable(
+                                            title = "Edit",
+                                            wrap = true,
+                                            height = 60.dp,
+                                            cornerRadius = 4.dp
+                                        ) {
+                                            if(slot.productCode.isNotEmpty()) {
+                                                viewModel.showDialogChooseNumber(isChooseMoney = true, slot = slot)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                        Column {
+                                            Text("Capacity", fontSize = 18.sp)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(text = "${slot.capacity}", fontSize = 20.sp)
+                                        }
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        CustomButtonComposable(
+                                            title = "Edit",
+                                            wrap = true,
+                                            height = 60.dp,
+                                            cornerRadius = 4.dp
+                                        ) {
+                                            if(slot.productCode.isNotEmpty()) {
+                                                viewModel.showDialogChooseNumber(slot = slot, isCapacity = true)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    if(slot.isCombine == "yes") {
+                                        CustomButtonComposable(
+                                            title = "SPLIT SLOT",
+                                            titleAlignment = TextAlign.Center,
+                                            cornerRadius = 4.dp,
+                                            height = 60.dp,
+                                            function = { viewModel.splitSlot(slot) },
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
                                         )
                                     } else {
-                                        Image(
-                                            modifier = Modifier
-                                                .width(34.dp)
-                                                .height(34.dp)
-                                                .clickable {
-                                                    if(isChecked) {
-                                                        viewModel.removeSlotToStateListAddMore(slot)
-                                                    } else {
-                                                        viewModel.addSlotToStateListAddMore(slot)
-                                                    }
-                                                    isChecked = !isChecked
-                                                },
-                                            painter = painterResource(id = if (isChecked) R.drawable.check_box else R.drawable.un_check_box),
-                                            contentDescription = ""
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(20.dp))
-                                Text(
-                                    slot.productName.ifEmpty { "Not have product" },
-                                    modifier = Modifier.height(50.dp),
-                                    maxLines = 2,
-                                    fontSize = 18.sp,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    Column {
-                                        Text("Inventory", fontSize = 18.sp)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = "${slot.inventory}/${slot.capacity}", fontSize = 20.sp)
-                                    }
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    CustomButtonComposable(
-                                        title = "Edit",
-                                        wrap = true,
-                                        height = 60.dp,
-                                        cornerRadius = 4.dp
-                                    ) {
-                                        if(slot.productCode.isNotEmpty()) {
-                                            viewModel.showDialogChooseNumber(slot = slot, isInventory = true)
+                                        if (slot.slot == 10 || slot.slot == 20 || slot.slot == 30 || slot.slot == 40 || slot.slot == 50 || slot.slot == 60) {
+//                                        Logger.info("index if = $index")
+                                        } else {
+//                                        Logger.info("index else = $index")
+                                            val slotNext = state.listSlot[index+1]
+                                            if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
+                                                CustomButtonComposable(
+                                                    title = "MERGE SLOT",
+                                                    titleAlignment = TextAlign.Center,
+                                                    cornerRadius = 4.dp,
+                                                    height = 60.dp,
+                                                    function = { viewModel.mergeSlot(slot) },
+                                                    fontSize = 20.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                )
+                                            }
                                         }
                                     }
                                 }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .height(546.dp)
+                                    .padding(bottom = 10.dp)
+                                    .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
+                            ) {
 
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    Column {
-                                        Text("Price", fontSize = 18.sp)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = slot.price.toVietNamDong(), fontSize = 20.sp)
-                                    }
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    CustomButtonComposable(
-                                        title = "Edit",
-                                        wrap = true,
-                                        height = 60.dp,
-                                        cornerRadius = 4.dp
-                                    ) {
-                                        if(slot.productCode.isNotEmpty()) {
-                                            viewModel.showDialogChooseNumber(isChooseMoney = true, slot = slot)
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    Column {
-                                        Text("Capacity", fontSize = 18.sp)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(text = "${slot.capacity}", fontSize = 20.sp)
-                                    }
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    CustomButtonComposable(
-                                        title = "Edit",
-                                        wrap = true,
-                                        height = 60.dp,
-                                        cornerRadius = 4.dp
-                                    ) {
-                                        if(slot.productCode.isNotEmpty()) {
-                                            viewModel.showDialogChooseNumber(slot = slot, isCapacity = true)
-                                        }
-                                    }
-                                }
-
-//            Spacer(modifier = Modifier.height(20.dp))
-//
-//            ButtonComposable(
-//                title = "SLOT PAIRING",
-//                height = 65.dp,
-//                titleAlignment = TextAlign.Center,
-//                cornerRadius = 4.dp
-//            ) {
-//
-//            }
                             }
                         }
                     }

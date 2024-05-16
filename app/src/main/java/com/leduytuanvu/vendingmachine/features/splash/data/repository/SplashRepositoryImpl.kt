@@ -9,6 +9,4 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.features.splash.domain.repository.SplashRepository
 import javax.inject.Inject
 
-class SplashRepositoryImpl @Inject constructor() : SplashRepository {
-
-}
+class SplashRepositoryImpl @Inject constructor() : SplashRepository

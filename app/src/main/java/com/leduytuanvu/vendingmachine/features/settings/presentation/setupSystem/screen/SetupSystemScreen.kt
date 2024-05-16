@@ -46,17 +46,19 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Title
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel.SetupSystemViewModel
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
 
 @Composable
 internal fun SetupSystemScreen(
     navController: NavHostController,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SetupSystemViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    LaunchedEffect(key1 = viewModel) {
-        viewModel.getInformationOfMachine()
-    }
+//    LaunchedEffect(key1 = viewModel) {
+//        viewModel.getInformationOfMachine()
+//    }
     SetupSystemContent(
         viewModel = viewModel,
         state = state,
@@ -68,8 +70,8 @@ internal fun SetupSystemScreen(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SetupSystemContent(
-    viewModel: SettingsViewModel,
-    state: SettingsViewState,
+    viewModel: SetupSystemViewModel,
+    state: SetupSystemViewState,
     navController: NavHostController,
     context: Context,
 ) {
@@ -117,10 +119,10 @@ fun SetupSystemBackContentComposable(navController: NavHostController) {
 
 @Composable
 fun SetupSystemMainContentComposable(
-    viewModel: SettingsViewModel,
+    viewModel: SetupSystemViewModel,
     navController: NavHostController,
     context: Context,
-    state: SettingsViewState,
+    state: SetupSystemViewState,
 ) {
     var inputVendingMachineCode by remember { mutableStateOf(state.initSetup!!.vendCode) }
     var inputTimeTurnOnLight by remember { mutableStateOf(state.initSetup!!.timeTurnOnLight) }
@@ -163,6 +165,8 @@ fun SetupSystemMainContentComposable(
     val hourTurnOffLight = partsTurnOffLight[0].toIntOrNull() ?: 0
     val minuteTurnOffLight = partsTurnOffLight.getOrNull(1)?.toIntOrNull() ?: 0
 
+    val seralSimId = state.serialSimId.ifEmpty { "No sim found" }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,6 +174,20 @@ fun SetupSystemMainContentComposable(
             .padding(top = 100.dp)
     ) {
         BodyTextComposable(title = "Application version: $appVersionName", fontWeight = FontWeight.Bold, paddingBottom = 30.dp)
+
+        BodyTextComposable(title = "Serial sim id: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) {
+            viewModel.getSerialSimId()
+        }
 
         BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 
@@ -191,23 +209,11 @@ fun SetupSystemMainContentComposable(
             viewModel.getInformationOfMachine()
         }
 
-        BodyTextComposable(title = "Serial sim id: ${state.serialSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 
-        CustomButtonComposable(
-            title = "REFRESH",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 30.dp,
-        ) {
-            viewModel.getSerialSimId()
-        }
 
         BodyTextComposable(title = "Vending machine code", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
-        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp, initText = state.initSetup!!.vendCode) {
+        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp, initText = state.initSetup.vendCode) {
             inputVendingMachineCode = it
         }
         CustomButtonComposable(
@@ -470,12 +476,12 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 30.dp,
         ) {
-//            viewModel.updateGlassHeatingModeInLocal(selectedItemGlassHeatingMode.toString())
+            viewModel.updateHighestAndLowestTempWarningInLocal(inputHighestTempWarning, inputLowestTempWarning)
         }
 
         BodyTextComposable(title = "Temperature", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
-        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp, initText = state.initSetup.temperature) {
+        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp, initText = state.initSetup.temperature, keyboardTypeNumber = true) {
             inputTemperature = it
         }
         CustomButtonComposable(

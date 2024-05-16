@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -22,6 +23,7 @@ fun BodyTextComposable(
     paddingRight: Dp = 0.dp,
     textAlign: TextAlign = TextAlign.Start,
     fontWeight: FontWeight = FontWeight.Normal,
+    color: Color = Color.Black,
 ) {
     Text(
         modifier = Modifier.fillMaxWidth().padding(bottom = paddingBottom, start = paddingLeft, end = paddingRight),
@@ -30,5 +32,6 @@ fun BodyTextComposable(
         lineHeight = lineHeight,
         fontSize = fontSize,
         fontWeight = fontWeight,
+        color = color,
     )
 }

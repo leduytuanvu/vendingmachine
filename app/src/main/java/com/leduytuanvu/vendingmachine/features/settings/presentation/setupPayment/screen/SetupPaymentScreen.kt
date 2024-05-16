@@ -2,12 +2,15 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayme
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,45 +26,42 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.EditTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayment.viewModel.SetupPaymentViewModel
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayment.viewState.SetupPaymentViewState
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.screen.TimePickerWrapper
 
 @Composable
 internal fun SetupPaymentScreen(
     navController: NavHostController,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SetupPaymentViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SetupPaymentContent(
         state = state,
-        navController = navController
+        viewModel = viewModel,
+        navController = navController,
     )
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SetupPaymentContent(
-    state: SettingsViewState,
+    state: SetupPaymentViewState,
+    viewModel: SetupPaymentViewModel,
     navController: NavHostController,
 ) {
-    var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
-    var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("TTYS2")) }
-    var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("TTYS1")) }
-
-    val itemsPort = listOf(
-        AnnotatedString("TTYS1"),
-        AnnotatedString("TTYS2"),
-        AnnotatedString("TTYS3"),
-        AnnotatedString("TTYS4")
-    )
-    val itemsTypeVendingMachine = listOf(
-        AnnotatedString("XY"),
-        AnnotatedString("TCN"),
-        AnnotatedString("TCN INTEGRATED CIRCUITS"),
-    )
-
+//    val selectedTimeReset = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
+//    val onTimeSelectedReset: (Int, Int) -> Unit = { hour, minute ->
+//        selectedTimeReset.value = Pair(hour, minute)
+//    }
+//    val partsReset= state.initSetup!!.timeTurnOnLight.split(":")
+//    val hourReset = partsReset[0].toIntOrNull() ?: 0
+//    val minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
     LoadingDialogComposable(isLoading = state.isLoading)
 
     Scaffold(
@@ -136,7 +136,12 @@ fun SetupPaymentContent(
 
 
                 BodyTextComposable(title = "Set time reset on everyday")
-                BodyTextComposable(title = "Id: ")
+//                TimePickerWrapper(
+//                    defaultHour = hourTurnOnLight,
+//                    defaultMinute = minuteTurnOnLight,
+//                    onTimeSelected = onTimeSelectedTurnOn
+//                )
+
                 CustomButtonComposable(
                     title = "SAVE",
                     wrap = true,
@@ -147,7 +152,44 @@ fun SetupPaymentContent(
                     paddingBottom = 30.dp,
                 ) { }
 
+                CustomButtonComposable(
+                    title = "TURN ON LIGHT",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.turnOnLight()
+                }
 
+                CustomButtonComposable(
+                    title = "TURN OFF LIGHT",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.turnOffLight()
+                }
+
+                CustomButtonComposable(
+                    title = "CHECK DROP SENSOR",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.checkDropSensor()
+                }
+
+                Text(text = "vending machine data: " + state.vendingMachineData)
+                Text(text = "cash box data: " + state.cashBoxData)
             }
         )
     }

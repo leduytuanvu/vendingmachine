@@ -1,12 +1,14 @@
 package com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource
 
+import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.lang.reflect.Type
 import javax.inject.Inject
 
@@ -97,7 +99,7 @@ class LocalStorageDatasource @Inject constructor() {
         }
     }
 
-    fun listFileNamesInFolder(folderPath: String): ArrayList<String>? {
+    fun getListFileNamesInFolder(folderPath: String): ArrayList<String> {
         try {
             val folder = File(folderPath)
             if (folder.exists() && folder.isDirectory) {
@@ -106,26 +108,45 @@ class LocalStorageDatasource @Inject constructor() {
                     return ArrayList(fileList.map { it.nameWithoutExtension } )
                 }
             }
-            return null
+            return arrayListOf()
         } catch (e: Exception) {
             throw e
         }
     }
 
-//    fun isImageExists(name: String): Boolean {
-//        try {
-//            val folder = File(pathFolderImage)
-//            if (folder.exists() && folder.isDirectory) {
-//                val fileList = folder.listFiles()
-//                return if (fileList != null) {
-//                    ArrayList(fileList.map { it.nameWithoutExtension })
-//                } else {
-//                    ArrayList()
-//                }
-//            }
-//            return null
-//        } catch (e: Exception) {
-//            throw e
-//        }
-//    }
+    fun getListPathFileInFolder(folderPath: String): ArrayList<String> {
+        try {
+            val folder = File(folderPath)
+            if (folder.exists() && folder.isDirectory) {
+                val fileList = folder.listFiles()
+                if (fileList != null) {
+                    return ArrayList(fileList.map { it.absolutePath } )
+                }
+            }
+            return arrayListOf()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    fun writeVideoAdsFromAssetToLocal(
+        context: Context,
+        rawResId: Int,
+        fileName: String,
+        pathFolderAds: String,
+    ) {
+        val dir = File(pathFolderAds)
+        if (!dir.exists()) dir.mkdirs()
+        val file = File(pathFolderAds, fileName)
+        val inputStream: InputStream = context.resources.openRawResource(rawResId)
+        val outputStream: OutputStream = FileOutputStream(file)
+        val buffer = ByteArray(1024)
+        var length: Int
+        while (inputStream.read(buffer).also { length = it } > 0) {
+            outputStream.write(buffer, 0, length)
+        }
+        outputStream.flush()
+        outputStream.close()
+        inputStream.close()
+    }
 }

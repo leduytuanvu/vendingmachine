@@ -51,7 +51,7 @@ fun ItemProductComposable(
                         .data(data = product.imageUrl)
                         .apply {
                             crossfade(true)
-                            error(R.drawable.warning)
+                            error(R.drawable.image_error)
                             scale(Scale.FILL)
                             size(160, 160)
                         }
@@ -70,14 +70,14 @@ fun ItemProductComposable(
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth(),
-                text = product.productName!!
+                text = product.productName
             )
             Text(
                 fontSize = 16.sp,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
                 modifier = Modifier.fillMaxWidth(),
-                text = "Price: ${product.price!!.toVietNamDong()}"
+                text = "Price: ${product.price.toVietNamDong()}"
             )
         }
     }

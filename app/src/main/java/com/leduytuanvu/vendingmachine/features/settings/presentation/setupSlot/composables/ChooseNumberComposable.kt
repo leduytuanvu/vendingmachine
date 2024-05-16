@@ -81,7 +81,6 @@ fun ChooseNumberComposable(
                                     } else {
                                         chooseNumber(index+1)
                                     }
-
                                 }
                             }
                         }
@@ -91,9 +90,3 @@ fun ChooseNumberComposable(
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun ChooseNumberPreview() {
-//    ChooseNumberComposable(true)
-//}

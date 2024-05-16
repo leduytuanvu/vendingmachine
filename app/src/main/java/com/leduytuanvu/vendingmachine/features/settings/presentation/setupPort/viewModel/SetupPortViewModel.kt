@@ -31,9 +31,11 @@ class SetupPortViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(SetupPortViewState())
     val state = _state.asStateFlow()
+
     init {
         getInitSetupFromLocal()
     }
+
     private fun getInitSetupFromLocal() {
         logger.debug("getInitSetupFromLocal")
         viewModelScope.launch {
@@ -46,15 +48,14 @@ class SetupPortViewModel @Inject constructor(
                 if (initSetup != null) {
                     _state.update {
                         it.copy(
-                            initSetup = initSetup,
-                            isLoading = false
+                            initSetup = initSetup, isLoading = false
                         )
                     }
                 } else {
                     val logError = LogError(
                         machineCode = "",
                         errorType = "application",
-                        errorContent = "init setup from local is null",
+                        errorContent = "init setup from local is null in SetupPortViewModel/getInitSetupFromLocal()",
                         eventTime = LocalDateTime.now().toDateTimeString(),
                     )
                     baseRepository.addNewLogToLocal(
@@ -67,7 +68,7 @@ class SetupPortViewModel @Inject constructor(
                 val logError = LogError(
                     machineCode = "",
                     errorType = "application",
-                    errorContent = "get init setup from local fail: ${e.message}",
+                    errorContent = "get init setup from local fail in SetupPortViewModel/getInitSetupFromLocal(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
@@ -81,7 +82,6 @@ class SetupPortViewModel @Inject constructor(
         }
     }
 
-    // DONE
     fun saveSetupPort(
         typeVendingMachine: String,
         portCashBox: String,
@@ -96,18 +96,17 @@ class SetupPortViewModel @Inject constructor(
                 } else {
                     delay(1000)
                     if (portConnectionDataSource.openPortCashBox(portCashBox) == -1) {
-                        throw Exception("Open port cash box is error!")
+                        logger.info("Open port cash box is error!")
                     } else {
                         portConnectionDataSource.startReadingCashBox()
                     }
                     if (portConnectionDataSource.openPortVendingMachine(portVendingMachine) == -1) {
-                        throw Exception("Open port vending machine is error!")
+                        logger.info("Open port vending machine is error!")
                     } else {
                         portConnectionDataSource.startReadingVendingMachine()
                     }
                     val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<InitSetup>() {}.type,
-                        path = pathFileInitSetup
+                        type = object : TypeToken<InitSetup>() {}.type, path = pathFileInitSetup
                     )!!
                     initSetup.typeVendingMachine = typeVendingMachine
                     initSetup.portCashBox = portCashBox
@@ -118,8 +117,8 @@ class SetupPortViewModel @Inject constructor(
                     )
                     val logSetup = LogSetup(
                         machineCode = initSetup.vendCode,
-                        operationContent = "set: $initSetup",
-                        operationType = "setup port",
+                        operationContent = "setup port: $initSetup",
+                        operationType = "setup",
                         username = initSetup.username,
                         eventTime = LocalDateTime.now().toDateTimeString(),
                     )
@@ -132,19 +131,18 @@ class SetupPortViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             initSetup = initSetup,
-                            isLoading = false
+                            isLoading = false,
                         )
                     }
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<InitSetup>() {}.type,
-                    path = pathFileInitSetup
+                    type = object : TypeToken<InitSetup>() {}.type, path = pathFileInitSetup
                 )!!
                 val logError = LogError(
                     machineCode = initSetup.vendCode,
                     errorType = "application",
-                    errorContent = "save setup port fail: ${e.message}",
+                    errorContent = "save setup port fail in SetupPortViewModel/saveSetupPort(): ${e.message}",
                     eventTime = LocalDateTime.now().toDateTimeString(),
                 )
                 baseRepository.addNewLogToLocal(
