@@ -2,13 +2,12 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.setupProdu
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,14 +26,9 @@ import coil.request.ImageRequest
 import coil.size.Scale
 
 @Composable
-fun ItemProductComposable(
-    product: Product,
-) {
+fun ItemSetupProductComposable(product: Product) {
     Box(
         modifier = Modifier
-            .height(300.dp)
-            .width(300.dp)
-            .padding(bottom = 10.dp)
             .border(
                 width = 0.4.dp,
                 color = Color.Black,
@@ -43,8 +37,9 @@ fun ItemProductComposable(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-                .align(Alignment.TopCenter)
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             val painter = rememberAsyncImagePainter(
                     ImageRequest.Builder(LocalContext.current)
@@ -60,24 +55,21 @@ fun ItemProductComposable(
             Image(
                 painter = painter,
                 contentDescription = product.productName,
-                modifier = Modifier
-                    .size(160.dp)
-                    .padding(top = 20.dp, bottom = 30.dp)
-                    .align(Alignment.CenterHorizontally)
+                modifier = Modifier.height(160.dp).padding(bottom = 20.dp),
             )
             Text(
                 fontSize = 16.sp,
                 overflow = TextOverflow.Ellipsis,
+                minLines = 2,
                 maxLines = 2,
-                modifier = Modifier.fillMaxWidth(),
-                text = product.productName
+                text = product.productName,
             )
             Text(
                 fontSize = 16.sp,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
-                modifier = Modifier.fillMaxWidth(),
-                text = "Price: ${product.price.toVietNamDong()}"
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                text = "Price: ${product.price.toVietNamDong()}",
             )
         }
     }

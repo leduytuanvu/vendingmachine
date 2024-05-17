@@ -102,7 +102,6 @@ fun SetupSlotContent(
     )
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { }
     ) {
         Column(
             modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp),
@@ -298,15 +297,27 @@ fun SetupSlotContent(
                                     Spacer(modifier = Modifier.height(20.dp))
 
                                     if(slot.isCombine == "yes") {
-                                        CustomButtonComposable(
-                                            title = "SPLIT SLOT",
-                                            titleAlignment = TextAlign.Center,
-                                            cornerRadius = 4.dp,
-                                            height = 60.dp,
-                                            function = { viewModel.splitSlot(slot) },
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                        )
+                                        if(slot.isLock) {
+                                            CustomButtonComposable(
+                                                title = "UNLOCK SLOT",
+                                                titleAlignment = TextAlign.Center,
+                                                cornerRadius = 4.dp,
+                                                height = 60.dp,
+                                                function = { },
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        } else {
+                                            CustomButtonComposable(
+                                                title = "SPLIT SLOT",
+                                                titleAlignment = TextAlign.Center,
+                                                cornerRadius = 4.dp,
+                                                height = 60.dp,
+                                                function = { viewModel.splitSlot(slot) },
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
                                     } else {
                                         if (slot.slot == 10 || slot.slot == 20 || slot.slot == 30 || slot.slot == 40 || slot.slot == 50 || slot.slot == 60) {
 //                                        Logger.info("index if = $index")

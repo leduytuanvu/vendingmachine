@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -25,12 +26,13 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
-import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.composables.ItemProductComposable
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.composables.ItemSetupProductComposable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.HandlePermissionsComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.viewModel.SetupProductViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.viewState.SetupProductViewState
 
@@ -69,15 +71,17 @@ fun SetupProductContent(
     )
     Scaffold(modifier = Modifier.fillMaxSize()) {
         Column (
-            modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp),
             content = {
                 Row(
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CustomButtonComposable(
                         title = "BACK",
                         wrap = true,
-                        height = 65.dp,
+                        height = 70.dp,
                         fontSize = 20.sp,
                         cornerRadius = 4.dp,
                         fontWeight = FontWeight.Bold,
@@ -87,20 +91,24 @@ fun SetupProductContent(
                     Spacer(modifier = Modifier.weight(1f))
                     Image(
                         modifier = Modifier
-                            .width(60.dp)
-                            .height(60.dp)
+                            .width(50.dp)
+                            .height(50.dp)
                             .clickable { viewModel.showDialogConfirm("Do you want to download all product from server to local?") },
                         painter = painterResource(id = R.drawable.image_download),
                         contentDescription = ""
                     )
                 }
                 LazyVerticalStaggeredGrid(
-                    modifier = Modifier.padding(top = 10.dp),
+                    modifier = Modifier,
                     columns = StaggeredGridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalItemSpacing = 10.dp,
                 ) {
                     items(state.listProduct.size) { index ->
-                        ItemProductComposable(state.listProduct[index])
+                        ItemSetupProductComposable(state.listProduct[index])
+                    }
+                    items(3) {
+                        Spacer(modifier = Modifier.height(94.dp))
                     }
                 }
             }

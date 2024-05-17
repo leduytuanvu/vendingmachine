@@ -106,7 +106,7 @@ fun SetupSystemBackContentComposable(navController: NavHostController) {
         CustomButtonComposable(
             title = "BACK",
             wrap = true,
-            height = 65.dp,
+            height = 70.dp,
             fontSize = 20.sp,
             cornerRadius = 4.dp,
             paddingBottom = 20.dp,

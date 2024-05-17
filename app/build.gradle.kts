@@ -74,6 +74,8 @@ android {
             path("src/main/java/com/leduytuanvu/vendingmachine/core/native/CMakeLists.txt")
         }
     }
+    buildToolsVersion = "34.0.0"
+    ndkVersion = "25.1.8937393"
 }
 
 dependencies {
@@ -126,6 +128,4 @@ dependencies {
 
     // Interceptor
     implementation(libs.logging.interceptor)
-
-    implementation("androidx.compose.material:material:1.6.7")
 }

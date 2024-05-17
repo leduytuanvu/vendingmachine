@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.widget.Space
 import android.widget.VideoView
 import androidx.compose.foundation.Image
@@ -59,6 +60,8 @@ import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.Loc
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
+import com.leduytuanvu.vendingmachine.features.home.presentation.composables.AdsHomeComposable
+import com.leduytuanvu.vendingmachine.features.home.presentation.composables.BackgroundHomeComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
 
@@ -68,7 +71,9 @@ internal fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     HomeContent(
+        context = context,
         state = state,
         viewModel = viewModel,
         navController = navController,
@@ -78,88 +83,81 @@ internal fun HomeScreen(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeContent(
+    context: Context,
     state: HomeViewState,
     viewModel: HomeViewModel,
     navController: NavHostController,
 ) {
-    var currentVideoIndex by remember { mutableIntStateOf(0) }
-    val videoView = remember { mutableStateOf<VideoView?>(null) }
-    val context = LocalContext.current
-    val localStorageDatasource = LocalStorageDatasource()
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-    Scaffold(modifier = Modifier.background(Color.White)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.image_background_home),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
+    val localStorageDatasource = LocalStorageDatasource()
+
+    Scaffold {
+        Box(modifier = Modifier.fillMaxSize()) {
+            BackgroundHomeComposable()
 
             Column(modifier = Modifier.fillMaxSize()) {
                 if(state.isShowAds) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(screenHeight / 3)
-                    ) {
-                        AndroidView(
-                            factory = {
-                                VideoView(context).apply {
-                                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                                    setOnCompletionListener {
-                                        currentVideoIndex = (currentVideoIndex + 1) % state.listAds.size
-                                        setVideoPath(state.listAds[currentVideoIndex])
-                                        start()
-                                    }
-                                    videoView.value = this
-                                }
-                            },
-                            update = { view ->
-                                if (state.listAds.isNotEmpty()) {
-                                    view.setVideoPath(state.listAds[currentVideoIndex])
-                                    view.start()
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .clipToBounds()
-                        )
-                        DisposableEffect(Unit) {
-                            onDispose {
-                                videoView.value?.stopPlayback()
-                            }
-                        }
-
-                        Button(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(bottom = 14.dp, end = 14.dp)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color.White,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            colors = ButtonDefaults.buttonColors(
-                                Color.Transparent,
-                                contentColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(4.dp),
-                            onClick = { viewModel.hideAds() },
-                        ) {
-                            Text(
-                                text = "Tắt quảng cáo",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                            )
-                        }
-                    }
+                    AdsHomeComposable(
+                        context = context,
+                        listAds = state.listAds,
+                        onClickHideAds = { viewModel.hideAds() },
+                    )
+//                    Box(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(400.dp)
+//                    ) {
+//                        AndroidView(
+//                            factory = {
+//                                VideoView(context).apply {
+//                                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+//                                    setOnCompletionListener {
+//                                        currentVideoIndex = (currentVideoIndex + 1) % state.listAds.size
+//                                        setVideoPath(state.listAds[currentVideoIndex])
+//                                        start()
+//                                    }
+//                                    videoView.value = this
+//                                }
+//                            },
+//                            update = { view ->
+//                                if (state.listAds.isNotEmpty()) {
+//                                    view.setVideoPath(state.listAds[currentVideoIndex])
+//                                    view.start()
+//                                }
+//                            },
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .clipToBounds()
+//                        )
+//                        DisposableEffect(Unit) {
+//                            onDispose {
+//                                videoView.value?.stopPlayback()
+//                            }
+//                        }
+//
+//                        Button(
+//                            modifier = Modifier
+//                                .align(Alignment.BottomEnd)
+//                                .padding(bottom = 14.dp, end = 14.dp)
+//                                .border(
+//                                    width = 1.dp,
+//                                    color = Color.White,
+//                                    shape = RoundedCornerShape(4.dp)
+//                                ),
+//                            colors = ButtonDefaults.buttonColors(
+//                                Color.Transparent,
+//                                contentColor = Color.Black
+//                            ),
+//                            shape = RoundedCornerShape(4.dp),
+//                            onClick = { viewModel.hideAds() },
+//                        ) {
+//                            Text(
+//                                text = "Tắt quảng cáo",
+//                                color = Color.White,
+//                                fontSize = 16.sp,
+//                            )
+//                        }
+//                    }
                 }
 //                Box(
 //                    modifier = Modifier
@@ -257,13 +255,13 @@ fun HomeContent(
                 }
                 Box(modifier = Modifier.fillMaxHeight()) {
                     LazyVerticalGrid(
-                        modifier = Modifier.padding(start = screenWidth/26, end = screenWidth/26),
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp),
                         columns = GridCells.Fixed(3),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(3) {
-                            Spacer(modifier = Modifier.height(screenHeight/60))
+                            Spacer(modifier = Modifier.height(6.dp))
                         }
                         items(state.listSlotShowInHome.size) {index ->
                             val slot = state.listSlotShowInHome[index]
@@ -271,25 +269,24 @@ fun HomeContent(
                             var numberProduct by remember { mutableIntStateOf(0) }
                             Box(
                                 modifier = Modifier
-                                    .height(440.dp)
                                     .border(
                                         width = 0.dp,
                                         color = Color.White,
-                                        shape = RoundedCornerShape(24.dp)
+                                        shape = RoundedCornerShape(22.dp)
                                     )
-                                    .background(Color.White, shape = RoundedCornerShape(24.dp)),
+                                    .background(Color.White, shape = RoundedCornerShape(22.dp)),
                             ) {
                                 Column(
                                     modifier = Modifier
-                                        .padding(10.dp)
+                                        .padding(20.dp)
                                         .fillMaxWidth()
                                         .fillMaxHeight(),
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
                                     val imageModifier = Modifier
-                                        .width(180.dp)
-                                        .height(180.dp)
+                                        .width(160.dp)
+                                        .height(160.dp)
                                         .clickable { }
                                     val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                             pathFolderImage +"/${slot.productCode}.png")) {
@@ -306,25 +303,23 @@ fun HomeContent(
                                         contentDescription = ""
                                     )
 
-                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Spacer(modifier = Modifier.height(20.dp))
 
                                     Text(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(80.dp)
-                                            .padding(bottom = 20.dp, start = 20.dp, end = 20.dp),
+                                            .padding(bottom = 10.dp),
                                         text = slot.productName,
-                                        lineHeight = 30.sp,
+                                        minLines = 2,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                     )
 
                                     BodyTextComposable(
                                         title = slot.price.toVietNamDong(),
-                                        paddingLeft = 20.dp,
-                                        paddingRight = 20.dp,
-                                        paddingBottom = 22.dp,
+                                        fontSize = 18.sp,
+                                        paddingBottom = 20.dp,
                                         color = Color(0xFFE72B28),
                                         fontWeight = FontWeight.Bold,
                                     )
@@ -388,7 +383,6 @@ fun HomeContent(
                                                 viewModel.addProduct(slot)
                                             },
                                             modifier = Modifier
-                                                .padding(start = 16.dp, end = 16.dp)
                                                 .height(60.dp)
                                                 .border(
                                                     width = 0.dp,
@@ -415,17 +409,15 @@ fun HomeContent(
                                                     painter = painterResource(id = R.drawable.image_select_to_buy),
                                                     contentDescription = ""
                                                 )
-                                                Text("Chọn mua", color = Color.White, fontSize = 19.sp)
+                                                Text("Chọn mua", color = Color.White, fontSize = 18.sp)
                                             }
                                         }
                                     }
-
-
                                 }
                             }
                         }
                         items(3) {
-                            Spacer(modifier = Modifier.height(screenHeight/60))
+                            Spacer(modifier = Modifier.height(6.dp))
                         }
                     }
                     Row {
@@ -437,31 +429,31 @@ fun HomeContent(
                                     shape = RoundedCornerShape(topEnd = 50.dp, bottomEnd = 50.dp)
                                 )
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                                    .height(screenHeight / 20),
-                                Arrangement.Center,
-                                Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier
-
-                                ) {
-                                    Text("Số dư tiền mặt", fontSize = 15.sp, color = Color.White)
-                                    Text("50.000đ", fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Image(
-                                    modifier = Modifier
-                                        .height(screenHeight / 40)
-                                        .width(screenHeight / 40)
-                                        .clickable { },
-                                    alignment = Alignment.Center,
-                                    painter = painterResource(id = R.drawable.image_withdraw),
-                                    contentDescription = ""
-                                )
-                            }
+//                            Row(
+//                                modifier = Modifier
+//                                    .padding(horizontal = 12.dp)
+//                                    .height(screenHeight / 20),
+//                                Arrangement.Center,
+//                                Alignment.CenterVertically
+//                            ) {
+//                                Column(
+//                                    modifier = Modifier
+//
+//                                ) {
+//                                    Text("Số dư tiền mặt", fontSize = 15.sp, color = Color.White)
+//                                    Text("50.000đ", fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
+//                                }
+//                                Spacer(modifier = Modifier.width(10.dp))
+//                                Image(
+//                                    modifier = Modifier
+//                                        .height(screenHeight / 40)
+//                                        .width(screenHeight / 40)
+//                                        .clickable { },
+//                                    alignment = Alignment.Center,
+//                                    painter = painterResource(id = R.drawable.image_withdraw),
+//                                    contentDescription = ""
+//                                )
+//                            }
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         if(!state.isShowAds) {
@@ -490,7 +482,7 @@ fun HomeContent(
                     if(state.listSlotBuy.isNotEmpty()) {
                         Row (
                             modifier = Modifier
-                                .height(screenHeight / 15)
+                                .height(200.dp)
                                 .background(Color.White)
                                 .align(Alignment.BottomCenter),
                             horizontalArrangement = Arrangement.Center,

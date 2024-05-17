@@ -25,6 +25,7 @@ fun TitleTextComposable(
             .padding(bottom = paddingBottom, top = paddingTop)
             .fillMaxWidth(),
         text = title,
+        lineHeight = 40.sp,
         textAlign = textAlign,
         fontSize = fontSize,
         fontWeight = FontWeight.Bold,

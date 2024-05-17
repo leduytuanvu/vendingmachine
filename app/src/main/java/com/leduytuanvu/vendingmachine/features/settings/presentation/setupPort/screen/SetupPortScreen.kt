@@ -80,14 +80,14 @@ fun SetupPortContent(
                 CustomButtonComposable(
                     title = "BACK",
                     wrap = true,
-                    height = 65.dp,
+                    height = 70.dp,
                     fontSize = 20.sp,
                     cornerRadius = 4.dp,
+                    paddingBottom = 30.dp,
                     fontWeight = FontWeight.Bold,
                 ) {
                     navController.popBackStack()
                 }
-                Spacer(modifier = Modifier.height(30.dp))
                 TitleAndDropdownComposable(
                     title = "Choose the type of vending machine",
                     items = itemsTypeVendingMachine,
@@ -115,7 +115,7 @@ fun SetupPortContent(
                     titleAlignment = TextAlign.Center,
                     paddingBottom = 20.dp,
                     cornerRadius = 4.dp,
-                    height = 65.dp,
+                    height = 70.dp,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 ) {

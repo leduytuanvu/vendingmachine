@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -106,7 +107,7 @@ fun InitSetupContent(
                     title = "SAVE INIT SETUP",
                     titleAlignment = TextAlign.Center,
                     cornerRadius = 4.dp,
-                    height = 65.dp,
+                    height = 70.dp,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                 ) {

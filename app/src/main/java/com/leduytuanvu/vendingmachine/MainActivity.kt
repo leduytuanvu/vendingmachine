@@ -62,6 +62,9 @@ class MainActivity : ComponentActivity() {
                                 is Event.NavigateToHomeScreen -> {
                                     navController.navigate(Screens.SettingScreenRoute.route)
                                 }
+                                is Event.NavigateToSetupSlotScreen -> {
+                                    navController.navigate(Screens.SetupSlotScreenRoute.route)
+                                }
                             }
                         }
                     }

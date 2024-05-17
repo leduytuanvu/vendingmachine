@@ -19,6 +19,8 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Loadi
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleTextComposable
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
+import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 
@@ -77,9 +79,9 @@ fun ButtonSettingsComposable(title: String, function: () -> Unit) {
     CustomButtonComposable(
         title = title,
         titleAlignment = TextAlign.Start,
-        paddingBottom = 10.dp,
+        paddingBottom = 14.dp,
         cornerRadius = 4.dp,
-        height = 65.dp,
+        height = 70.dp,
         function = function,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
