@@ -2,44 +2,31 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.settings.v
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.Coil
-import coil.request.ImageRequest
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServerLocal
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
-import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
-import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTime
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
-import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDateTime
-import java.io.File
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")

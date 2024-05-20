@@ -131,6 +131,9 @@ class InitSetupViewModel @Inject constructor(
                                 lowestTempWarning = "0",
                                 temperature = "",
                                 timeoutPayment = "60",
+                                initPromotion = "ON",
+                                currentCash = 0,
+                                timeoutPaymentByCash = "60",
                                 role = ""
                             )
                             baseRepository.writeDataToLocal(

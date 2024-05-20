@@ -98,11 +98,13 @@ class SetupPortViewModel @Inject constructor(
                     if (portConnectionDataSource.openPortCashBox(portCashBox) == -1) {
                         logger.info("Open port cash box is error!")
                     } else {
+                        logger.info("Open port cash box is success")
                         portConnectionDataSource.startReadingCashBox()
                     }
                     if (portConnectionDataSource.openPortVendingMachine(portVendingMachine) == -1) {
                         logger.info("Open port vending machine is error!")
                     } else {
+                        logger.info("Open port vending machine is success")
                         portConnectionDataSource.startReadingVendingMachine()
                     }
                     val initSetup: InitSetup = baseRepository.getDataFromLocal(

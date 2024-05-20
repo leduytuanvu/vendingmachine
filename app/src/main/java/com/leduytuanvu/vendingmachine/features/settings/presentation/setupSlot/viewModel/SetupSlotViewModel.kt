@@ -102,7 +102,7 @@ class SetupSlotViewModel @Inject constructor(
 
     fun showDialogConfirm(mess: String, slot: Slot?, nameFunction: String) {
         viewModelScope.launch {
-            if (baseRepository.isHaveNetwork(context)) {
+            if(nameFunction == "resetAllSlot" || nameFunction == "setFullInventory" || nameFunction == "removeSlot") {
                 _state.update { it.copy(
                     isConfirm = true,
                     titleDialogConfirm = mess,
@@ -110,7 +110,16 @@ class SetupSlotViewModel @Inject constructor(
                     nameFunction = nameFunction,
                 ) }
             } else {
-                showDialogWarning("Not have internet, please connect with internet!")
+                if (baseRepository.isHaveNetwork(context)) {
+                    _state.update { it.copy(
+                        isConfirm = true,
+                        titleDialogConfirm = mess,
+                        slot = slot,
+                        nameFunction = nameFunction,
+                    ) }
+                } else {
+                    showDialogWarning("Not have internet, please connect with internet!")
+                }
             }
         }
     }

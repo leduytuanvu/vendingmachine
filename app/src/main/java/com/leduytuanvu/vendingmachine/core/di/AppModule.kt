@@ -7,11 +7,14 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 //import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionHelperDatasource
 import com.leduytuanvu.vendingmachine.core.util.BASE_URL
+import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.remote.AuthApi
+import com.leduytuanvu.vendingmachine.features.home.data.remote.HomeApi
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
 import dagger.Module
 import dagger.Provides
@@ -58,6 +61,10 @@ object AppModule {
     @Provides
     @Singleton
     fun providePortConnectionDataSource(): PortConnectionDatasource = PortConnectionDatasource()
+
+    @Provides
+    @Singleton
+    fun provideByteArrays(): ByteArrays = ByteArrays()
 
     private var accessToken: String = ""
     private val authInterceptor = Interceptor { chain ->
@@ -118,5 +125,12 @@ object AppModule {
     @Provides
     fun provideSettingsApi(): SettingsApi {
         return settingsApi
+    }
+
+    private val homeApi: HomeApi = retrofit.create(HomeApi::class.java)
+    @Singleton
+    @Provides
+    fun provideHomeApi(): HomeApi {
+        return homeApi
     }
 }

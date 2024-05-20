@@ -11,7 +11,6 @@ import dagger.hilt.android.HiltAndroidApp
 class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-//        Graph.provide(this)
         AndroidThreeTen.init(this)
         Thread.setDefaultUncaughtExceptionHandler(CustomExceptionHandler())
     }

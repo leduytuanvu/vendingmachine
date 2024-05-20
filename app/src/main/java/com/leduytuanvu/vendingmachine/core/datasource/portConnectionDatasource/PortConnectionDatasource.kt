@@ -18,8 +18,8 @@ class PortConnectionDatasource {
     private val portConnectionHelperDataSource = PortConnectionHelperDatasource()
 
     // Data from cash box
-    private val _dataFromCashBox = MutableStateFlow<String>("")
-    val dataFromCashBox: StateFlow<String> = _dataFromCashBox
+    private val _dataFromCashBox = MutableStateFlow<ByteArray>(byteArrayOf())
+    val dataFromCashBox: StateFlow<ByteArray> = _dataFromCashBox
     // Data from vending machine
     private val _dataFromVendingMachine = MutableStateFlow<String>("")
     val dataFromVendingMachine: StateFlow<String> = _dataFromVendingMachine
@@ -47,7 +47,7 @@ class PortConnectionDatasource {
 
     // Make data empty
     fun makeDataEmpty() {
-        _dataFromCashBox.value = ""
+        _dataFromCashBox.value = byteArrayOf()
         _dataFromVendingMachine.value = ""
     }
 
@@ -108,10 +108,11 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
-                        val dataHexString = byteArrayToHexString(data)
-                        Logger.info("PortConnectionDataSource: data is $dataHexString")
+//                        val dataHexString = byteArrayToHexString(data)
+//                        Logger.info("PortConnectionDataSource: data is $dataHexString")
                         coroutineScope.launch {
-                            _dataFromCashBox.emit(dataHexString)
+//                            _dataFromCashBox.emit(dataHexString)
+                            _dataFromCashBox.emit(data)
                         }
                     }
                 } catch (e: IOException) {

@@ -24,9 +24,8 @@ data class InitSetup (
     var lowestTempWarning: String,
     var temperature: String,
     var timeoutPayment: String,
+    var initPromotion: String,
+    var currentCash: Int,
+    var timeoutPaymentByCash: String,
     var role: String,
-) {
-    override fun toString(): String {
-        return "vendCode='$vendCode', androidId='$androidId', username='$username', password='$password', portVendingMachine='$portVendingMachine', baudRateVendingMachine='$baudRateVendingMachine', portCashBox='$portCashBox', baudRateCashBox='$baudRateCashBox', typeVendingMachine='$typeVendingMachine', role='$role'"
-    }
-}
+)

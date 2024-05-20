@@ -82,7 +82,6 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
-                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbEnable123456789)
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {

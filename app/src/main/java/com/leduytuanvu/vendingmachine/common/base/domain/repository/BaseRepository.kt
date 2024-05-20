@@ -9,10 +9,16 @@ interface BaseRepository {
         severity: String,
         eventData: T,
     )
-//    suspend fun getInitSetupFromLocal() : InitSetup
+
+    suspend fun addNewErrorLogToLocal(
+        machineCode: String,
+        errorType: String = "application",
+        errorContent: String,
+        severity: String = "normal",
+    )
+
     suspend fun isFileInitSetupExists() : Boolean
     suspend fun getAndroidId() : String
-//    suspend fun writeInitSetupToLocal(initSetup: InitSetup)
     suspend fun <T> writeDataToLocal(data: T, path: String)
     suspend fun <T> getDataFromLocal(type: Type, path: String): T?
     suspend fun deleteFolder(path: String)

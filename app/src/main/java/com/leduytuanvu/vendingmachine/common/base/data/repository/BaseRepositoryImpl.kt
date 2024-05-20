@@ -7,9 +7,12 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.provider.Settings
 import com.google.gson.Gson
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServerLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.Event
+import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import com.leduytuanvu.vendingmachine.core.util.toBase64
@@ -53,6 +56,42 @@ class BaseRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun addNewErrorLogToLocal(
+        machineCode: String,
+        errorType: String,
+        errorContent: String,
+        severity: String
+    ) {
+        try {
+            val logError = LogError(
+                machineCode = machineCode,
+                errorType = errorType,
+                errorContent = errorContent,
+                eventTime = LocalDateTime.now().toDateTimeString(),
+            )
+            var listLogServerLocal = arrayListOf<LogServerLocal>()
+            val logServerLocal = LogServerLocal (
+                eventId = LocalDateTime.now().toId(),
+                eventType = "error",
+                severity = severity,
+                eventTime = LocalDateTime.now().toDateTimeString(),
+                eventData = logError.toBase64(),
+                isSent = false,
+            )
+            if (localStorageDatasource.checkFileExists(pathFileLogServer)) {
+                listLogServerLocal = localStorageDatasource.getDataFromPath(pathFileLogServer)!!
+            }
+            listLogServerLocal.add(logServerLocal)
+            localStorageDatasource.writeData(
+                pathFileLogServer,
+                gson.toJson(listLogServerLocal)
+            )
+            EventBus.sendEvent(Event.Toast(errorContent))
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
     override suspend fun isFileInitSetupExists() : Boolean {
         try {
             return localStorageDatasource.checkFileExists(pathFileInitSetup)
@@ -60,14 +99,6 @@ class BaseRepositoryImpl @Inject constructor(
             throw e
         }
     }
-
-//    override suspend fun getInitSetupFromLocal(): InitSetup {
-//        try {
-//            return localStorageDatasource.getDataFromPath(pathFileInitSetup)!!
-//        } catch (e: Exception) {
-//            throw e
-//        }
-//    }
 
     @SuppressLint("HardwareIds")
     override suspend fun getAndroidId(): String {
@@ -77,14 +108,6 @@ class BaseRepositoryImpl @Inject constructor(
             throw e
         }
     }
-
-//    override suspend fun writeInitSetupToLocal(initSetup: InitSetup) {
-//        try {
-//            localStorageDatasource.writeData(pathFileInitSetup, gson.toJson(initSetup))
-//        } catch (e: Exception) {
-//            throw e
-//        }
-//    }
 
     override suspend fun <T> getDataFromLocal(type: Type, path: String): T? {
         try {

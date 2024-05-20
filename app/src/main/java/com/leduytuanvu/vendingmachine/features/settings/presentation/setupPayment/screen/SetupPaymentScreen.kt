@@ -29,6 +29,8 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Custo
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.EditTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
+import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayment.viewModel.SetupPaymentViewModel
@@ -62,8 +64,19 @@ fun SetupPaymentContent(
 //    val partsReset= state.initSetup!!.timeTurnOnLight.split(":")
 //    val hourReset = partsReset[0].toIntOrNull() ?: 0
 //    val minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
-    LoadingDialogComposable(isLoading = state.isLoading)
 
+    var selectedItemDefaultPromotion by remember {
+        mutableStateOf(
+            AnnotatedString(state.initSetup?.initPromotion!!)
+        )
+    }
+
+    LoadingDialogComposable(isLoading = state.isLoading)
+    WarningDialogComposable(
+        isWarning = state.isWarning,
+        titleDialogWarning = state.titleDialogWarning,
+        onClickClose = { viewModel.hideDialogWarning() },
+    )
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {  }
@@ -86,7 +99,7 @@ fun SetupPaymentContent(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                BodyTextComposable(title = "Current cash: 10.000 vnđ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Current cash: ${state.initSetup!!.currentCash.toVietNamDong()}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 
                 CustomButtonComposable(
                     title = "REFRESH",
@@ -96,7 +109,9 @@ fun SetupPaymentContent(
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     paddingBottom = 30.dp,
-                ) { }
+                ) {
+                    viewModel.refreshCurrentCash()
+                }
 
                 BodyTextComposable(title = "Rotten box balance: 20.000 vnđ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 CustomButtonComposable(
@@ -108,6 +123,26 @@ fun SetupPaymentContent(
                     fontSize = 20.sp,
                     paddingBottom = 30.dp,
                 ) { }
+
+                BodyTextComposable(title = "Default promotion", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemDefaultPromotion, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    selectedItemDefaultPromotion = it
+                }
+
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.saveDefaultPromotion(selectedItemDefaultPromotion.toString())
+                }
 
                 BodyTextComposable(title = "Time out payment online", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
@@ -134,6 +169,43 @@ fun SetupPaymentContent(
                     paddingBottom = 30.dp,
                 ) { }
 
+                BodyTextComposable(title = "Time out payment cash", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("30s"),
+                    AnnotatedString("60s"),
+                    AnnotatedString("90s"),
+                    AnnotatedString("120s"),
+                    AnnotatedString("150s"),
+                    AnnotatedString("180s"),
+                    AnnotatedString("210s"),
+                    AnnotatedString("240s"),
+                    AnnotatedString("270s"),
+                    AnnotatedString("300s"),
+                ), selectedItem = AnnotatedString("30s"), paddingTop = 2.dp, paddingBottom = 12.dp) {
+
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) { }
+
+                CustomButtonComposable(
+                    title = "DOWNLOAD PAYMENT METHODS",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.downloadListMethodPayment()
+                }
+
 
                 BodyTextComposable(title = "Set time reset on everyday")
 //                TimePickerWrapper(
@@ -151,6 +223,18 @@ fun SetupPaymentContent(
                     fontSize = 20.sp,
                     paddingBottom = 30.dp,
                 ) { }
+
+                CustomButtonComposable(
+                    title = "POLL STATUS",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    viewModel.pollStatus()
+                }
 
                 CustomButtonComposable(
                     title = "TURN ON LIGHT",

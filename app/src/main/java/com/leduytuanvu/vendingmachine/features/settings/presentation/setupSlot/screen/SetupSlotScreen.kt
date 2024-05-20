@@ -41,7 +41,7 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Loadi
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Logger
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
@@ -175,9 +175,9 @@ fun SetupSlotContent(
                                             .height(150.dp)
                                             .clickable { viewModel.showDialogChooseImage(slot) }
                                         val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                pathFolderImage +"/${slot.productCode}.png")) {
+                                                pathFolderImageProduct +"/${slot.productCode}.png")) {
                                             val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                .data(pathFolderImage +"/${slot.productCode}.png")
+                                                .data(pathFolderImageProduct +"/${slot.productCode}.png")
                                                 .build()
                                             rememberAsyncImagePainter(imageRequest)
                                         } else {

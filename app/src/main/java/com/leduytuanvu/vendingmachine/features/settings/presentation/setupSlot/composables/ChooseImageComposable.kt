@@ -17,11 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import java.io.File
 
 @Composable
@@ -52,7 +50,7 @@ fun ChooseImageComposable(
                     contentPadding = PaddingValues(10.dp)
                 ) {
                     items(listProduct.size) { index ->
-                        val imageFile = File(pathFolderImage+"/${listProduct[index].productCode}.png")
+                        val imageFile = File(pathFolderImageProduct+"/${listProduct[index].productCode}.png")
                         val painter = rememberAsyncImagePainter(imageFile)
                         Image(
                             painter = painter,

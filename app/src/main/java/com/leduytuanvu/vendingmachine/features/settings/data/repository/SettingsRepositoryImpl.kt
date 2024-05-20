@@ -16,6 +16,9 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.toSlot
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PriceResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -92,6 +95,36 @@ class SettingsRepositoryImpl @Inject constructor(
                 response.data.remove(item)
             }
             return response.data
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getListPriceOfProductFromServer(): ArrayList<PriceResponse> {
+        try {
+            val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup) ?: return arrayListOf()
+            val response = settingsApi.getListPriceOfProduct(initSetup.vendCode)
+            return response.data
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getListImageOfProductFromServer(): ArrayList<ImageResponse> {
+        try {
+            val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup) ?: return arrayListOf()
+            val response = settingsApi.getListImageOfProduct(initSetup.vendCode)
+            return response.data
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getListPaymentMethodFromServer(): ArrayList<PaymentMethodResponse> {
+        try {
+            val initSetup: InitSetup = localStorageDatasource.getDataFromPath(pathFileInitSetup)!!
+            val response = settingsApi.getListPaymentMethod(initSetup.vendCode, "payment")
+            return response.data[0].settingData ?: arrayListOf()
         } catch (e: Exception) {
             throw e
         }

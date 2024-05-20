@@ -12,4 +12,23 @@ data class Slot(
     var status: Int,
     var slotCombine: Int,
     var isLock: Boolean
-)
+) {
+    constructor(
+        productCode: String,
+        productName: String,
+        inventory: Int,
+        price: Int,
+    ) : this(
+        slot = 0,
+        productCode = productCode,
+        productName = productName,
+        inventory = inventory,
+        capacity = 0,
+        price = price,
+        isCombine = "no",
+        springType = "lo xo don",
+        status = 1,
+        slotCombine = 0,
+        isLock = false
+    )
+}

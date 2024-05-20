@@ -1,6 +1,8 @@
 package com.leduytuanvu.vendingmachine
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -42,6 +44,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var portConnectionDataSource: PortConnectionDatasource
     private val crashHandler = Thread.getDefaultUncaughtExceptionHandler()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
@@ -57,7 +60,7 @@ class MainActivity : ComponentActivity() {
                         EventBus.events.collect { event ->
                             when (event) {
                                 is Event.Toast -> {
-                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
                                 }
                                 is Event.NavigateToHomeScreen -> {
                                     navController.navigate(Screens.SettingScreenRoute.route)
@@ -108,5 +111,16 @@ class MainActivity : ComponentActivity() {
             startActivity(intent)
             android.os.Process.killProcess(android.os.Process.myPid())
         }, 1000)
+    }
+}
+
+class BootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
+            Log.d("BootReceiver", "Device booted, starting MainActivity")
+            val startIntent = Intent(context, MainActivity::class.java)
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(startIntent)
+        }
     }
 }

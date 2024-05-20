@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
 import coil.Coil
 import coil.request.ImageRequest
 import com.google.gson.reflect.TypeToken
@@ -18,7 +17,7 @@ import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImage
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
@@ -97,6 +96,68 @@ class SetupProductViewModel @Inject constructor(
         }
     }
 
+    fun getListPriceOfProductFromServer() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val listPriceOfProduct = settingsRepository.getListPriceOfProductFromServer()
+                _state.update { it.copy(
+                    isLoading = false,
+                    listPriceOfProduct = listPriceOfProduct,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun getListImageOfProductFromServer() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val listPathImageOfProduct = settingsRepository.getListImageOfProductFromServer()
+                _state.update { it.copy(
+                    isLoading = false,
+                    listPathImageOfProduct = listPathImageOfProduct,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     private fun getListProductFromServer() {
         logger.debug("getListProductFromServer")
         viewModelScope.launch {
@@ -148,9 +209,9 @@ class SetupProductViewModel @Inject constructor(
                         )
                     }
                     val listFileNameInFolder =
-                        settingsRepository.getListFileNameInFolder(pathFolderImage)
-                    if (!baseRepository.isFolderExists(pathFolderImage)) {
-                        baseRepository.createFolder(pathFolderImage)
+                        settingsRepository.getListFileNameInFolder(pathFolderImageProduct)
+                    if (!baseRepository.isFolderExists(pathFolderImageProduct)) {
+                        baseRepository.createFolder(pathFolderImageProduct)
                     }
                     for (product in state.value.listProduct) {
                         if (product.imageUrl!!.isNotEmpty()) {
@@ -166,7 +227,7 @@ class SetupProductViewModel @Inject constructor(
                                         }
                                         if (result != null) {
                                             val file =
-                                                File(pathFolderImage, "${product.productCode}.png")
+                                                File(pathFolderImageProduct, "${product.productCode}.png")
                                             withContext(Dispatchers.IO) {
                                                 file.outputStream().use { outputStream ->
                                                     result.toBitmap().compress(
