@@ -18,7 +18,6 @@ import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFilePaymentMethod
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImagePayment
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
@@ -46,22 +45,40 @@ class SetupPaymentViewModel @Inject constructor(
     private val _state = MutableStateFlow(SetupPaymentViewState())
     val state = _state.asStateFlow()
 
-    init {
-        loadInitData()
-        startCollectingData()
-    }
-
     fun loadInitData() {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
+
+                delay(500)
+
                 // Get init setup in local
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
+
+                // Open port and start reading
+                portConnectionDatasource.openPortCashBox(initSetup.portCashBox)
+                portConnectionDatasource.startReadingCashBox()
+                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine)
+                portConnectionDatasource.startReadingVendingMachine()
+
+                // Get current cash
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+
+                // Start collecting data
+                startCollectingData()
+
+                // List payment method
+                val listPaymentMethod: ArrayList<PaymentMethodResponse>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<PaymentMethodResponse>>() {}.type,
+                    path = pathFilePaymentMethod
+                )
+
                 _state.update { it.copy(
                     initSetup = initSetup,
+                    listPaymentMethod = listPaymentMethod ?: arrayListOf(),
                     isLoading = false,
                 ) }
             } catch (e: Exception) {
@@ -90,10 +107,101 @@ class SetupPaymentViewModel @Inject constructor(
                     initSetup = initSetup,
                     isLoading = false,
                 ) }
+                sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
-                    errorContent = "load init data fail in HomeViewModel/loadInitData(): ${e.message}",
+                    errorContent = "save default promotion fail in SetupPaymentViewModel/saveDefaultPromotion(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun saveSetTimeResetOnEveryDay(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                settingsRepository.setScheduleDailyReset(
+                    context,
+                    hour,
+                    minute,
+                )
+                // Get init setup in local
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                initSetup.timeResetOnEveryDay = "$hour:$minute"
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+                sendEvent(Event.Toast("SUCCESS"))
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "save default promotion fail in SetupPaymentViewModel/saveDefaultPromotion(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun saveTimeoutPaymentQrCode(timeoutPaymentQrCode: String) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val regex = "\\d+".toRegex()
+                val timeoutPaymentQrCodeTmp = regex.find(timeoutPaymentQrCode)?.value
+                // Get init setup in local
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                initSetup.timeoutPaymentByQrCode = timeoutPaymentQrCodeTmp!!
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+                sendEvent(Event.Toast("SUCCESS"))
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "save timeout payment qr code fail in SetupViewModel/saveTimeoutPaymentQrCode(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun saveTimeoutPaymentCash(timeoutPaymentCash: String) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val regex = "\\d+".toRegex()
+                val timeoutPaymentCashTmp = regex.find(timeoutPaymentCash)?.value
+                // Get init setup in local
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                initSetup.timeoutPaymentByCash = timeoutPaymentCashTmp!!
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+                sendEvent(Event.Toast("SUCCESS"))
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "save timeout payment qr code fail in SetupViewModel/saveTimeoutPaymentQrCode(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
             }
@@ -116,6 +224,7 @@ class SetupPaymentViewModel @Inject constructor(
                     initSetup = initSetup,
                     isLoading = false,
                 ) }
+                sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
@@ -126,7 +235,25 @@ class SetupPaymentViewModel @Inject constructor(
         }
     }
 
-    private fun startCollectingData() {
+    fun refreshRottenBoxBalance() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+                delay(500)
+                _state.update { it.copy(isLoading = false) }
+                sendEvent(Event.Toast("SUCCESS"))
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "refresh current cash fail in HomeViewModel/refreshCurrentCash(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun startCollectingData() {
         viewModelScope.launch {
             launch {
                 portConnectionDatasource.dataFromVendingMachine.collect { data ->
@@ -135,9 +262,60 @@ class SetupPaymentViewModel @Inject constructor(
             }
             launch {
                 portConnectionDatasource.dataFromCashBox.collect { data ->
-//                    _state.update { it.copy(cashBoxData = data) }
+                    processingDataFromCashBox(data)
                 }
             }
+        }
+    }
+
+    fun processingDataFromCashBox(byteArray: ByteArray) {
+        val dataHexString = byteArray.joinToString(",") { "%02X".format(it) }
+        logger.debug(dataHexString)
+        if(dataHexString.contains("01,01,03,00,00,")) {
+            // Define the byte to balance map
+            val byteToBalanceMap = mapOf(
+                0x01.toByte() to 1,
+                0x02.toByte() to 2,
+                0x03.toByte() to 3,
+                0x04.toByte() to 4,
+                0x05.toByte() to 5,
+                0x06.toByte() to 6,
+                0x07.toByte() to 7,
+                0x08.toByte() to 8,
+                0x09.toByte() to 9,
+                0x0A.toByte() to 10,
+                0x0B.toByte() to 11,
+                0x0C.toByte() to 12,
+                0x0D.toByte() to 13,
+                0x0E.toByte() to 14,
+                0x0F.toByte() to 15,
+                0x10.toByte() to 16,
+                0x11.toByte() to 17,
+                0x12.toByte() to 18,
+                0x13.toByte() to 19,
+                0x14.toByte() to 20,
+                0x15.toByte() to 21,
+                0x16.toByte() to 22,
+                0x17.toByte() to 23,
+                0x18.toByte() to 23,
+                0x19.toByte() to 24,
+                0x1A.toByte() to 25,
+                0x1B.toByte() to 26,
+                0x1C.toByte() to 27,
+                0x1D.toByte() to 28,
+                0x1E.toByte() to 29,
+                0x1F.toByte() to 30,
+                0x20.toByte() to 31,
+                0x21.toByte() to 32,
+                0x22.toByte() to 33,
+                0x23.toByte() to 34
+            )
+
+            // Get the value from the map or default to 0 if not found
+            val numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], 0)
+
+            // Update the state
+            _state.update { it.copy(numberRottenBoxBalance = numberRottenBoxBalance) }
         }
     }
 
@@ -158,7 +336,7 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("pollStatus")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbDispenseBill3)
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbStack)
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {

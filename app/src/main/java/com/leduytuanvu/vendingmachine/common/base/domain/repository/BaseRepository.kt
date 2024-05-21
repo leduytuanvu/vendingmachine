@@ -25,4 +25,8 @@ interface BaseRepository {
     suspend fun createFolder(pathFolder: String)
     suspend fun isHaveNetwork(context: Context): Boolean
     suspend fun isFolderExists(pathFolder: String): Boolean
+
+    suspend fun byteArrayToHexString(byteArray: ByteArray): String
+
+    suspend fun hexStringToByteArray(hexString: String): ByteArray
 }

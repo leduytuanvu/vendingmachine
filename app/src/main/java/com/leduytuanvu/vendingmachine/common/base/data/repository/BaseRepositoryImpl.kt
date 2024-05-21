@@ -180,4 +180,14 @@ class BaseRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    override suspend fun byteArrayToHexString(byteArray: ByteArray): String {
+        return byteArray.joinToString(",") { "%02X".format(it) }
+    }
+
+    override suspend fun hexStringToByteArray(hexString: String): ByteArray {
+        return hexString.split(",")
+            .map { it.toInt(16).toByte() }
+            .toByteArray()
+    }
 }

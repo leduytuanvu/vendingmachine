@@ -1,6 +1,8 @@
 
-tkotlin:S1172{"6Remove this unused function parameter "navController".(«×‰†J$5054e583-4106-4488-baed-2feba8ccdc61
-\kotlin:S125;"Remove this commented out code.(‡ô—‡J$76277cc0-19c3-4fe4-9aad-01505c1bb670
-~kotlin:S1481":Remove this unused "inputTimeTurnOffLight" local variable.(¦™¦ºùÿÿÿÿJ$79bb1d8e-a112-42ca-8ec9-f54b53a4e77c
-xkotlin:S1481€"9Remove this unused "inputTimeTurnOnLight" local variable.(ÄŸ’±J$c8bee0fc-d037-48a2-a22c-d5eef3fdd04d
-Xkotlin:S1128"Remove this unused import.(”ªˆ­J$8807455e-aabc-4ce5-ab07-c9654e7115ee
+{kotlin:S1172|"6Remove this unused function parameter "navController".(«×‰†8Ã­ãÔù1J$be835ca8-282b-4b36-a75f-b8f4649977ff
+dkotlin:S125‘"Remove this commented out code.(ªòÛ8Ì­ãÔù1J$ce138018-c640-47fa-afd6-8c43c77f465a
+dkotlin:S125œ"Remove this commented out code.(¾µñÿ8Ì­ãÔù1J$85cf2528-d195-4c2c-82f3-e6874d8c66f7
+ikotlin:S125ò"Remove this commented out code.(ˆ öÃúÿÿÿÿ8Í­ãÔù1J$c063d32a-9e4a-46de-986a-e192405c6ba5
+_kotlin:S1128"Remove this unused import.(ÁÖÖ8ï­ãÔù1J$93a32b30-a966-4c33-aae8-bdabca1361c5
+dkotlin:S1128"Remove this unused import.(¶ç—øÿÿÿÿ8ï­ãÔù1J$89cb89e1-a7e7-4d49-863a-f09f97700021
+—kotlin:S3776z"RRefactor this method to reduce its Cognitive Complexity from 41 to the 15 allowed.(úœƒó8ö­ãÔù1J$6d767461-437a-49dc-9c27-4457456a0dbc

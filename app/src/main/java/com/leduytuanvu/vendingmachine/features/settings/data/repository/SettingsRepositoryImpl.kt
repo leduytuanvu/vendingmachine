@@ -2,13 +2,17 @@ package com.leduytuanvu.vendingmachine.features.settings.data.repository
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.AlarmReceiver
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
@@ -24,6 +28,7 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import java.lang.reflect.Type
+import java.util.Calendar
 import javax.inject.Inject
 
 class SettingsRepositoryImpl @Inject constructor(
@@ -208,6 +213,31 @@ class SettingsRepositoryImpl @Inject constructor(
         try {
             val listFileNameInFolder = localStorageDatasource.getListFileNamesInFolder(folderPath)
             return listFileNameInFolder
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun setScheduleDailyReset(context: Context, hour: Int, minute: Int) {
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmIntent = Intent(context, AlarmReceiver::class.java).let { intent ->
+                PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            }
+            val calendar: Calendar = Calendar.getInstance().apply {
+                timeInMillis = System.currentTimeMillis()
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                add(Calendar.DAY_OF_YEAR, 1) // Schedule for next day
+            }
+            // Set the alarm to trigger at 00:00 every day
+            alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                AlarmManager.INTERVAL_DAY,
+                alarmIntent
+            )
         } catch (e: Exception) {
             throw e
         }

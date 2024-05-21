@@ -9,7 +9,8 @@ data class SetupPaymentViewState (
     val isWarning: Boolean = false,
     val initSetup: InitSetup? = null,
     val cashBoxData: String = "",
+    val numberRottenBoxBalance: Int = 0,
     val vendingMachineData: String = "",
     val titleDialogWarning: String = "",
-    val listPaymentMethod: ArrayList<PaymentMethodResponse> = arrayListOf()
+    val listPaymentMethod: ArrayList<PaymentMethodResponse> = arrayListOf(),
 )

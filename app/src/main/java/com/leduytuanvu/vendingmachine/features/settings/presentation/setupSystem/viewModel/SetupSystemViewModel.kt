@@ -41,9 +41,57 @@ class SetupSystemViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
-        getInitSetupFromLocal()
-        getSerialSimId()
-        getInitInformationOfMachine()
+//        getInitSetupFromLocal()
+//        getSerialSimId()
+//        getInitInformationOfMachine()
+//        loadInitData()
+    }
+
+    fun loadInitData() {
+        logger.debug("getInitInformationOfMachine")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                val serialSimId = settingsRepository.getSerialSimId()
+                if (baseRepository.isHaveNetwork(context)) {
+                    val informationOfMachine = settingsRepository.getInformationOfMachine()
+                    _state.update { it.copy(
+                        initSetup = initSetup,
+                        serialSimId = serialSimId,
+                        informationOfMachine = informationOfMachine,
+                        isLoading = false,
+                    ) }
+                } else {
+                    _state.update { it.copy(
+                        initSetup = initSetup,
+                        serialSimId = serialSimId,
+                        isLoading = false,
+                    ) }
+                }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val logError = LogError(
+                    machineCode = initSetup.vendCode,
+                    errorType = "application",
+                    errorContent = "get init information machine from server fail: ${e.message}",
+                    eventTime = LocalDateTime.now().toDateTimeString(),
+                )
+                baseRepository.addNewLogToLocal(
+                    eventType = "error",
+                    severity = "normal",
+                    eventData = logError,
+                )
+                sendEvent(Event.Toast("${e.message}"))
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
     }
 
     fun getInitInformationOfMachine() {
@@ -295,7 +343,7 @@ class SetupSystemViewModel @Inject constructor(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
-                initSetup.timeToJumpToAdsScreen = timeToJumpToAdsScreen
+                initSetup.timeoutJumpToBigAdsScreen = timeToJumpToAdsScreen
                 _state.update { it.copy(initSetup = initSetup) }
                 baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                 sendEvent(Event.Toast("SUCCESS"))

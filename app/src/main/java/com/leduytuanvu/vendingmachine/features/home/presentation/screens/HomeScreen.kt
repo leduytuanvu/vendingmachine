@@ -73,8 +73,10 @@ import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.AdsHomeComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.BackgroundHomeComposable
+import com.leduytuanvu.vendingmachine.features.home.presentation.composables.BigAdsComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.DatetimeHomeComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.InformationHomeComposable
+import com.leduytuanvu.vendingmachine.features.home.presentation.composables.PaymentConfirmComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
 import kotlinx.coroutines.delay
@@ -87,11 +89,7 @@ internal fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val localStorageDatasource = LocalStorageDatasource()
-//    LaunchedEffect(Unit) {
-//        viewModel.loadInitData()
-//    }
     val lifecycleOwner = LocalLifecycleOwner.current
-
     // Register the lifecycle observer
     DisposableEffect(lifecycleOwner) {
         onDispose {
@@ -118,25 +116,31 @@ fun HomeContent(
     localStorageDatasource: LocalStorageDatasource,
 ) {
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
     // Update last interaction time on any interaction
     val updateInteractionTime = {
         lastInteractionTime = System.currentTimeMillis()
     }
+
+    // Capture any interaction on the screen
+    val interactionModifier = Modifier.pointerInput(Unit) {
+        detectTapGestures {
+            updateInteractionTime()
+        }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
-            if (System.currentTimeMillis() - lastInteractionTime > 10000) { // 60 seconds
-                if(!state.isShowBigAds) {
-                    Logger.debug("ifffffffffffffffff")
-                    viewModel.showBigAds() // Replace with your route
+            if (System.currentTimeMillis() - lastInteractionTime > (state.initSetup!!.timeoutJumpToBigAdsScreen.toLong()*1000)) { // 60 seconds
+                if (!state.isShowBigAds) {
+                    viewModel.showBigAds()
                 } else {
-                    Logger.debug("elseeeeeeeeeeeee")
                     updateInteractionTime()
                 }
             }
         }
     }
-
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
@@ -144,22 +148,13 @@ fun HomeContent(
         }
     }
     LoadingDialogComposable(isLoading = state.isLoading)
-    Scaffold {
+    Scaffold(modifier = interactionModifier) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput (Unit) {
-                    detectTapGestures (
-                        onTap = { updateInteractionTime() },
-                        onPress = { updateInteractionTime() },
-                        onDoubleTap = { updateInteractionTime() },
-                        onLongPress = { updateInteractionTime() }
-                    )
-                }
+            modifier = Modifier.fillMaxSize()
         ) {
             BackgroundHomeComposable()
             Column(modifier = Modifier.fillMaxSize()) {
-                if(state.isShowAds) {
+                if(state.isShowAds && !state.isShowBigAds) {
                     AdsHomeComposable(
                         context = context,
                         listAds = state.listAds,
@@ -831,98 +826,24 @@ fun HomeContent(
                             )
                         ),
                 ) {
-                    CustomButtonComposable(
-                        title = "Quay lại",
-                        wrap = true,
-                        height = 65.dp,
-                        fontSize = 20.sp,
-                        cornerRadius = 4.dp,
-                        fontWeight = FontWeight.Bold,
-                        paddingTop = 22.dp,
-                        paddingStart = 22.dp
-                    ) {
-                        viewModel.backInPayment()
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(900.dp)
-                            .padding(40.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Image(
-                            modifier = Modifier
-                                .height(320.dp)
-                                .padding(bottom = 80.dp)
-                                .width(320.dp),
-                            alignment = Alignment.Center,
-                            painter = painterResource(id = R.drawable.image_put_money),
-                            contentDescription = ""
-                        )
-                        Text(
-                            "Số tiền cần thanh toán: ${state.totalAmount.toVietNamDong()}",
-                            modifier = Modifier.padding(bottom = 26.dp),
-                            fontSize = 22.sp,
-                        )
-                        Text(
-                            "Vuốt phẳng và nhét tiền vào khe bên dưới",
-                            modifier = Modifier.padding(bottom = 26.dp),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 28.sp,
-                        )
-                        Text(
-                            "Số dư: ${state.initSetup!!.currentCash.toVietNamDong()}",
-                            modifier = Modifier.padding(bottom = 26.dp),
-                            fontSize = 22.sp,
-                        )
-                        Text(
-                            "Thời gian thanh toán còn ${state.countDownPaymentByCash}",
-                            modifier = Modifier.padding(bottom = 34.dp),
-                            fontSize = 22.sp,
-                        )
-
-                        CustomButtonComposable(
-                            title = "Chọn hình thức thanh toán khác",
-                            wrap = true,
-                            fontSize = 22.sp,
-                            cornerRadius = 6.dp,
-                        ) {
-                            viewModel.chooseAnotherMethodPayment()
-                        }
-                    }
+                    PaymentConfirmComposable(
+                        initSetup = state.initSetup!!,
+                        countDownPaymentByCash = state.countDownPaymentByCash,
+                        totalAmount = state.totalAmount,
+                        onClickChooseAnotherMethodPayment = { viewModel.chooseAnotherMethodPayment() },
+                        onClickBackInPayment = { viewModel.backInPayment() }
+                    )
                 }
             }
             if(state.isShowBigAds) {
-                var currentVideoIndex by remember { mutableIntStateOf(0) }
-                Box(
-                    modifier = Modifier
-                        .clickable { viewModel.hideBigAds() }
-                        .fillMaxSize()
-                        .background(Color.Black)
-                ) {
-                    AndroidView(
-                        factory = {
-                            VideoView(context).apply {
-                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                                setOnCompletionListener {
-                                    currentVideoIndex = (currentVideoIndex + 1) % state.listAds.size
-                                    setVideoPath(state.listAds[currentVideoIndex])
-                                    start()
-                                }
-                                if (state.listAds.isNotEmpty()) {
-                                    setVideoPath(state.listAds[currentVideoIndex])
-                                    start()
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clipToBounds()
-                            .background(Color.Black)
-                            .align(Alignment.Center)
-                    )
-                }
+                BigAdsComposable(
+                    context = context,
+                    listAds = state.listAds,
+                    onClickHideAds = {
+                        updateInteractionTime()
+                        viewModel.hideBigAds()
+                    }
+                )
             }
         }
     }

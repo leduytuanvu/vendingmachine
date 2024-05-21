@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.settings.domain.repository
 
+import android.content.Context
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
@@ -23,4 +24,5 @@ interface SettingsRepository {
     suspend fun getInformationOfMachine() : DataInformationMachineResponse
     suspend fun getSerialSimId() : String
     suspend fun getListFileNameInFolder(folderPath: String) : ArrayList<String>
+    suspend fun setScheduleDailyReset(context: Context, hour: Int, minute: Int)
 }

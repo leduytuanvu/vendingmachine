@@ -125,15 +125,16 @@ class InitSetupViewModel @Inject constructor(
                                 timeTurnOffLight = "",
                                 dropSensor = "ON",
                                 inchingMode = "0",
-                                timeToJumpToAdsScreen = "60",
+                                timeoutJumpToBigAdsScreen = "60",
                                 glassHeatingMode = "ON",
                                 highestTempWarning = "30",
                                 lowestTempWarning = "0",
                                 temperature = "",
-                                timeoutPayment = "60",
                                 initPromotion = "ON",
                                 currentCash = 0,
                                 timeoutPaymentByCash = "60",
+                                timeoutPaymentByQrCode = "60",
+                                timeResetOnEveryDay = "0:0",
                                 role = ""
                             )
                             baseRepository.writeDataToLocal(

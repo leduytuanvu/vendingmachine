@@ -443,12 +443,12 @@ class HomeViewModel @Inject constructor (
                 val totalAmount = homeRepository.getTotalAmount(_state.value.listSlotInCard)
                 if(baseRepository.isHaveNetwork(context)) {
                     if(_state.value.initSetup!!.initPromotion == "ON") {
-                        val promotion = homeRepository.getPromotion(
-                            voucherCode = _state.value.voucherCode,
-                            listSlot = _state.value.listSlotInCard,
-                        )
+//                        val promotion = homeRepository.getPromotion(
+//                            voucherCode = _state.value.voucherCode,
+//                            listSlot = _state.value.listSlotInCard,
+//                        )
                         _state.update { it.copy (
-                            promotion = promotion,
+//                            promotion = promotion,
                             totalAmount = totalAmount,
                             isLoading = false,
                         ) }

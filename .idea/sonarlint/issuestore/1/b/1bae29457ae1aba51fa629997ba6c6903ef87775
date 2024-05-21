@@ -1,8 +1,11 @@
 
-=kotlin:S125Z"Remove this commented out code.(‹ÙšÏ8†ê…Çù1
->kotlin:S125«"Remove this commented out code.(ú½­‹8ˆê…Çù1
->kotlin:S125Å"Remove this commented out code.(ú¾§8‰ê…Çù1
->kotlin:S125Ö"Remove this commented out code.(ú¾§8Šê…Çù1
-9kotlin:S1128'"Remove this unused import.(ÔÖ‰¹8Üê…Çù1
-Hkotlin:S1874"#Deprecated code should not be used.(˜íÆüıÿÿÿÿ8íê…Çù1
-qkotlin:S3776q"SRefactor this method to reduce its Cognitive Complexity from 177 to the 15 allowed.(–Ä÷8òê…Çù1
+dkotlin:S125¦"Remove this commented out code.(ú½­‹8£½ìÉù1J$b98bce0c-6528-49d9-839e-241e462f48ad
+dkotlin:S125À"Remove this commented out code.(ú¾§8£½ìÉù1J$5e72f373-4cd9-4eb2-8c69-a6c40b999bac
+dkotlin:S125Ñ"Remove this commented out code.(ú¾§8¤½ìÉù1J$adaca16e-c7e2-477d-b7f5-05eb6c0b3cf7
+dkotlin:S1128"Remove this unused import.(çÌ®ÿÿÿÿÿ8ä½ìÉù1J$c0c2a760-fae6-4e43-98e1-4eeefbd07c25
+_kotlin:S1128'"Remove this unused import.(ÔÖ‰¹8ä½ìÉù1J$320fa943-3f63-4b5a-bb29-4a9a1a180b28
+dkotlin:S1128("Remove this unused import.(õ»ıÂÿÿÿÿÿ8ä½ìÉù1J$905923b6-ab05-4b16-8aac-51f0c713fdc4
+_kotlin:S1128."Remove this unused import.(”¯°8ä½ìÉù1J$97b58543-ddf6-47aa-be95-69c5904f9a39
+dkotlin:S11289"Remove this unused import.(¶ç—øÿÿÿÿ8å½ìÉù1J$3adf79fa-78e0-4dd7-83a6-c98c9d2947cb
+nkotlin:S1874ˆ"#Deprecated code should not be used.(˜íÆüıÿÿÿÿ8ï½ìÉù1J$f28da4e4-4cf8-4358-845f-079cdcf9a043
+—kotlin:S3776o"SRefactor this method to reduce its Cognitive Complexity from 171 to the 15 allowed.(–Ä÷8ò½ìÉù1J$134264aa-7a12-4270-8a16-7b8906976da1

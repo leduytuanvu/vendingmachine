@@ -124,3 +124,10 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 }
+
+class AlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        // Perform reset operation here
+        // This will be executed when the alarm triggers at 00:00
+    }
+}

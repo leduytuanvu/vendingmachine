@@ -1,16 +1,18 @@
 
-}kotlin:S1172"7Use "_" instead of this unused lambda parameter "data".(ú·Ã–8èı®ºù1J$d6e817f5-e020-4f15-a095-7fdc21c4e6a5
-hkotlin:S125a"Remove this commented out code.(Í±±´ÿÿÿÿÿ8Üİ®ºù1J$0d075451-bceb-4111-89b7-d7b19adfb4f3
-ikotlin:S125§"Remove this commented out code.(¬®ãüÿÿÿÿ8öı®ºù1J$9b073c73-6ed7-460f-b5be-23484d7b69d8
-dkotlin:S125Ò"Remove this commented out code.(Ê×›¡8÷ı®ºù1J$d3d837cf-7811-47d8-a5b1-66c72c1849c3
-dkotlin:S125¼"Remove this commented out code.(ËÁ÷³8úı®ºù1J$ce796f31-a552-4d26-b895-fad352453f3b
-ckotlin:S125å"Remove this commented out code.(è»»_8ûı®ºù1J$e4672e78-b065-4afa-9ba4-906be0690eb4
-dkotlin:S125œ"Remove this commented out code.(ÙœÂ8şı®ºù1J$11074845-531f-4928-8807-a45419599c32
-nkotlin:S108¿")Either remove or fill this block of code.(Œ‡˜Ò8 ş®ºù1J$5508b572-35b1-474d-88f3-1277e97c7770
-skotlin:S108›")Either remove or fill this block of code.(ß®á§şÿÿÿÿ8¡ş®ºù1J$0231a748-f3ea-4e3f-98f1-6d527b2857be
-{kotlin:S1481–"0Remove this unused "updatedSlot" local variable.(İÆ­îøÿÿÿÿ8±ş®ºù1J$85724558-df19-4e09-b245-31a46ac2e28c
-{kotlin:S1481„"0Remove this unused "updatedSlot" local variable.(İÆ­îøÿÿÿÿ8±ş®ºù1J$4f94866f-1082-4a65-9553-727e0e2a6998
-hkotlin:S1874"#Deprecated code should not be used.(û¿„˜8Ó†Áºù1J$26ba4f7b-7261-4345-a923-9fefefb9b3db
-mkotlin:S1874w"#Deprecated code should not be used.(Ôå²“ûÿÿÿÿ8Ó†Áºù1J$12df86db-52a0-4629-9665-0737b0193431
-˜kotlin:S3776°"RRefactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.(äºˆØ8Äş®ºù1J$c8b1b85a-2bbf-4891-9c3c-2501a7b54a9f
-tkotlin:S1066™".Merge this "if" statement with the nested one.(ï¶Ê«8×ş®ºù1J$bce0d923-c26f-4d13-9baa-7f23324c4b00
+}kotlin:S1172"7Use "_" instead of this unused lambda parameter "data".(ú·Ã–8èı®ºù1J$8467afc2-8621-4eac-8635-fb6dd4744928
+hkotlin:S125a"Remove this commented out code.(Í±±´ÿÿÿÿÿ8Üİ®ºù1J$fbe1d1db-f015-4b67-995d-fa32b4ebc385
+ikotlin:S125§"Remove this commented out code.(¬®ãüÿÿÿÿ8öı®ºù1J$cbb1a74c-f298-4dbf-994f-327e7b639b26
+dkotlin:S125Ò"Remove this commented out code.(Ê×›¡8÷ı®ºù1J$525be625-2513-43cd-a7c7-1f7fd67a2f01
+dkotlin:S125¼"Remove this commented out code.(ËÁ÷³8úı®ºù1J$a02366ac-d805-43be-8051-0297862eceb9
+dkotlin:S125¾"Remove this commented out code.(Î¹Şƒ8Òì…Éù1J$9b69c676-31b4-43d4-9c94-8427bf9b3fb1
+ckotlin:S125å"Remove this commented out code.(è»»_8ûı®ºù1J$edfc84fc-5842-42f4-bf3e-0eb1255c4e92
+dkotlin:S125œ"Remove this commented out code.(ÙœÂ8şı®ºù1J$bc4c943c-eeea-40cf-a823-341eef9b4c22
+nkotlin:S108¿")Either remove or fill this block of code.(Œ‡˜Ò8 ş®ºù1J$b3c27caa-3803-4e2a-bbcf-c531a98efbea
+skotlin:S108›")Either remove or fill this block of code.(ß®á§şÿÿÿÿ8¡ş®ºù1J$a0bdb449-8aed-4e08-bdd2-0667a4fe7633
+{kotlin:S1481–"0Remove this unused "updatedSlot" local variable.(İÆ­îøÿÿÿÿ8±ş®ºù1J$59cbbb28-31c8-41fa-a345-12f4ffaa44b3
+{kotlin:S1481„"0Remove this unused "updatedSlot" local variable.(İÆ­îøÿÿÿÿ8±ş®ºù1J$cc9da6ed-7a9b-4511-a2d7-78d16d18c902
+hkotlin:S1874"#Deprecated code should not be used.(û¿„˜8Ó†Áºù1J$85bfff6e-b2db-4b01-95a1-3e2803a4ab36
+mkotlin:S1874w"#Deprecated code should not be used.(Ôå²“ûÿÿÿÿ8Ó†Áºù1J$e84601ad-3af0-40a9-9ca8-642ce93597f5
+˜kotlin:S3776°"RRefactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.(äºˆØ8Äş®ºù1J$d4b93680-e97e-4bad-801a-9916b8631340
+tkotlin:S1066™".Merge this "if" statement with the nested one.(ï¶Ê«8×ş®ºù1J$f25dd3b1-332d-4f6e-80a9-5854c8145973
+¡kotlin:S3923½"[Remove this conditional structure or edit its code blocks so that they're not all the same.(÷ı³’8¬ş…Éù1J$2fee0e81-1546-4790-b300-21f422ff9b17

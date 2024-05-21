@@ -1,7 +1,5 @@
 
-}kotlin:S1172‰"7Use "_" instead of this unused lambda parameter "data".(’ãĞº8÷„Ü¥ù1J$2bf81f92-36fe-4b4d-b135-e47c2fc713d7
-ikotlin:S125Š"Remove this commented out code.(›íöøÿÿÿÿ8ı„Ü¥ù1J$c5d45780-ae3c-4ec7-9f00-c866606b7d4f
-gkotlin:S6310…"Avoid hardcoded dispatchers.(ÊñÇ¬úÿÿÿÿ8¢Äİşø1J$139f394f-5bf8-4ffd-a3a6-490584b4709e
-bkotlin:S6310‹"Avoid hardcoded dispatchers.(Ô¥‚ü8¢Äİşø1J$10f06725-fbe8-4339-88c9-7f7fdcdc06bc
-zkotlin:S1143š"4Remove this break statement from this finally block.(ÄñŞ­8¦Äİşø1J$a05dd4db-a002-4c4c-9d3c-ab1134e93776
-˜kotlin:S3776ó"RRefactor this method to reduce its Cognitive Complexity from 38 to the 15 allowed.(â´Àš8µÄİşø1J$c25cd02f-ccc8-471f-b4f3-0d43efd53986
+gkotlin:S6310·"Avoid hardcoded dispatchers.(ÊñÇ¬úÿÿÿÿ8âÿÑù1J$68acfeb7-2040-47cb-833a-8e114f92a96b
+bkotlin:S6310½"Avoid hardcoded dispatchers.(Ô¥‚ü8âÿÑù1J$f2761c39-4b8d-44dc-8245-c0f739e3e98c
+zkotlin:S1143Ì"4Remove this break statement from this finally block.(ÄñŞ­8éÿÑù1J$bf4e879f-6e60-4b21-95c6-e641b5c6eb43
+˜kotlin:S3776¥"RRefactor this method to reduce its Cognitive Complexity from 38 to the 15 allowed.(â´Àš8ƒ€Ñù1J$3b33e113-c053-40ad-a12f-ace134f06f4d
