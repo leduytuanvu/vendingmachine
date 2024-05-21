@@ -13,10 +13,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +28,68 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 
+//@Composable
+//fun AdsHomeComposable(
+//    context: Context,
+//    listAds: ArrayList<String>,
+//    onClickHideAds: () -> Unit,
+//) {
+//    var currentVideoIndex by remember { mutableIntStateOf(0) }
+//    val videoView = remember { mutableStateOf<VideoView?>(null) }
+//
+//    Box(
+//        modifier = Modifier.fillMaxWidth().height(400.dp)
+//    ) {
+//        AndroidView(
+//            factory = {
+//                VideoView(context).apply {
+//                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+//                    setOnCompletionListener {
+//                        currentVideoIndex = (currentVideoIndex + 1) % listAds.size
+//                        setVideoPath(listAds[currentVideoIndex])
+//                        start()
+//                    }
+//                    videoView.value = this
+//                }
+//            },
+//            update = { view ->
+//                if (listAds.isNotEmpty()) {
+//                    view.setVideoPath(listAds[currentVideoIndex])
+//                    view.start()
+//                }
+//            },
+//            modifier = Modifier.fillMaxWidth().clipToBounds()
+//        )
+//        DisposableEffect(Unit) {
+//            onDispose {
+//                videoView.value?.stopPlayback()
+//            }
+//        }
+//        Button(
+//            modifier = Modifier
+//                .align(Alignment.BottomEnd)
+//                .padding(bottom = 14.dp, end = 14.dp)
+//                .border(
+//                    width = 1.dp,
+//                    color = Color.White,
+//                    shape = RoundedCornerShape(4.dp)
+//                ),
+//            colors = ButtonDefaults.buttonColors(
+//                Color.Transparent,
+//                contentColor = Color.Black
+//            ),
+//            shape = RoundedCornerShape(4.dp),
+//            onClick = { onClickHideAds() },
+//        ) {
+//            Text(
+//                text = "Tắt quảng cáo",
+//                color = Color.White,
+//                fontSize = 16.sp,
+//            )
+//        }
+//    }
+//}
+
 @Composable
 fun AdsHomeComposable(
     context: Context,
@@ -33,10 +97,11 @@ fun AdsHomeComposable(
     onClickHideAds: () -> Unit,
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
-    val videoView = remember { mutableStateOf<VideoView?>(null) }
 
     Box(
-        modifier = Modifier.fillMaxWidth().height(400.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
     ) {
         AndroidView(
             factory = {
@@ -47,22 +112,15 @@ fun AdsHomeComposable(
                         setVideoPath(listAds[currentVideoIndex])
                         start()
                     }
-                    videoView.value = this
-                }
-            },
-            update = { view ->
-                if (listAds.isNotEmpty()) {
-                    view.setVideoPath(listAds[currentVideoIndex])
-                    view.start()
+                    if (listAds.isNotEmpty()) {
+                        setVideoPath(listAds[currentVideoIndex])
+                        start()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth().clipToBounds()
         )
-        DisposableEffect(Unit) {
-            onDispose {
-                videoView.value?.stopPlayback()
-            }
-        }
+
         Button(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -87,3 +145,4 @@ fun AdsHomeComposable(
         }
     }
 }
+

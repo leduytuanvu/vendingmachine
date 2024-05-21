@@ -141,3 +141,5 @@ q
 Aapp/src/main/java/com/leduytuanvu/vendingmachine/MyApplication.kt,0\d\0d3f6afecbfa1ead801d5342d8440bc5f56acb9a
 P
  app/src/main/AndroidManifest.xml,8\c\8c55c3ccc257e5907959013f99656e4c8ec3903e
+u
+Eapp/src/main/java/com/leduytuanvu/vendingmachine/core/util/Screens.kt,4\1\4139b2aa662bade1d90f0f36ff2759c40cb21150

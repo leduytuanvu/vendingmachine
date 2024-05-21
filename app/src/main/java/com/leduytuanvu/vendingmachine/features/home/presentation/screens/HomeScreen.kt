@@ -2,10 +2,12 @@ package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.widget.VideoView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults.outlinedTextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -40,14 +43,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -58,6 +65,8 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyT
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.getCurrentDateTime
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImagePayment
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
@@ -81,6 +90,14 @@ internal fun HomeScreen(
 //    LaunchedEffect(Unit) {
 //        viewModel.loadInitData()
 //    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Register the lifecycle observer
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            viewModel.onStop()
+        }
+    }
     HomeContent(
         context = context,
         state = state,
@@ -100,6 +117,26 @@ fun HomeContent(
     navController: NavHostController,
     localStorageDatasource: LocalStorageDatasource,
 ) {
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    // Update last interaction time on any interaction
+    val updateInteractionTime = {
+        lastInteractionTime = System.currentTimeMillis()
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000L)
+            if (System.currentTimeMillis() - lastInteractionTime > 10000) { // 60 seconds
+                if(!state.isShowBigAds) {
+                    Logger.debug("ifffffffffffffffff")
+                    viewModel.showBigAds() // Replace with your route
+                } else {
+                    Logger.debug("elseeeeeeeeeeeee")
+                    updateInteractionTime()
+                }
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
@@ -108,7 +145,18 @@ fun HomeContent(
     }
     LoadingDialogComposable(isLoading = state.isLoading)
     Scaffold {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput (Unit) {
+                    detectTapGestures (
+                        onTap = { updateInteractionTime() },
+                        onPress = { updateInteractionTime() },
+                        onDoubleTap = { updateInteractionTime() },
+                        onLongPress = { updateInteractionTime() }
+                    )
+                }
+        ) {
             BackgroundHomeComposable()
             Column(modifier = Modifier.fillMaxSize()) {
                 if(state.isShowAds) {
@@ -456,11 +504,11 @@ fun HomeContent(
                             )
                         ),
                 ) {
-                    Column(modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 20.dp)) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         CustomButtonComposable(
                             title = "Quay lại",
                             wrap = true,
-                            paddingBottom = 20.dp,
+                            paddingBottom = 36.dp,
                             fontSize = 20.sp,
                             height = 60.dp,
                             fontWeight = FontWeight.Bold,
@@ -587,7 +635,7 @@ fun HomeContent(
                         }
                         Row(
                             modifier = Modifier
-                                .padding(top = 20.dp)
+                                .padding(top = 28.dp)
                                 .fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -618,7 +666,7 @@ fun HomeContent(
                                 viewModel.applyPromotion(text)
                             }
                         }
-                        Spacer(modifier = Modifier.height(30.dp))
+                        Spacer(modifier = Modifier.height(34.dp))
                         Row {
                             Text(
                                 "Khuyến mãi",
@@ -632,7 +680,7 @@ fun HomeContent(
                                 , fontSize = 20.sp
                             )
                         }
-                        Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
                         Row {
                             Text(
                                 "Tổng tiền thanh toán",
@@ -646,7 +694,7 @@ fun HomeContent(
                                 , fontSize = 20.sp
                             )
                         }
-                        Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
                         Row {
                             Text(
                                 "Số dư tiền mặt trên máy",
@@ -656,7 +704,7 @@ fun HomeContent(
                             )
                             Text("0vnd", fontSize = 20.sp)
                         }
-                        Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
                         Text(
                             "Hình thức thanh toán",
                             fontWeight = FontWeight.Bold,
@@ -667,7 +715,7 @@ fun HomeContent(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 26.dp)
+                                    .padding(top = 28.dp)
                             ) {
                                 chunks.forEach { rowItems ->
                                     Row(
@@ -701,13 +749,13 @@ fun HomeContent(
                                             ) {
                                                 Row(
                                                     modifier = Modifier
-                                                        .padding(start = 20.dp, end = 10.dp)
+                                                        .padding(start = 24.dp, end = 10.dp)
                                                         .fillMaxWidth(),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
                                                     val imageModifier = Modifier
-                                                        .width(40.dp)
-                                                        .height(40.dp)
+                                                        .width(44.dp)
+                                                        .height(44.dp)
                                                         .clickable { }
                                                     val imagePainter = if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                             pathFolderImagePayment + "/${item.methodName}.png"
@@ -752,7 +800,7 @@ fun HomeContent(
                             fontWeight = FontWeight.Bold,
                             height = 70.dp,
                             fontSize = 20.sp,
-                            paddingTop = 6.dp,
+                            paddingTop = 12.dp,
                         ) {
                             viewModel.paymentConfirmation()
                         }
@@ -843,6 +891,37 @@ fun HomeContent(
                             viewModel.chooseAnotherMethodPayment()
                         }
                     }
+                }
+            }
+            if(state.isShowBigAds) {
+                var currentVideoIndex by remember { mutableIntStateOf(0) }
+                Box(
+                    modifier = Modifier
+                        .clickable { viewModel.hideBigAds() }
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+                    AndroidView(
+                        factory = {
+                            VideoView(context).apply {
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                                setOnCompletionListener {
+                                    currentVideoIndex = (currentVideoIndex + 1) % state.listAds.size
+                                    setVideoPath(state.listAds[currentVideoIndex])
+                                    start()
+                                }
+                                if (state.listAds.isNotEmpty()) {
+                                    setVideoPath(state.listAds[currentVideoIndex])
+                                    start()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clipToBounds()
+                            .background(Color.Black)
+                            .align(Alignment.Center)
+                    )
                 }
             }
         }

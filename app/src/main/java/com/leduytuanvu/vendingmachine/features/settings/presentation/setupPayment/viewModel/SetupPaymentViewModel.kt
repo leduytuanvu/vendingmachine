@@ -158,7 +158,7 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("pollStatus")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbPollStatus)
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbDispenseBill3)
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {

@@ -3,6 +3,8 @@ package com.leduytuanvu.vendingmachine.features.home.presentation.viewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.CountDownTimer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.reflect.TypeToken
@@ -51,7 +53,10 @@ class HomeViewModel @Inject constructor (
     private var debounceDelay = 100L
     private var debounceJob: Job? = null
 
+    private val collectJobs = mutableListOf<Job>()
+
     init {
+        logger.debug("init homeviewmodel")
         loadInitData()
         observePortData()
         initLoad()
@@ -61,6 +66,10 @@ class HomeViewModel @Inject constructor (
         logger.debug("initLoad")
         viewModelScope.launch {
             try {
+                portConnectionDatasource.openPortCashBox(_state.value.initSetup!!.portCashBox)
+                portConnectionDatasource.startReadingCashBox()
+                portConnectionDatasource.openPortVendingMachine(_state.value.initSetup!!.portVendingMachine)
+                portConnectionDatasource.startReadingVendingMachine()
                 sendCommandCashBox(byteArrays.cbEnableType3456789)
                 delay(250)
                 sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
@@ -85,26 +94,56 @@ class HomeViewModel @Inject constructor (
         }
     }
 
+//    private fun observePortData() {
+//        viewModelScope.launch {
+//            portConnectionDatasource.dataFromCashBox.collect { data ->
+//                // Handle cash box data
+//                processDataFromCashBox(data)
+////                _state.update { currentState ->
+////                    currentState.copy(cashBoxData = data)
+////                }
+//            }
+//        }
+//
+//        viewModelScope.launch {
+//            portConnectionDatasource.dataFromVendingMachine.collect { data ->
+//                // Handle vending machine data
+////                Logger.info("HomeViewModel: collected vending machine data is $data")
+////                _state.update { currentState ->
+////                    currentState.copy(vendingMachineData = data)
+////                }
+//            }
+//        }
+//    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onStop() {
+        logger.debug("HomeViewModel is being stopped")
+
+        // Cancel all collection jobs
+        collectJobs.forEach { it.cancel() }
+
+        // Close any open connections or cleanup resources
+        portConnectionDatasource.closeVendingMachinePort()
+        portConnectionDatasource.closeCashBoxPort()
+    }
+
     private fun observePortData() {
-        viewModelScope.launch {
+        val cashBoxJob = viewModelScope.launch {
             portConnectionDatasource.dataFromCashBox.collect { data ->
                 // Handle cash box data
                 processDataFromCashBox(data)
-//                _state.update { currentState ->
-//                    currentState.copy(cashBoxData = data)
-//                }
             }
         }
+        collectJobs.add(cashBoxJob)
 
-        viewModelScope.launch {
+        val vendingMachineJob = viewModelScope.launch {
             portConnectionDatasource.dataFromVendingMachine.collect { data ->
                 // Handle vending machine data
-//                Logger.info("HomeViewModel: collected vending machine data is $data")
-//                _state.update { currentState ->
-//                    currentState.copy(vendingMachineData = data)
-//                }
+                // Logger.info("HomeViewModel: collected vending machine data is $data")
             }
         }
+        collectJobs.add(vendingMachineJob)
     }
 
     private fun processDataFromCashBox(data: ByteArray) {
@@ -260,7 +299,7 @@ class HomeViewModel @Inject constructor (
                         listSlot = listSlot,
                         listSlotInHome = listSlotShowInHome,
                         listPaymentMethod = listPaymentMethod,
-                        countDownPaymentByCash = (initSetup.timeoutPaymentByCash.toLong() * 1000),
+                        countDownPaymentByCash = initSetup.timeoutPaymentByCash.toLong(),
                         isLoading = false,
                     )
                 }
@@ -337,6 +376,19 @@ class HomeViewModel @Inject constructor (
     fun hideAds() {
         viewModelScope.launch {
             _state.update { it.copy(isShowAds = false) }
+        }
+    }
+
+    fun showBigAds() {
+        viewModelScope.launch {
+            _state.update { it.copy(isShowBigAds = true) }
+        }
+    }
+
+    fun hideBigAds() {
+        logger.debug("hideAds")
+        viewModelScope.launch {
+            _state.update { it.copy(isShowBigAds = false) }
         }
     }
 
@@ -604,7 +656,7 @@ class HomeViewModel @Inject constructor (
         logger.info("paymentConfirmation")
         viewModelScope.launch {
             try {
-                _state.update { it.copy(countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()*1000)) }
+                _state.update { it.copy(countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong())) }
                 when(_state.value.nameMethodPayment) {
                     "cash" -> {
                         logger.debug("method payment: cash")
@@ -645,7 +697,7 @@ class HomeViewModel @Inject constructor (
 
     private fun startCountdownPaymentByCash() {
         countdownTimer?.cancel() // Cancel any existing timer
-        countdownTimer = object : CountDownTimer(60000, 1000) {
+        countdownTimer = object : CountDownTimer((_state.value.initSetup!!.timeoutPaymentByCash.toLong()*1000), 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 _state.update { it.copy(countDownPaymentByCash = (millisUntilFinished / 1000).toLong()) }
                 if(_state.value.initSetup!!.currentCash >= _state.value.totalAmount) {

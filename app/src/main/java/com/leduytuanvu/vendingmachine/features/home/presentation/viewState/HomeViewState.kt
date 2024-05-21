@@ -9,6 +9,7 @@ data class HomeViewState (
     val isLoading: Boolean = false,
     val isShowAds: Boolean = true,
     val isPayment: Boolean = false,
+    val isShowBigAds: Boolean = false,
     val isPaymentConfirmation: Boolean = false,
     val nameMethodPayment: String = "cash",
     val voucherCode: String = "",
