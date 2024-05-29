@@ -45,7 +45,7 @@ class SetupProductViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
-        getListProductFromServer()
+        loadListProduct()
     }
 
     private fun showDialogWarning(mess: String) {
@@ -96,70 +96,58 @@ class SetupProductViewModel @Inject constructor(
         }
     }
 
-    fun getListPriceOfProductFromServer() {
+    fun getListPriceProductFromServer() {
         viewModelScope.launch {
             try {
-                _state.update { it.copy(isLoading = true) }
-                val listPriceOfProduct = settingsRepository.getListPriceOfProductFromServer()
-                _state.update { it.copy(
-                    isLoading = false,
-                    listPriceOfProduct = listPriceOfProduct,
-                ) }
+                if(baseRepository.isHaveNetwork(context)) {
+                    _state.update { it.copy(isLoading = true) }
+                    val listPriceOfProduct = settingsRepository.getListPriceOfProductFromServer()
+                    _state.update { it.copy(
+                        isLoading = false,
+                        listPriceOfProduct = listPriceOfProduct,
+                    ) }
+                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val logError = LogError(
+                baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
-                    errorType = "application",
-                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
+                    errorContent = "get list price of product from server fail in SetupProductViewModel/getListPriceProductFromServer(): ${e.message}"
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
                 _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    fun getListImageOfProductFromServer() {
+    fun getListImageProductFromServer() {
         viewModelScope.launch {
             try {
-                _state.update { it.copy(isLoading = true) }
-                val listPathImageOfProduct = settingsRepository.getListImageOfProductFromServer()
-                _state.update { it.copy(
-                    isLoading = false,
-                    listPathImageOfProduct = listPathImageOfProduct,
-                ) }
+                if(baseRepository.isHaveNetwork(context)) {
+                    _state.update { it.copy(isLoading = true) }
+                    val listPathImageOfProduct = settingsRepository.getListImageOfProductFromServer()
+                    _state.update { it.copy(
+                        isLoading = false,
+                        listPathImageOfProduct = listPathImageOfProduct,
+                    ) }
+                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val logError = LogError(
+                baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
-                    errorType = "application",
-                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
+                    errorContent = "get list image of product from server fail in SetupProductViewModel/getListImageProductFromServer(): ${e.message}",
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
                 _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    private fun getListProductFromServer() {
-        logger.debug("getListProductFromServer")
+    fun loadListProduct() {
+        logger.debug("loadListProduct")
         viewModelScope.launch {
             try {
                 if (baseRepository.isHaveNetwork(context)) {
@@ -173,32 +161,23 @@ class SetupProductViewModel @Inject constructor(
                     }
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
-                    _state.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val logError = LogError(
+                baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
-                    errorType = "application",
-                    errorContent = "get product from server fail in SetupProductViewModel/getListProductFromServer(): ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
+                    errorContent = "get list product from server fail in SetupProductViewModel/loadInitListProduct(): ${e.message}",
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
                 _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    fun downloadProductFromServer() {
-        logger.debug("downloadProductFromServer")
+    fun downloadListProductFromServerToLocal() {
+        logger.debug("downloadListProductFromServerToLocal")
         viewModelScope.launch {
             try {
                 if (baseRepository.isHaveNetwork(context = context)) {
@@ -255,16 +234,10 @@ class SetupProductViewModel @Inject constructor(
                         type = object : TypeToken<InitSetup>() {}.type,
                         path = pathFileInitSetup
                     )!!
-                    val logFill = LogFill(
+                    baseRepository.addNewFillLogToLocal(
                         machineCode = initSetup.vendCode,
-                        fillType = "download product from server to local",
+                        fillType = "download list product from server to local",
                         content = state.value.listProduct.toString(),
-                        eventTime = LocalDateTime.now().toDateTimeString(),
-                    )
-                    baseRepository.addNewLogToLocal(
-                        eventType = "fill",
-                        severity = "normal",
-                        eventData = logFill,
                     )
                     sendEvent(Event.Toast("SUCCESS"))
                 } else {
@@ -275,18 +248,10 @@ class SetupProductViewModel @Inject constructor(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val logError = LogError(
+                baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
-                    errorType = "application",
-                    errorContent = "download product from server to local fail in SetupProductViewModel/downloadProductFromServer(): ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
+                    errorContent = "download list product from server to local fail in SetupProductViewModel/downloadListProductFromServerToLocal(): ${e.message}",
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }

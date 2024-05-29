@@ -16,6 +16,7 @@ fun TitleAndEditTextComposable(
     initText: String = "",
     paddingBottom: Dp = 20.dp,
     keyboardTypeNumber: Boolean = false,
+    keyboardTypePassword: Boolean = false,
     onTextChanged: (String) -> Unit,
 ) {
     if(title.isNotEmpty()) {
@@ -23,6 +24,10 @@ fun TitleAndEditTextComposable(
         BodyTextComposable(title = title)
         Spacer(modifier = Modifier.height(14.dp))
     }
-    EditTextComposable(initText = initText, keyboardTypeNumber = keyboardTypeNumber) { inputText -> onTextChanged(inputText) }
+    EditTextComposable(
+        initText = initText,
+        keyboardTypeNumber = keyboardTypeNumber,
+        keyboardTypePassword = keyboardTypePassword,
+    ) { inputText -> onTextChanged(inputText) }
     Spacer(modifier = Modifier.height(paddingBottom))
 }

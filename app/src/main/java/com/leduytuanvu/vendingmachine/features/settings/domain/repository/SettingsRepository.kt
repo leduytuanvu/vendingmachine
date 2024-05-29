@@ -24,5 +24,4 @@ interface SettingsRepository {
     suspend fun getInformationOfMachine() : DataInformationMachineResponse
     suspend fun getSerialSimId() : String
     suspend fun getListFileNameInFolder(folderPath: String) : ArrayList<String>
-    suspend fun setScheduleDailyReset(context: Context, hour: Int, minute: Int)
 }

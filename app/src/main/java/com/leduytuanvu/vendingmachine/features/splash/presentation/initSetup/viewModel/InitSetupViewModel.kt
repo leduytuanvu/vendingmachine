@@ -1,49 +1,50 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewModel
 
-import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.leduytuanvu.vendingmachine.ScheduledTaskWorker
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogAuthy
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
+import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
 import com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewState.InitSetupViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDateTime
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-@SuppressLint("StaticFieldLeak")
 class InitSetupViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
     private val authRepository: AuthRepository,
-    private val portConnectionDataSource: PortConnectionDatasource,
     private val logger: Logger,
-    private val context: Context,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(InitSetupViewState())
     val state = _state.asStateFlow()
+    private val workManager = WorkManager.getInstance(context)
 
     private fun showDialogWarning(mess: String) {
         viewModelScope.launch {
             _state.update {
-                it.copy(
+                it.copy (
                     titleDialogWarning = mess,
                     isWarning = true,
                 )
@@ -89,29 +90,21 @@ class InitSetupViewModel @Inject constructor(
                         sendEvent(Event.Toast("Password must not empty!"))
                     } else {
                         val passwordEncode = authRepository.encodePassword(loginRequest.password)
-                        logger.info("passwordEncode: $passwordEncode")
-                        val passwordDecode = authRepository.decodePassword(passwordEncode)
-                        logger.info("passwordDecode: $passwordDecode")
-                        val response = authRepository.login(inputVendingMachineCode, loginRequest)
-                        if (response.accessToken.isNotEmpty()) {
-                            val logAuthy = LogAuthy(
+                        val responseLogin = authRepository.login(inputVendingMachineCode, loginRequest)
+                        if (responseLogin.accessToken.isNotEmpty()) {
+                            baseRepository.addNewAuthyLogToLocal(
                                 machineCode = inputVendingMachineCode,
                                 authyType = "login",
                                 username = loginRequest.username,
-                                eventTime = LocalDateTime.now().toDateTimeString(),
-                            )
-                            baseRepository.addNewLogToLocal(
-                                eventType = "authy",
-                                severity = "normal",
-                                eventData = logAuthy,
                             )
                             val baudRateCashBox = "9600"
                             val baudRateVendingMachine = "9600"
+                            val androidId = baseRepository.getAndroidId()
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
-                                androidId = baseRepository.getAndroidId(),
+                                androidId = androidId,
                                 username = loginRequest.username,
-                                password = passwordDecode,
+                                password = passwordEncode,
                                 portVendingMachine = portVendingMachine,
                                 baudRateVendingMachine = baudRateVendingMachine,
                                 portCashBox = portCashBox,
@@ -121,87 +114,129 @@ class InitSetupViewModel @Inject constructor(
                                 withdrawalAllowed = "ON",
                                 autoStartApplication = "ON",
                                 layoutHomeScreen = "3",
-                                timeTurnOnLight = "",
-                                timeTurnOffLight = "",
+                                timeTurnOnLight = "18:00",
+                                timeTurnOffLight = "06:00",
                                 dropSensor = "ON",
                                 inchingMode = "0",
                                 timeoutJumpToBigAdsScreen = "60",
                                 glassHeatingMode = "ON",
-                                highestTempWarning = "30",
+                                highestTempWarning = "25",
                                 lowestTempWarning = "0",
-                                temperature = "",
+                                temperature = "25",
                                 initPromotion = "ON",
                                 currentCash = 0,
                                 timeoutPaymentByCash = "60",
                                 timeoutPaymentByQrCode = "60",
-                                timeResetOnEveryDay = "0:0",
+                                timeResetOnEveryDay = "00:00",
                                 role = ""
                             )
-                            baseRepository.writeDataToLocal(
-                                data = initSetup,
-                                path = pathFileInitSetup
-                            )
-                            if (portConnectionDataSource.openPortCashBox(initSetup.portCashBox) == -1) {
-                                logger.info("Open port cash box is error!")
+                            baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                            val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
+                            val index = responseGetListAccount.indexOfFirst { it.username == loginRequest.username }
+                            if(index != -1 && !responseGetListAccount[index].role.isNullOrEmpty()) {
+                                initSetup.role = responseGetListAccount[index].role!!
+                                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                                val activateTheMachineRequest = ActivateTheMachineRequest(
+                                    machineCode = inputVendingMachineCode,
+                                    androidId = androidId,
+                                )
+                                val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
+                                if(responseActivateTheMachine.code==200) {
+                                    logger.debug("responseActivateTheMachine: $responseActivateTheMachine")
+                                    val partsTimeTurnOnLight = initSetup.timeTurnOnLight.split(":")
+                                    val hourTurnOnLight = partsTimeTurnOnLight[0].toInt()
+                                    val minuteTurnOnLight = partsTimeTurnOnLight[1].toInt()
+                                    rescheduleDailyTask("TurnOnLightTask", hourTurnOnLight, minuteTurnOnLight)
+
+                                    val partsTimeTurnOffLight = initSetup.timeTurnOffLight.split(":")
+                                    val hourTurnOffLight = partsTimeTurnOffLight[0].toInt()
+                                    val minuteTurnOffLight = partsTimeTurnOffLight[1].toInt()
+                                    rescheduleDailyTask("TurnOffLightTask", hourTurnOffLight, minuteTurnOffLight)
+
+                                    val partsTimeResetApp = initSetup.timeResetOnEveryDay.split(":")
+                                    val hourReset = partsTimeResetApp[0].toInt()
+                                    val minuteReset = partsTimeResetApp[1].toInt()
+                                    rescheduleDailyTask("ResetAppTask", hourReset, minuteReset)
+
+                                    baseRepository.addNewSetupLogToLocal(
+                                        machineCode = inputVendingMachineCode,
+                                        operationContent = "setup init: $initSetup",
+                                        operationType = "setup system",
+                                        username = loginRequest.username,
+                                    )
+                                    navController.navigate(Screens.SettingScreenRoute.route) {
+                                        popUpTo(Screens.InitSetupScreenRoute.route) {
+                                            inclusive = true
+                                        }
+                                    }
+                                    sendEvent(Event.Toast("Setup init success"))
+                                } else {
+                                    baseRepository.deleteFile(pathFileInitSetup)
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = initSetup.vendCode,
+                                        errorContent = "activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
+                                    )
+                                }
                             } else {
-                                logger.info("Open port cash box is success")
-                                portConnectionDataSource.startReadingCashBox()
+                                baseRepository.deleteFile(pathFileInitSetup)
+                                baseRepository.addNewErrorLogToLocal(
+                                    machineCode = initSetup.vendCode,
+                                    errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
+                                )
                             }
-                            if (portConnectionDataSource.openPortVendingMachine(initSetup.portVendingMachine) == -1) {
-                                logger.info("Open port vending machine is error!")
-                            } else {
-                                logger.info("Open port vending machine is success")
-                                portConnectionDataSource.startReadingVendingMachine()
-                            }
-                            val logSetup = LogSetup(
-                                machineCode = inputVendingMachineCode,
-                                operationContent = "setup init: $initSetup",
-                                operationType = "setup",
-                                username = loginRequest.username,
-                                eventTime = LocalDateTime.now().toDateTimeString(),
-                            )
-                            baseRepository.addNewLogToLocal(
-                                eventType = "setup",
-                                severity = "normal",
-                                eventData = logSetup,
-                            )
-                            sendEvent(Event.Toast("Setup init success"))
-                            navController.popBackStack()
-                            navController.navigate(Screens.SettingScreenRoute.route)
                         } else {
-                            val logError = LogError(
-                                machineCode = inputVendingMachineCode,
-                                errorType = "application",
+                            baseRepository.addNewErrorLogToLocal(
+                                machineCode = "error when machine code has not been entered",
                                 errorContent = "access token get from api is empty in InitSetupViewModel/writeInitSetupToLocal()",
-                                eventTime = LocalDateTime.now().toDateTimeString(),
                             )
-                            baseRepository.addNewLogToLocal(
-                                eventType = "error",
-                                severity = "normal",
-                                eventData = logError,
-                            )
-                            sendEvent(Event.Toast("Access token is empty!"))
                         }
                     }
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
                 }
             } catch (e: Exception) {
-                val logError = LogError(
-                    machineCode = "",
-                    errorType = "application",
+                if(baseRepository.isFileExists(pathFileInitSetup)) {
+                    baseRepository.deleteFile(pathFileInitSetup)
+                }
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = "error when machine code has not been entered",
                     errorContent = "write init setup to local in the first time fail in InitSetupViewModel/writeInitSetupToLocal(): ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
         }
+    }
+
+    private fun rescheduleDailyTask(taskName: String, hour: Int, minute: Int) {
+        workManager.cancelUniqueWork(taskName).also {
+            scheduleDailyTask(taskName, hour, minute)
+        }
+    }
+
+    private fun scheduleDailyTask(taskName: String, hour: Int, minute: Int) {
+        val currentTime = Calendar.getInstance()
+        val targetTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (before(currentTime)) {
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+        val initialDelay = targetTime.timeInMillis - currentTime.timeInMillis
+        val inputData = Data.Builder()
+            .putString("TASK_NAME", taskName)
+            .build()
+        val dailyWorkRequest = PeriodicWorkRequestBuilder<ScheduledTaskWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .setInputData(inputData)
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            taskName, // Unique task name
+            ExistingPeriodicWorkPolicy.REPLACE,
+            dailyWorkRequest
+        )
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.HandlePermissionsComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
-import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.viewModel.SetupProductViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.viewState.SetupProductViewState
 
@@ -43,6 +43,9 @@ internal fun SetupProductScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     HandlePermissionsComposable()
+    LaunchedEffect(Unit) {
+        viewModel.loadListProduct()
+    }
     SetupProductContent(
         state = state,
         viewModel = viewModel,
@@ -67,7 +70,7 @@ fun SetupProductContent(
         isConfirm = state.isConfirm,
         titleDialogConfirm = state.titleDialogConfirm,
         onClickClose = { viewModel.hideDialogConfirm() },
-        onClickConfirm = { viewModel.downloadProductFromServer() }
+        onClickConfirm = { viewModel.downloadListProductFromServerToLocal() }
     )
     Scaffold(modifier = Modifier.fillMaxSize()) {
         Column (

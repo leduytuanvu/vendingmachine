@@ -40,7 +40,6 @@ fun WarningDialogComposable(
             Box(
                 modifier = Modifier
                     .width(500.dp)
-                    .height(290.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color.White),
             ) {
@@ -79,6 +78,7 @@ fun WarningDialogComposable(
                             width = 160.dp,
                             fontSize = 20.sp,
                             cornerRadius = 4.dp,
+                            paddingBottom = 20.dp,
                             titleAlignment = TextAlign.Center,
                             fontWeight = FontWeight.Bold,
                         ) {

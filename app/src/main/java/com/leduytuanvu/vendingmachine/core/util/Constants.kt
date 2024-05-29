@@ -9,6 +9,8 @@ import java.util.Locale
 const val BASE_URL = "https://dev-api.avf.vn"
 
 @SuppressLint("SdCardPath")
+const val pathFolderVendingMachineData = "/sdcard/VendingMachineData"
+@SuppressLint("SdCardPath")
 const val pathFileInitSetup = "/sdcard/VendingMachineData/Setup/InitSetup.json"
 @SuppressLint("SdCardPath")
 const val pathFileSlot = "/sdcard/VendingMachineData/Slot/Slot.json"
@@ -18,6 +20,8 @@ const val pathFileProductDetail = "/sdcard/VendingMachineData/Product/ProductDet
 const val pathFolderImageProduct = "/sdcard/VendingMachineData/Product/Image"
 @SuppressLint("SdCardPath")
 const val pathFileLogServer = "/sdcard/VendingMachineData/Log/LogServer.json"
+@SuppressLint("SdCardPath")
+const val pathFileLogDepositWithdrawServer = "/sdcard/VendingMachineData/Log/DepositWithdrawServer.json"
 @SuppressLint("SdCardPath")
 const val pathFolderAds = "/sdcard/VendingMachineData/Ads"
 @SuppressLint("SdCardPath")

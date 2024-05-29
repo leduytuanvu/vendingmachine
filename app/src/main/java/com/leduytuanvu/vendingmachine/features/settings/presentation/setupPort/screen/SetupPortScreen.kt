@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +25,6 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
-import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.itemsPort
 import com.leduytuanvu.vendingmachine.core.util.itemsTypeVendingMachine
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.viewModel.SetupPortViewModel
@@ -39,7 +36,9 @@ internal fun SetupPortScreen(
     viewModel: SetupPortViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    Logger.info("SetupPortScreen")
+    LaunchedEffect(Unit) {
+        viewModel.loadInitSetup()
+    }
     SetupPortContent(
         state = state,
         viewModel = viewModel,
@@ -56,18 +55,24 @@ fun SetupPortContent(
 ) {
     var selectedItemTypeVendingMachine by remember {
         mutableStateOf(
-            AnnotatedString(state.initSetup?.typeVendingMachine!!)
+            AnnotatedString("")
         )
     }
     var selectedItemPortCashBox by remember {
         mutableStateOf(
-            AnnotatedString(state.initSetup?.portCashBox!!)
+            AnnotatedString("")
         )
     }
     var selectedItemPortVendingMachine by remember {
         mutableStateOf(
-            AnnotatedString(state.initSetup?.portVendingMachine!!)
+            AnnotatedString("")
         )
+    }
+
+    LaunchedEffect(state.initSetup) {
+        selectedItemTypeVendingMachine = AnnotatedString(state.initSetup?.typeVendingMachine ?: "")
+        selectedItemPortCashBox = AnnotatedString(state.initSetup?.portCashBox ?: "")
+        selectedItemPortVendingMachine = AnnotatedString(state.initSetup?.portVendingMachine ?: "")
     }
 
     LoadingDialogComposable(isLoading = state.isLoading)

@@ -1,7 +1,17 @@
 package com.leduytuanvu.vendingmachine.features.home.domain.repository
 
 import android.content.Context
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositAndWithdrawMoneyResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 
 interface HomeRepository {
@@ -16,6 +26,15 @@ interface HomeRepository {
         voucherCode: String,
         listSlot: ArrayList<Slot>,
     ): PromotionResponse
+    suspend fun updatePromotion(updatePromotionRequest: UpdatePromotionRequest): UpdatePromotionResponse
 
     suspend fun getTotalAmount(listSlot: ArrayList<Slot>): Int
+    suspend fun getSlotDrop(productCode: String): Slot?
+    suspend fun lockSlot(slotIndex: Int)
+    suspend fun minusInventory(slotIndex: Int)
+    suspend fun getListAnotherSlot(productCode: String): ArrayList<Slot>
+    suspend fun logMulti(listEvents: ArrayList<LogServer>): ArrayList<LogServerResponse>
+    suspend fun pushDepositWithdrawToServer(depositWithdrawRequest: DepositAndWithdrawMoneyRequest): DepositAndWithdrawMoneyResponse
+    suspend fun getQrCodeFromServer(getQrCodeRequest: GetQrCodeRequest): GetQrCodeResponse
+    suspend fun checkResultPaymentOnline(checkPaymentResultOnlineRequest: CheckPaymentResultOnlineRequest): CheckPaymentResultOnlineResponse
 }

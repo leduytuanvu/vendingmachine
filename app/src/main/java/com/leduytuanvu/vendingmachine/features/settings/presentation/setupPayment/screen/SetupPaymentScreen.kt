@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +64,12 @@ internal fun SetupPaymentScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
     }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            viewModel.closePort()
+        }
+    }
     SetupPaymentContent(
         state = state,
         viewModel = viewModel,
@@ -94,7 +102,7 @@ fun SetupPaymentContent(
         selectedTimeReset.value = Pair(hour, minute)
     }
     var partsReset by remember {
-        mutableStateOf(if (state.initSetup != null) state.initSetup.timeTurnOnLight.split(":") else listOf("0", "0"))
+        mutableStateOf(if (state.initSetup != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0"))
     }
     var hourReset by remember { mutableIntStateOf(partsReset[0].toIntOrNull() ?: 0) }
     var minuteReset by remember { mutableIntStateOf(partsReset.getOrNull(1)?.toIntOrNull() ?: 0) }
@@ -103,12 +111,10 @@ fun SetupPaymentContent(
         selectedItemDefaultPromotion = AnnotatedString(state.initSetup?.initPromotion ?: "ON")
         selectedItemTimeOutPaymentQrCode = AnnotatedString(if(state.initSetup?.timeoutPaymentByQrCode != null) "${state.initSetup.timeoutPaymentByQrCode}s" else "30s")
         selectedItemTimeOutPaymentCash = AnnotatedString(if(state.initSetup?.timeoutPaymentByCash != null) "${state.initSetup.timeoutPaymentByCash}s" else "30s")
-
         partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
         hourReset = partsReset[0].toIntOrNull() ?: 0
         minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
     }
-
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
         isWarning = state.isWarning,
@@ -261,7 +267,7 @@ fun SetupPaymentContent(
                     title = "DOWNLOAD PAYMENT METHODS",
                     wrap = true,
                     cornerRadius = 4.dp,
-                    paddingTop = 14.dp,
+                    paddingTop = 12.dp,
                     height = 60.dp,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
@@ -299,6 +305,198 @@ fun SetupPaymentContent(
                         minute = selectedTimeReset.value.second,
                     )
                 }
+
+//                CustomButtonComposable(
+//                    title = "TURN ON LIGHT",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.turnOnLight()
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "TURN OFF LIGHT",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.turnOffLight()
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "TURN OFF LIGHT",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.drop1()
+//                }
+//
+                CustomButtonComposable(
+                    title = "SET 2",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.setDrop(2)
+                }
+
+                CustomButtonComposable(
+                    title = "SET 3",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.setDrop(3)
+                }
+
+                CustomButtonComposable(
+                    title = "SET 5",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.setDrop(5)
+                }
+
+                CustomButtonComposable(
+                    title = "DROP 1",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.productDispense(0,1)
+                }
+
+                CustomButtonComposable(
+                    title = "DROP 2",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.productDispenseNotSensor(0,2)
+                }
+
+                CustomButtonComposable(
+                    title = "DISPENDED",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.dispensed()
+                }
+
+                CustomButtonComposable(
+                    title = "on",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.resetCashBox()
+                }
+
+                CustomButtonComposable(
+                    title = "off",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.offLight()
+                }
+//
+//                CustomButtonComposable(
+//                    title = "DROP NOT SENSOR 1",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.productDispense(0,1)
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "DROP SENSOR 2",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.productDispenseNotSensor(0,2)
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "DROP NOT SENSOR 2",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.productDispense(0,2)
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "DROP SENSOR 3",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.productDispenseNotSensor(0,3)
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "DROP NOT SENSOR 3",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.productDispense(0,3)
+//                }
 
                 Spacer(modifier = Modifier.height(100.dp))
             }

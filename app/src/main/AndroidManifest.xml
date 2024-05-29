@@ -14,6 +14,7 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <uses-permission android:name="android.permission.RESTART_PACKAGES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CWJ_GROUP" />
     <uses-permission android:name="android.permission.MTWEAK_USER" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -34,17 +35,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vendingmachine"
         tools:targetApi="31">
-        <receiver
-            android:name=".BootReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".AlarmReceiver" />
+<!--        <receiver-->
+<!--            android:name=".BootReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true"-->
+<!--            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.BOOT_COMPLETED" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <receiver android:name=".AlarmReceiver" />-->
 
         <activity
             android:name=".MainActivity"

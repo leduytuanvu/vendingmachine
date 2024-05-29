@@ -21,8 +21,8 @@ class PortConnectionDatasource {
     private val _dataFromCashBox = MutableStateFlow<ByteArray>(byteArrayOf())
     val dataFromCashBox: StateFlow<ByteArray> = _dataFromCashBox
     // Data from vending machine
-    private val _dataFromVendingMachine = MutableStateFlow<String>("")
-    val dataFromVendingMachine: StateFlow<String> = _dataFromVendingMachine
+    private val _dataFromVendingMachine = MutableStateFlow<ByteArray>(byteArrayOf())
+    val dataFromVendingMachine: StateFlow<ByteArray> = _dataFromVendingMachine
 
     // Data from vending machine
     private val _listSerialPort = MutableStateFlow<Array<String>>(arrayOf())
@@ -45,20 +45,6 @@ class PortConnectionDatasource {
         return fdPortCashBox
     }
 
-    // Make data empty
-    fun makeDataEmpty() {
-        _dataFromCashBox.value = byteArrayOf()
-        _dataFromVendingMachine.value = ""
-    }
-
-    // Get all serial ports
-    fun getAllSerialPorts(): Array<String> {
-        val listSerialPort = portConnectionHelperDataSource.getAllSerialPorts()
-        coroutineScope.launch { _listSerialPort.emit(listSerialPort) }
-        Logger.info("PortConnectionDataSource: list size serial ports is ${listSerialPort.size}")
-        return listSerialPort
-    }
-
     // Close vending machine ports
     fun closeVendingMachinePort() {
         portConnectionHelperDataSource.closePortVendingMachine()
@@ -79,6 +65,19 @@ class PortConnectionDatasource {
         readThreadCashBox.start()
     }
 
+    fun checkPortCashBoxStillStarting(): Boolean {
+        if(readThreadCashBox.isAlive) {
+            return true
+        }
+        return false
+    }
+    fun checkPortVendingMachineStillStarting(): Boolean {
+        if(readThreadVendingMachine.isAlive) {
+            return true
+        }
+        return false
+    }
+
     // Read thread vending machine
     private val readThreadVendingMachine = object : Thread() {
         @SuppressLint("SuspiciousIndentation")
@@ -87,10 +86,9 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingVendingMachine(512) { data ->
-                        val dataHexString = byteArrayToHexString(data)
-                        Logger.info("PortConnectionDataSource: data is $dataHexString")
+//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
-                            _dataFromVendingMachine.emit(dataHexString)
+                            _dataFromVendingMachine.emit(data)
                         }
                     }
                 } catch (e: IOException) {
@@ -108,10 +106,8 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
-//                        val dataHexString = byteArrayToHexString(data)
-//                        Logger.info("PortConnectionDataSource: data is $dataHexString")
+//                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
-//                            _dataFromCashBox.emit(dataHexString)
                             _dataFromCashBox.emit(data)
                         }
                     }
@@ -125,10 +121,12 @@ class PortConnectionDatasource {
 
     // Send command vending machine
     fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
+        Logger.info("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
     }
     // Send command cash box
     fun sendCommandCashBox(byteArray: ByteArray) : Int {
+//        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortCashBox(byteArray)
     }
 

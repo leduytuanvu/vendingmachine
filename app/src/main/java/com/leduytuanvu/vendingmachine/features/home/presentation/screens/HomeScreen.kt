@@ -2,7 +2,8 @@ package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.widget.VideoView
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -30,21 +32,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults.outlinedTextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -54,20 +56,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyTextComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Logger
-import com.leduytuanvu.vendingmachine.core.util.Screens
-import com.leduytuanvu.vendingmachine.core.util.getCurrentDateTime
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImagePayment
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
@@ -76,11 +80,12 @@ import com.leduytuanvu.vendingmachine.features.home.presentation.composables.Bac
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.BigAdsComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.DatetimeHomeComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.InformationHomeComposable
-import com.leduytuanvu.vendingmachine.features.home.presentation.composables.PaymentConfirmComposable
+import com.leduytuanvu.vendingmachine.features.home.presentation.composables.PutMoneyComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
 import kotlinx.coroutines.delay
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun HomeScreen(
     navController: NavHostController,
@@ -89,13 +94,42 @@ internal fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val localStorageDatasource = LocalStorageDatasource()
-    val lifecycleOwner = LocalLifecycleOwner.current
-    // Register the lifecycle observer
-    DisposableEffect(lifecycleOwner) {
-        onDispose {
-            viewModel.onStop()
+    Logger.debug("HomeScreen")
+    LaunchedEffect(Unit) {
+        viewModel.loadInitData()
+        while (true) {
+            delay(2500)
+            viewModel.pollStatus()
         }
     }
+//    LaunchedEffect(Unit) {
+//        while (true) {
+//            delay(10000L)
+//            viewModel.getTypeNetworkAndBatteryStatus()
+//        }
+//    }
+//    LaunchedEffect(Unit) {
+//        while (true) {
+//            delay(3000)
+//            viewModel.writeLogStatusNetworkAndPower()
+////            viewModel.readDoor()
+//        }
+//    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(300000)
+            viewModel.pushLogToServer()
+            viewModel.pushDepositWithdrawToServer()
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            viewModel.closePort()
+        }
+    }
+
     HomeContent(
         context = context,
         state = state,
@@ -115,367 +149,484 @@ fun HomeContent(
     navController: NavHostController,
     localStorageDatasource: LocalStorageDatasource,
 ) {
-    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
-
-    // Update last interaction time on any interaction
-    val updateInteractionTime = {
-        lastInteractionTime = System.currentTimeMillis()
-    }
-
+    var checkTouch by remember { mutableLongStateOf(0) }
     // Capture any interaction on the screen
     val interactionModifier = Modifier.pointerInput(Unit) {
         detectTapGestures {
-            updateInteractionTime()
+            checkTouch = 0
         }
     }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000L)
-            if (System.currentTimeMillis() - lastInteractionTime > (state.initSetup!!.timeoutJumpToBigAdsScreen.toLong()*1000)) { // 60 seconds
-                if (!state.isShowBigAds) {
-                    viewModel.showBigAds()
-                } else {
-                    updateInteractionTime()
+    if(state.initSetup!=null) {
+        if(!state.isShowBigAds && !state.isShowWaitForDropProduct) {
+            checkTouch = 0
+            LaunchedEffect(Unit) {
+                while (true) {
+                    delay(1000L)
+                    checkTouch++
+//                    Logger.debug("check touch = $checkTouch, ${state.initSetup.timeoutJumpToBigAdsScreen.toLong()}")
+                    if(checkTouch>state.initSetup.timeoutJumpToBigAdsScreen.toLong()) {
+//                        Logger.debug("vo check touch")
+                        viewModel.showBigAds()
+                        break
+                    }
                 }
             }
         }
     }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000L)
-            viewModel.pollStatus()
-        }
-    }
     LoadingDialogComposable(isLoading = state.isLoading)
+    WarningDialogComposable(
+        isWarning = state.isWarning,
+        titleDialogWarning = state.titleDialogWarning,
+        onClickClose = { viewModel.hideDialogWarning() },
+    )
+    ConfirmDialogComposable(
+        isConfirm = state.isConfirm,
+        titleDialogConfirm = state.titleDialogConfirm,
+        onClickClose = { viewModel.hideDialogConfirm() },
+        onClickConfirm = { viewModel.hideDialogConfirm() },
+    )
     Scaffold(modifier = interactionModifier) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
             BackgroundHomeComposable()
             Column(modifier = Modifier.fillMaxSize()) {
-                if(state.isShowAds && !state.isShowBigAds) {
-                    AdsHomeComposable(
-                        context = context,
-                        listAds = state.listAds,
-                        onClickHideAds = { viewModel.hideAdsDebounced() },
-                    )
-                }
-                DatetimeHomeComposable()
-                InformationHomeComposable(navController = navController, vendCode = state.initSetup!!.vendCode)
-//                ListProductHomeComposable(
-//                    listSlotShowInHome = state.listSlotShowInHome,
-//                    listSlotInCart = state.listSlotInCart,
-//                    slotShowBottom = state.slot,
-////                    numberProduct = state.numberProduct,
-//                    isShowAds = state.isShowAds,
-//                    localStorageDatasource = localStorageDatasource,
-//                    onClickMinusProduct = { slot -> viewModel.minusProduct(slot) },
-//                    onClickPlusProduct = { slot -> viewModel.plusProduct(slot) },
-//                    onClickAddProduct = { slot -> viewModel.addProduct(slot) },
-//                    onClickShowAds = { viewModel.showAds() }
-//                ) {}
-                Box(modifier = Modifier.fillMaxHeight()) {
-                    val chunks = state.listSlotInHome.chunked(3)
-                    Column(
+                if(state.listAds.isNotEmpty()) {
+                    if(state.isShowAds && !state.isShowBigAds) {
+                        AdsHomeComposable(
+                            context = context,
+                            listAds = state.listAds,
+                            onClickHideAds = { viewModel.hideAdsDebounced() },
+                        )
+                    }
+                } else {
+                    Box(
                         modifier = Modifier
-                            .padding(start = 20.dp, end = 20.dp)
-                            .verticalScroll(rememberScrollState())
+                            .height(400.dp)
+                            .background(Color.Black)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Spacer(modifier = Modifier.height(54.dp))
-                        chunks.forEach { rowItems ->
+
+                    }
+                }
+                if(state.initSetup!=null) {
+                    DatetimeHomeComposable(
+                        temp1 = state.temp1,
+                        temp2 = state.temp2,
+                        getTempStatusNetworkAndPower = {
+                            viewModel.getTemp()
+                            viewModel.writeLogStatusNetworkAndPower()
+                        })
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .height(30.dp)
+                            .fillMaxWidth()
+                            .background(Color(0xFFA31412)),
+                        Arrangement.Center,
+                        Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Nhiệt độ: ...",
+                            modifier = Modifier.padding(start = 6.dp),
+                            fontSize = 13.sp,
+                            color = Color.White,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            "00:00 - 00 Tháng 00, 2000",
+                            modifier = Modifier.padding(end = 6.dp),
+                            fontSize = 13.sp,
+                            color = Color.White,
+                        )
+                    }
+                }
+                if(state.initSetup!=null) {
+                    InformationHomeComposable(navController = navController, vendCode = state.initSetup!!.vendCode)
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .height(80.dp)
+                            .fillMaxWidth()
+                            .background(Color(0xFFCB1A17)),
+                        Arrangement.Center,
+                        Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxHeight(),
+                                Arrangement.Center,
+                                Alignment.CenterHorizontally
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    Arrangement.Center,
+                                    Alignment.CenterVertically,
+                                ) {
+                                    Image(
+                                        modifier = Modifier
+                                            .width(21.dp)
+                                            .height(21.dp)
+                                            .clickable { },
+                                        alignment = Alignment.TopEnd,
+                                        painter = painterResource(id = R.drawable.image_circle_phone),
+                                        contentDescription = ""
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(text = "1900.99.99.80", color = Color.White, fontSize = 15.sp)
+                                }
+                                Text(text = "AVF000000", color = Color.White, fontSize = 13.sp)
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            Alignment.Center,
+                        ) {
+                            Image(
+                                modifier = Modifier
+                                    .height(26.dp),
+                                alignment = Alignment.Center,
+                                painter = painterResource(id = R.drawable.image_logo_avf),
+                                contentDescription = ""
+                            )
+                        }
+                        Box(modifier = Modifier
+                            .weight(1f),
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                Arrangement.Center,
+                                Alignment.CenterVertically,
                             ) {
-                                rowItems.forEach { slot ->
+                                Image(
+                                    modifier = Modifier.height(20.dp),
+                                    alignment = Alignment.Center,
+                                    painter = painterResource(id = R.drawable.image_flags),
+                                    contentDescription = ""
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = "Tiếng việt", color = Color.White)
+                            }
+                        }
+                    }
+                }
+                if(state.initSetup!=null) {
+                    Box(modifier = Modifier.fillMaxHeight()) {
+                        val chunks = state.listSlotInHome.chunked(3)
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 20.dp, end = 20.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Spacer(modifier = Modifier.height(54.dp))
+                            chunks.forEach { rowItems ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    rowItems.forEach { slot ->
 //                                    var isChoose by remember { mutableStateOf(false) }
 //                                    var numberProduct by remember { mutableIntStateOf(0) }
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .border(
-                                                width = 0.dp,
-                                                color = Color.White,
-                                                shape = RoundedCornerShape(22.dp)
-                                            )
-                                            .background(
-                                                Color.White,
-                                                shape = RoundedCornerShape(22.dp)
-                                            ),
-                                    ) {
-                                        Column(
+                                        Box(
                                             modifier = Modifier
-                                                .padding(20.dp)
-                                                .fillMaxWidth()
-                                                .fillMaxHeight(),
-                                            verticalArrangement = Arrangement.Center,
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                        ) {
-                                            val imageModifier = Modifier
-                                                .width(150.dp)
-                                                .height(150.dp)
-                                                .clickable { }
-                                            val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                    pathFolderImageProduct + "/${slot.productCode}.png"
+                                                .weight(1f)
+                                                .border(
+                                                    width = 0.dp,
+                                                    color = Color.White,
+                                                    shape = RoundedCornerShape(22.dp)
                                                 )
-                                            ) {
-                                                val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                    .data(pathFolderImageProduct + "/${slot.productCode}.png")
-                                                    .build()
-                                                rememberAsyncImagePainter(imageRequest)
-                                            } else {
-                                                painterResource(id = R.drawable.image_error)
-                                            }
-                                            Image(
-                                                modifier = imageModifier,
-                                                painter = imagePainter,
-                                                contentDescription = ""
-                                            )
-
-                                            Spacer(modifier = Modifier.height(20.dp))
-
-                                            Text(
+                                                .background(
+                                                    Color.White,
+                                                    shape = RoundedCornerShape(22.dp)
+                                                ),
+                                        ) {
+                                            Column(
                                                 modifier = Modifier
+                                                    .padding(20.dp)
                                                     .fillMaxWidth()
-                                                    .padding(bottom = 10.dp),
-                                                text = slot.productName,
-                                                minLines = 2,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis,
-                                                fontSize = 17.sp,
-                                            )
-
-                                            BodyTextComposable(
-                                                title = slot.price.toVietNamDong(),
-                                                fontSize = 19.sp,
-                                                paddingBottom = 20.dp,
-                                                color = Color(0xFFE72B28),
-                                                fontWeight = FontWeight.Bold,
-                                            )
-
-                                            if (state.listSlotInCard.isNotEmpty() && viewModel.getInventoryByProductCode(slot.productCode) != -1) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .height(60.dp)
-                                                        .border(
-                                                            width = 0.dp,
-                                                            color = Color(0xFFE72B28),
-                                                            shape = RoundedCornerShape(50.dp)
-                                                        ),
+                                                    .fillMaxHeight(),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                            ) {
+                                                val imageModifier = Modifier
+                                                    .width(150.dp)
+                                                    .height(150.dp)
+                                                val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                        pathFolderImageProduct + "/${slot.productCode}.png"
+                                                    )
                                                 ) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .padding(horizontal = 20.dp),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                    ) {
-                                                        Image(
-                                                            modifier = Modifier
-                                                                .height(30.dp)
-                                                                .width(30.dp)
-                                                                .clickable {
-                                                                    viewModel.minusProductDebounced(
-                                                                        slot
-                                                                    )
-                                                                },
-                                                            alignment = Alignment.Center,
-                                                            painter = painterResource(id = R.drawable.image_minus),
-                                                            contentDescription = ""
-                                                        )
-                                                        Text(
-                                                            "${viewModel.getInventoryByProductCode(slot.productCode)}",
-                                                            fontSize = 19.sp,
-                                                        )
-                                                        Image(
-                                                            modifier = Modifier
-                                                                .height(30.dp)
-                                                                .width(30.dp)
-                                                                .clickable {
-                                                                    viewModel.plusProductDebounced(
-                                                                        slot
-                                                                    )
-                                                                },
-                                                            alignment = Alignment.Center,
-                                                            painter = painterResource(id = R.drawable.image_plus),
-                                                            contentDescription = ""
-                                                        )
-                                                    }
+                                                    val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                                        .data(pathFolderImageProduct + "/${slot.productCode}.png")
+                                                        .build()
+                                                    rememberAsyncImagePainter(imageRequest)
+                                                } else {
+                                                    painterResource(id = R.drawable.image_error)
                                                 }
-                                            } else {
-                                                Button(
-                                                    onClick = {
-                                                        viewModel.addProductDebounced(slot)
-                                                    },
+                                                Image(
+                                                    modifier = imageModifier,
+                                                    painter = imagePainter,
+                                                    contentDescription = ""
+                                                )
+
+                                                Spacer(modifier = Modifier.height(20.dp))
+
+                                                Text(
                                                     modifier = Modifier
-                                                        .height(60.dp)
-                                                        .border(
-                                                            width = 0.dp,
-                                                            color = Color(0xFFE72B28),
-                                                            shape = RoundedCornerShape(50.dp)
-                                                        ),
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        Color(0xFFE72B28),
-                                                        contentColor = Color.Black
-                                                    ),
-                                                    shape = RoundedCornerShape(50.dp),
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        Arrangement.Center,
-                                                        Alignment.CenterVertically,
+                                                        .fillMaxWidth()
+                                                        .padding(bottom = 10.dp),
+                                                    text = slot.productName,
+                                                    minLines = 2,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    fontSize = 17.sp,
+                                                )
+
+                                                BodyTextComposable(
+                                                    title = slot.price.toVietNamDong(),
+                                                    fontSize = 19.sp,
+                                                    paddingBottom = 20.dp,
+                                                    color = Color(0xFFE72B28),
+                                                    fontWeight = FontWeight.Bold,
+                                                )
+
+                                                if (state.listSlotInCard.isNotEmpty() && viewModel.getInventoryByProductCode(slot.productCode) != -1) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .height(60.dp)
+                                                            .border(
+                                                                width = 0.dp,
+                                                                color = Color(0xFFE72B28),
+                                                                shape = RoundedCornerShape(50.dp)
+                                                            ),
                                                     ) {
-                                                        Image(
+                                                        Row(
                                                             modifier = Modifier
-                                                                .padding(end = 6.dp)
-                                                                .height(30.dp),
-                                                            alignment = Alignment.Center,
-                                                            painter = painterResource(id = R.drawable.image_select_to_buy),
-                                                            contentDescription = ""
-                                                        )
-                                                        Text("Chọn mua", color = Color.White, fontSize = 18.sp)
+                                                                .fillMaxSize()
+                                                                .padding(horizontal = 20.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                        ) {
+                                                            Image(
+                                                                modifier = Modifier
+                                                                    .height(30.dp)
+                                                                    .width(30.dp)
+                                                                    .clickable {
+                                                                        viewModel.minusProductDebounced(
+                                                                            slot
+                                                                        )
+                                                                    },
+                                                                alignment = Alignment.Center,
+                                                                painter = painterResource(id = R.drawable.image_minus),
+                                                                contentDescription = ""
+                                                            )
+                                                            Text(
+                                                                "${viewModel.getInventoryByProductCode(slot.productCode)}",
+                                                                fontSize = 19.sp,
+                                                            )
+                                                            Image(
+                                                                modifier = Modifier
+                                                                    .height(30.dp)
+                                                                    .width(30.dp)
+                                                                    .clickable {
+                                                                        viewModel.plusProductDebounced(
+                                                                            slot
+                                                                        )
+                                                                    },
+                                                                alignment = Alignment.Center,
+                                                                painter = painterResource(id = R.drawable.image_plus),
+                                                                contentDescription = ""
+                                                            )
+                                                        }
+                                                    }
+                                                } else {
+                                                    Button(
+                                                        onClick = {
+                                                            viewModel.addProductDebounced(slot)
+                                                        },
+                                                        modifier = Modifier
+                                                            .height(60.dp)
+                                                            .border(
+                                                                width = 0.dp,
+                                                                color = Color(0xFFE72B28),
+                                                                shape = RoundedCornerShape(50.dp)
+                                                            ),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            Color(0xFFE72B28),
+                                                            contentColor = Color.Black
+                                                        ),
+                                                        shape = RoundedCornerShape(50.dp),
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            Arrangement.Center,
+                                                            Alignment.CenterVertically,
+                                                        ) {
+                                                            Image(
+                                                                modifier = Modifier
+                                                                    .padding(end = 6.dp)
+                                                                    .height(30.dp),
+                                                                alignment = Alignment.Center,
+                                                                painter = painterResource(id = R.drawable.image_select_to_buy),
+                                                                contentDescription = ""
+                                                            )
+                                                            Text("Chọn mua", color = Color.White, fontSize = 18.sp)
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
 
-                                // Add empty slots to fill the row if the row is not complete
-                                repeat(3 - rowItems.size) {
-                                    Spacer(modifier = Modifier.weight(1f))
+                                    // Add empty slots to fill the row if the row is not complete
+                                    repeat(3 - rowItems.size) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
 
-                        Spacer(modifier = Modifier.height(120.dp))
-                    }
-                    Row {
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 14.dp)
-                                .background(
-                                    Color(0xFFF59E0B),
-                                    shape = RoundedCornerShape(topEnd = 50.dp, bottomEnd = 50.dp)
-                                )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                                    .height(80.dp),
-                                Arrangement.Center,
-                                Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier
-
-                                ) {
-                                    Text("Số dư tiền mặt", fontSize = 15.sp, color = Color.White)
-                                    Text(state.initSetup.currentCash.toVietNamDong(), fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Image(
-                                    modifier = Modifier
-                                        .height(44.dp)
-                                        .width(44.dp)
-                                        .clickable { },
-                                    alignment = Alignment.Center,
-                                    painter = painterResource(id = R.drawable.image_withdraw),
-                                    contentDescription = ""
-                                )
-                            }
+                            Spacer(modifier = Modifier.height(120.dp))
                         }
-                        Spacer(modifier = Modifier.weight(1f))
-                        if(!state.isShowAds) {
-                            Button(
+                        Row {
+                            Box(
                                 modifier = Modifier
-                                    .padding(end = 14.dp, top = 14.dp)
+                                    .padding(top = 14.dp)
                                     .background(
-                                        color = Color(0xFF9CA3AF),
-                                        shape = RoundedCornerShape(4.dp) // Set the shape here
-                                    ),
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF9CA3AF), // Button background color
-                                    contentColor = Color.Black
-                                ),
-                                shape = RoundedCornerShape(4.dp), // Set the shape again for consistency
-                                onClick = { viewModel.showAdsDebounced() },
-                            ) {
-                                Text(
-                                    text = "Bật quảng cáo",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                )
-                            }
-                        }
-                    }
-                    if(state.listSlotInCard.isNotEmpty()) {
-                        Row (
-                            modifier = Modifier
-                                .height(120.dp)
-                                .background(Color.White)
-                                .padding(horizontal = 20.dp)
-                                .align(Alignment.BottomCenter),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val imageModifier = Modifier
-                                .width(80.dp)
-                                .height(80.dp)
-                            val imagePainter = if (state.slotAtBottom!!.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                    pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")) {
-                                val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                    .data(pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")
-                                    .build()
-                                rememberAsyncImagePainter(imageRequest)
-                            } else {
-                                painterResource(id = R.drawable.image_add_slot)
-                            }
-                            Image(
-                                modifier = imageModifier,
-                                painter = imagePainter,
-                                contentDescription = ""
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column() {
-                                Text(if(state.slotAtBottom != null) state.slotAtBottom.productName else "")
-                                Text(if(state.slotAtBottom!=null) "(Số lượng ${state.slotAtBottom.inventory})" else "")
-                                Text(if(state.slotAtBottom!=null) state.slotAtBottom.price.toVietNamDong() else "", color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            Button(
-                                onClick = { viewModel.showPaymentDebounced() },
-                                modifier = Modifier
-                                    .height(80.dp)
-                                    .wrapContentWidth()
-                                    .border(
-                                        width = 0.dp,
-                                        color = Color(0xFFE72B28),
-                                        shape = RoundedCornerShape(10.dp)
-                                    ),
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFFE72B28),
-                                    contentColor = Color.Black
-                                ),
-                                shape = RoundedCornerShape(10.dp),
+                                        Color(0xFFF59E0B),
+                                        shape = RoundedCornerShape(
+                                            topEnd = 50.dp,
+                                            bottomEnd = 50.dp
+                                        )
+                                    )
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp)
+                                        .height(80.dp),
                                     Arrangement.Center,
-                                    Alignment.CenterVertically,
+                                    Alignment.CenterVertically
                                 ) {
-                                    Text("Thanh toán", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                    Text(" | ", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                    Text(viewModel.getTotal().toVietNamDong(), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                    Column(
+                                        modifier = Modifier
+
+                                    ) {
+                                        Text("Số dư tiền mặt", fontSize = 15.sp, color = Color.White)
+                                        Text(state.initSetup.currentCash.toVietNamDong(), fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Image(
+                                        modifier = Modifier
+                                            .height(44.dp)
+                                            .width(44.dp)
+                                            .clickable {
+                                                checkTouch = 0
+                                                if (state.initSetup.withdrawalAllowed == "ON") {
+                                                    viewModel.withdrawalMoney()
+                                                }
+                                            },
+                                        alignment = Alignment.Center,
+                                        painter = painterResource(id = R.drawable.image_withdraw),
+                                        contentDescription = ""
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            if(!state.isShowAds) {
+                                Button(
+                                    modifier = Modifier
+                                        .padding(end = 14.dp, top = 14.dp)
+                                        .background(
+                                            color = Color(0xFF9CA3AF),
+                                            shape = RoundedCornerShape(4.dp) // Set the shape here
+                                        ),
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF9CA3AF), // Button background color
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(4.dp), // Set the shape again for consistency
+                                    onClick = { viewModel.showAdsDebounced() },
+                                ) {
+                                    Text(
+                                        text = "Bật quảng cáo",
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                    )
+                                }
+                            }
+                        }
+                        if(state.listSlotInCard.isNotEmpty()) {
+                            Row (
+                                modifier = Modifier
+                                    .height(120.dp)
+                                    .background(Color.White)
+                                    .padding(horizontal = 20.dp)
+                                    .align(Alignment.BottomCenter),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                val imageModifier = Modifier
+                                    .width(80.dp)
+                                    .height(80.dp)
+                                val imagePainter = if (state.slotAtBottom!!.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                        pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")) {
+                                    val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                        .data(pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")
+                                        .build()
+                                    rememberAsyncImagePainter(imageRequest)
+                                } else {
+                                    painterResource(id = R.drawable.image_add_slot)
+                                }
+                                Image(
+                                    modifier = imageModifier,
+                                    painter = imagePainter,
+                                    contentDescription = ""
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column() {
+                                    Text(state.slotAtBottom.productName)
+                                    Text("(Số lượng ${state.slotAtBottom.inventory})")
+                                    Text(state.slotAtBottom.price.toVietNamDong(), color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
+                                Button(
+                                    onClick = { viewModel.showPaymentDebounced() },
+                                    modifier = Modifier
+                                        .height(80.dp)
+                                        .wrapContentWidth()
+                                        .border(
+                                            width = 0.dp,
+                                            color = Color(0xFFE72B28),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ),
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFFE72B28),
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp),
+                                        Arrangement.Center,
+                                        Alignment.CenterVertically,
+                                    ) {
+                                        Text("Thanh toán", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                        Text(" | ", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                        Text(viewModel.getTotal().toVietNamDong(), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            if(state.isPayment && state.listSlotInCard.isNotEmpty()) {
+            if(state.isShowCart && state.listSlotInCard.isNotEmpty()) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -526,7 +677,6 @@ fun HomeContent(
                                         .width(130.dp)
                                         .height(130.dp)
                                         .padding(end = 10.dp)
-                                        .clickable { }
                                     val imagePainter = if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                             pathFolderImageProduct + "/${item.productCode}.png"
                                         )
@@ -683,11 +833,7 @@ fun HomeContent(
                                 modifier = Modifier.weight(1f),
                                 fontSize = 20.sp,
                             )
-                            Text(
-                                if(state.promotion == null) state.totalAmount.toVietNamDong()
-                                else state.promotion.paymentAmount!!.toVietNamDong()
-                                , fontSize = 20.sp
-                            )
+                            Text(state.totalAmount.toVietNamDong(), fontSize = 20.sp)
                         }
                         Spacer(modifier = Modifier.height(28.dp))
                         Row {
@@ -697,7 +843,7 @@ fun HomeContent(
                                 modifier = Modifier.weight(1f),
                                 fontSize = 20.sp,
                             )
-                            Text("0vnd", fontSize = 20.sp)
+                            Text("${if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ"}", fontSize = 20.sp)
                         }
                         Spacer(modifier = Modifier.height(28.dp))
                         Text(
@@ -802,7 +948,7 @@ fun HomeContent(
                     }
                 }
             }
-            if(state.isPaymentConfirmation && state.listSlotInCard.isNotEmpty()) {
+            if(state.isShowPushMoney) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -826,7 +972,7 @@ fun HomeContent(
                             )
                         ),
                 ) {
-                    PaymentConfirmComposable(
+                    PutMoneyComposable(
                         initSetup = state.initSetup!!,
                         countDownPaymentByCash = state.countDownPaymentByCash,
                         totalAmount = state.totalAmount,
@@ -835,16 +981,202 @@ fun HomeContent(
                     )
                 }
             }
+            if(state.isShowQrCode) {
+//                Logger.debug("adsfasdffgwrefrgsfgasdfsdfsdfdsffddff")
+//                Box(
+//                    modifier = Modifier
+//                        .height(200.dp)
+//                        .align(Alignment.BottomCenter)
+//                        .border(
+//                            width = 0.dp,
+//                            color = Color.White,
+//                            shape = RoundedCornerShape(
+//                                topStart = 22.dp,
+//                                topEnd = 22.dp,
+//                                bottomEnd = 0.dp,
+//                                bottomStart = 0.dp
+//                            )
+//                        )
+//                        .background(
+//                            color = Color.White,
+//                            shape = RoundedCornerShape(
+//                                topStart = 22.dp,
+//                                topEnd = 22.dp,
+//                                bottomEnd = 0.dp,
+//                                bottomStart = 0.dp
+//                            )
+//                        ),
+//                ) {
+//                    Image(
+//                        modifier = Modifier
+//                            .padding(bottom = 20.dp)
+//                            .height(300.dp)
+//                            .width(300.dp),
+//                        alignment = Alignment.Center,
+//                        painter = painterResource(id = R.drawable.image_get_product),
+//                        contentDescription = ""
+//                    )
+////                    Text("dfsdfsdfdff")
+//                }
+                Dialog(
+                    onDismissRequest = { /*TODO*/ },
+                    properties = DialogProperties(dismissOnClickOutside = false)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(630.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.White,
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 17.dp, vertical = 17.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Image(
+                                modifier = Modifier
+                                    .align(Alignment.End)
+                                    .height(38.dp)
+                                    .width(38.dp),
+                                alignment = Alignment.Center,
+                                painter = painterResource(id = R.drawable.image_close),
+                                contentDescription = ""
+                            )
+                            Text(
+                                "Thanh toán ${state.nameMethodPayment}",
+                                modifier = Modifier.padding(bottom = 4.dp, top = 4.dp),
+                                fontSize = 21.sp,
+                            )
+                            Image(
+                                bitmap = state.imageBitmap!!,
+                                contentDescription = "QR Code",
+                                modifier = Modifier.size(460.dp)
+                            )
+                            Text(
+                                "Vui lòng quét mã trong ${state.countDownPaymentByOnline}s",
+                                modifier = Modifier.padding(bottom = 30.dp, top = 10.dp),
+                                fontSize = 21.sp,
+                            )
+                        }
+                    }
+                }
+            }
             if(state.isShowBigAds) {
                 BigAdsComposable(
                     context = context,
                     listAds = state.listAds,
                     onClickHideAds = {
-                        updateInteractionTime()
+//                        updateInteractionTime()
                         viewModel.hideBigAds()
                     }
                 )
             }
+            if(state.isShowWaitForDropProduct) {
+                Dialog(
+                    onDismissRequest = { /*TODO*/ },
+                    properties = DialogProperties(dismissOnClickOutside = false)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(560.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color.White,
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Image(
+                                modifier = Modifier
+                                    .padding(bottom = 20.dp)
+                                    .height(300.dp)
+                                    .width(300.dp),
+                                alignment = Alignment.Center,
+                                painter = painterResource(id = R.drawable.image_get_product),
+                                contentDescription = ""
+                            )
+                            Text(
+                                "Vui lòng chờ để nhận sản phẩm từ khe bên dưới",
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                fontSize = 21.sp,
+                            )
+                            Text(
+                                "Nước có ga vui lòng mở sau 15 giây",
+                                modifier = Modifier.padding(bottom = 36.dp),
+                                fontSize = 21.sp,
+                            )
+                            Text(
+                                "Nếu bạn cần hỗ trợ thêm liên hệ hotline",
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                fontSize = 21.sp,
+                            )
+                            Text(
+                                "1900.99.99.89",
+                                modifier = Modifier.padding(bottom = 34.dp),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFE72B28),
+                            )
+                        }
+                    }
+                }
+            }
+//            if(state.isShowDropFail) {
+//                Dialog(
+//                    onDismissRequest = { /*TODO*/ },
+//                    properties = DialogProperties(dismissOnClickOutside = false)
+//                ) {
+//                    Surface(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(300.dp),
+//                        shape = RoundedCornerShape(8.dp),
+//                        color = Color.White,
+//                    ) {
+//                        Column(
+//                            modifier = Modifier
+//                                .fillMaxSize()
+//                                .padding(30.dp),
+//                            horizontalAlignment = Alignment.CenterHorizontally,
+//                            verticalArrangement = Arrangement.Center,
+//                        ) {
+//                            Text(
+//                                "Có ${state.numberProductDroppedFail} sản phẩm rớt không thành công! Vui lòng mua sản phẩm khác hoặc rút lại tiền thừa",
+//                                modifier = Modifier.padding(bottom = 32.dp),
+//                                lineHeight = 30.sp,
+//                                textAlign = TextAlign.Center,
+//                                fontSize = 22.sp,
+//                            )
+//                            Row {
+//                                CustomButtonComposable(
+//                                    title = "Mua sản phẩm khác",
+//                                    height = 65.dp,
+//                                    fontWeight = FontWeight.Bold,
+//                                    paddingEnd = 5.dp,
+//                                    cornerRadius = 6.dp,
+//                                    fontSize = 20.sp,
+//                                    wrap = true,
+//                                ) {
+//                                    viewModel.hideDropFailDebounced()
+//                                }
+//                                CustomButtonComposable(
+//                                    title = "Rút tiền thừa",
+//                                    fontWeight = FontWeight.Bold,
+//                                    height = 65.dp,
+//                                    paddingStart = 5.dp,
+//                                    cornerRadius = 6.dp,
+//                                    fontSize = 20.sp,
+//                                    wrap = true,
+//                                ) {
+//
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 }

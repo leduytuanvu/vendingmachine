@@ -1,6 +1,9 @@
 
-_kotlin:S1128"Remove this unused import.(ŸÍ¾8ùì©Ëø1J$ef042269-b48c-4b57-9988-c8f24cd542cc
-kotlin:S1192y"qDefine a constant instead of duplicating this literal "Not have internet, please connect with internet!" 3 times.(‘¤ß8‹¿»Ëø1
-˜kotlin:S3776™"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(×’8œí©Ëø1J$c26fe44d-3f0e-40e9-b8b2-ddf71932ae4b
-kotlin:S3776ÿ"RRefactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.(ì·×üÿÿÿÿ8§í©Ëø1J$03c6bb53-d592-41ed-b8d4-3a12ab2ead6b
-kotlin:S3776•"RRefactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.(†ˆÆƒÿÿÿÿÿ8©í©Ëø1J$24b21148-051a-447d-b708-1a536ca66504
+ckotlin:S125V"Remove this commented out code.(Êºşü8Ïâà´ú1J$35807ae4-64ef-48ac-9397-88c37d9abc9d
+_kotlin:S1128"Remove this unused import.(ŸÍ¾8ë¦Í´ú1J$1bd5fe2c-6058-49a3-b9ea-44d8e8f1d995
+dkotlin:S1128"Remove this unused import.(ùÑ¿ÿÿÿÿÿ8ÖîÖ´ú1J$d9bbd002-3eaa-4a92-a8b5-ce237cfa4f75
+·kotlin:S1192§"qDefine a constant instead of duplicating this literal "Not have internet, please connect with internet!" 3 times.(‘¤ß8ï¦Í´ú1J$b866c852-b4f1-4b66-8ea4-3d9a71168661
+–kotlin:S1192É"KDefine a constant instead of duplicating this literal "setup slot" 7 times.(Çƒ‘²ÿÿÿÿÿ8î¦Í´ú1J$1e5c08c8-6a88-48d9-81ff-7f9a2084dd0d
+˜kotlin:S3776Ú"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(×’8ô¦Í´ú1J$f16b2cc3-2a27-40ee-959b-16991919acb6
+kotlin:S3776¥"RRefactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.(ì·×üÿÿÿÿ8ô¦Í´ú1J$f64e9423-83cd-492f-b7a1-fa9c67bb106d
+kotlin:S3776á"RRefactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.(†ˆÆƒÿÿÿÿÿ8õ¦Í´ú1J$ebf19435-541e-4ae0-b1ab-1ad4e540fe9c

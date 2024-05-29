@@ -16,31 +16,6 @@ fun LoadingDialogComposable(isLoading: Boolean) {
             properties = DialogProperties(dismissOnClickOutside = false)
         ) {
             CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
-//            Box(
-//                modifier = Modifier
-//                    .width(200.dp)
-//                    .height(200.dp)
-//                    .clip(RoundedCornerShape(10.dp))
-//                    .background(Color.White),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Column(
-//                    modifier = Modifier.padding(0.dp),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                    content = {
-//                        CircularProgressIndicator(modifier = Modifier.padding(bottom = 30.dp), color = Color.Black, strokeWidth = 2.dp)
-//                        Text(text = "Loading")
-//                    }
-//                )
-//            }
         }
     }
-}
-
-@Preview
-@Composable
-fun LoadingDialogPreview() {
-    LoadingDialogComposable(
-        true
-    )
 }

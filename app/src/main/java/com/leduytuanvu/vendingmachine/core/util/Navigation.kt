@@ -1,11 +1,14 @@
 package com.leduytuanvu.vendingmachine.core.util
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.screen.SettingsScreen
 import com.leduytuanvu.vendingmachine.features.splash.presentation.splash.screen.SplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.leduytuanvu.vendingmachine.features.auth.presentation.screen.LoginScreen
 import com.leduytuanvu.vendingmachine.features.home.presentation.screens.HomeScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayment.screen.SetupPaymentScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.screen.SetupPortScreen
@@ -15,6 +18,7 @@ import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem
 import com.leduytuanvu.vendingmachine.features.settings.presentation.viewLog.screen.ViewLogScreen
 import com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.screen.InitSetupScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Screens.SplashScreenRoute.route) {
@@ -30,7 +34,7 @@ fun Navigation(navController: NavHostController) {
             HomeScreen(navController)
         }
 
-        composable(Screens.InitSettingScreenRoute.route) {
+        composable(Screens.InitSetupScreenRoute.route) {
             InitSetupScreen(navController)
         }
 
@@ -56,6 +60,10 @@ fun Navigation(navController: NavHostController) {
 
         composable(Screens.SetupSystemScreenRoute.route) {
             SetupSystemScreen(navController)
+        }
+
+        composable(Screens.LoginScreenRoute.route) {
+            LoginScreen(navController)
         }
     }
 }

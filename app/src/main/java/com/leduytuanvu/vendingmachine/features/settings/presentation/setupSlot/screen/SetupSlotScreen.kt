@@ -55,7 +55,9 @@ internal fun SetupSlotScreen(
     viewModel: SetupSlotViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    Logger.info("SetupSlotScreen")
+    LaunchedEffect(Unit) {
+        viewModel.loadInitSetupListSlotListProduct()
+    }
     SetupSlotContent(
         state = state,
         viewModel = viewModel,
@@ -156,6 +158,7 @@ fun SetupSlotContent(
                     items(state.listSlot.size) { index ->
                         val slot = state.listSlot[index]
                         var isChecked by remember { mutableStateOf(false) }
+                        var isLock by remember { mutableStateOf(slot.isLock) }
                         if(slot.status==1) {
                             Box(
                                 modifier = Modifier
@@ -303,7 +306,10 @@ fun SetupSlotContent(
                                                 titleAlignment = TextAlign.Center,
                                                 cornerRadius = 4.dp,
                                                 height = 60.dp,
-                                                function = { },
+                                                function = {
+                                                    isLock = false
+                                                    viewModel.unlockSlot(slot)
+                                                },
                                                 fontSize = 20.sp,
                                                 fontWeight = FontWeight.Bold,
                                             )
@@ -319,21 +325,35 @@ fun SetupSlotContent(
                                             )
                                         }
                                     } else {
-                                        if (slot.slot == 10 || slot.slot == 20 || slot.slot == 30 || slot.slot == 40 || slot.slot == 50 || slot.slot == 60) {
-//                                        Logger.info("index if = $index")
+                                        if(isLock) {
+                                            CustomButtonComposable(
+                                                title = "UNLOCK SLOT",
+                                                titleAlignment = TextAlign.Center,
+                                                cornerRadius = 4.dp,
+                                                height = 60.dp,
+                                                function = {
+                                                    isLock = false
+                                                    viewModel.unlockSlot(slot)
+                                                },
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
                                         } else {
-//                                        Logger.info("index else = $index")
-                                            val slotNext = state.listSlot[index+1]
-                                            if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
-                                                CustomButtonComposable(
-                                                    title = "MERGE SLOT",
-                                                    titleAlignment = TextAlign.Center,
-                                                    cornerRadius = 4.dp,
-                                                    height = 60.dp,
-                                                    function = { viewModel.mergeSlot(slot) },
-                                                    fontSize = 20.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                )
+                                            if (slot.slot == 10 || slot.slot == 20 || slot.slot == 30 || slot.slot == 40 || slot.slot == 50 || slot.slot == 60) {
+
+                                            } else {
+                                                val slotNext = state.listSlot[index+1]
+                                                if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
+                                                    CustomButtonComposable(
+                                                        title = "MERGE SLOT",
+                                                        titleAlignment = TextAlign.Center,
+                                                        cornerRadius = 4.dp,
+                                                        height = 60.dp,
+                                                        function = { viewModel.mergeSlot(slot) },
+                                                        fontSize = 20.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
+                                                }
                                             }
                                         }
                                     }

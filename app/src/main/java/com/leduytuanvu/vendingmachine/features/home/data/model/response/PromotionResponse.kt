@@ -3,7 +3,8 @@ package com.leduytuanvu.vendingmachine.features.home.data.model.response
 import com.google.gson.annotations.SerializedName
 
 data class PromotionResponse(
-    @SerializedName("vend_code") var vendCode: String?,
+    @SerializedName("machine_code") var machineCode: String?,
+    @SerializedName("android_id") var androidId: String?,
     @SerializedName("carts") var carts: ArrayList<DataPromotionResponse>?,
     @SerializedName("total_amount") var totalAmount: Int?,
     @SerializedName("total_discount") var totalDiscount: Int?,

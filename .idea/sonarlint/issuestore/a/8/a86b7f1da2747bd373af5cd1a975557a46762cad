@@ -1,5 +1,7 @@
 
-gkotlin:S6310·"Avoid hardcoded dispatchers.(ÊñÇ¬úÿÿÿÿ8âÿÑù1J$68acfeb7-2040-47cb-833a-8e114f92a96b
-bkotlin:S6310½"Avoid hardcoded dispatchers.(Ô¥‚ü8âÿÑù1J$f2761c39-4b8d-44dc-8245-c0f739e3e98c
-zkotlin:S1143Ì"4Remove this break statement from this finally block.(ÄñŞ­8éÿÑù1J$bf4e879f-6e60-4b21-95c6-e641b5c6eb43
-˜kotlin:S3776¥"RRefactor this method to reduce its Cognitive Complexity from 38 to the 15 allowed.(â´Àš8ƒ€Ñù1J$3b33e113-c053-40ad-a12f-ace134f06f4d
+gkotlin:S6310 "Avoid hardcoded dispatchers.(ÊñÇ¬úÿÿÿÿ8¹ÓıÃú1J$b267c412-c71f-4771-a65e-b260753142d4
+bkotlin:S6310¦"Avoid hardcoded dispatchers.(Ô¥‚ü8ºÓıÃú1J$ae97768f-62d7-4ed7-8cc5-752379e57194
+zkotlin:S1143µ"4Remove this break statement from this finally block.(ÄñŞ­8ÃÓıÃú1J$751fcdb8-ee59-43f7-ad0e-5b9c96b38ca8
+_kotlin:S1128"Remove this unused import.(ï›’8ÈîúÃú1J$9c3782c7-0666-4744-ba79-3b4d60d1d6c4
+•kotlin:S1192Ÿ"ODefine a constant instead of duplicating this literal "Turn off light" 4 times.(—ÀŠ«8ŞÓıÃú1J$ff178f63-6ce0-4df5-86fb-e57123f0888f
+˜kotlin:S3776"RRefactor this method to reduce its Cognitive Complexity from 38 to the 15 allowed.(â´Àš8ãÓıÃú1J$8c8a4ee1-7039-4d6b-ae0f-7cf9de285267

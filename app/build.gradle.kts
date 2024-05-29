@@ -33,8 +33,18 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = "key0"
+            keyPassword = "1234567890"
+            storeFile = file("C:\\Users\\leduytuanvu\\Develop\\Kotlin\\vendingmachine\\keystore\\keystore.jks")
+            storePassword = "1234567890"
+        }
+    }
+
     buildTypes {
-        release {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -42,6 +52,21 @@ android {
             )
         }
     }
+
+//    buildTypes {
+////        release {
+////            isMinifyEnabled = false
+////            proguardFiles(
+////                getDefaultProguardFile("proguard-android-optimize.txt"),
+////                "proguard-rules.pro"
+////            )
+////        }
+//        release {
+//            signingConfig signingConfigs.release
+//        }
+//    }
+
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_9
@@ -128,4 +153,9 @@ dependencies {
 
     // Interceptor
     implementation(libs.logging.interceptor)
+
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
+
+    implementation("com.google.zxing:core:3.4.1")
+
 }

@@ -1,6 +1,9 @@
 package com.leduytuanvu.vendingmachine.core.util
 
+import android.graphics.Bitmap
 import android.util.Base64
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
@@ -115,4 +118,6 @@ fun String?.toJson(): String {
     val jsonBytes = Base64.decode(this, Base64.DEFAULT)
     return String(jsonBytes)
 }
+
+fun Bitmap.toImageBitmap(): ImageBitmap = this.asImageBitmap()
 

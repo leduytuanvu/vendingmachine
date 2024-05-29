@@ -1,8 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.screen
 
 import android.annotation.SuppressLint
-import android.widget.TimePicker
-import androidx.compose.ui.viewinterop.AndroidView
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -18,8 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -44,9 +45,8 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Loadi
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TimePickerWrapperComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.util.Logger
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
-import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel.SetupSystemViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
 
@@ -59,6 +59,12 @@ internal fun SetupSystemScreen(
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            viewModel.closePort()
+        }
     }
     SetupSystemContent(
         viewModel = viewModel,
@@ -77,8 +83,17 @@ fun SetupSystemContent(
     context: Context,
 ) {
     LoadingDialogComposable(isLoading = state.isLoading)
-//    ConfirmDialogComposable(isConfirm = state.isConfirm, state, viewModel)
-
+    WarningDialogComposable(
+        isWarning = state.isWarning,
+        titleDialogWarning = state.titleDialogWarning,
+        onClickClose = { viewModel.hideDialogWarning() },
+    )
+    ConfirmDialogComposable(
+        isConfirm = state.isConfirm,
+        titleDialogConfirm = state.titleDialogConfirm,
+        onClickClose = { viewModel.hideDialogConfirm() },
+        onClickConfirm = { viewModel.resetFactory(navController) },
+    )
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -88,7 +103,6 @@ fun SetupSystemContent(
                 .padding(start = 20.dp, end = 20.dp, top = 20.dp),
             content = {
                 SetupSystemMainContentComposable(
-                    navController = navController,
                     context = context,
                     state = state,
                     viewModel = viewModel
@@ -121,44 +135,38 @@ fun SetupSystemBackContentComposable(navController: NavHostController) {
 @Composable
 fun SetupSystemMainContentComposable(
     viewModel: SetupSystemViewModel,
-    navController: NavHostController,
     context: Context,
     state: SetupSystemViewState,
 ) {
-    var inputVendingMachineCode by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.vendCode else "") }
-    var inputTimeTurnOnLight by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.timeTurnOnLight else "0:0") }
-    var inputTimeTurnOffLight by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.vendCode else "0:0") }
-    var inputHighestTempWarning by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.highestTempWarning else "") }
-    var inputLowestTempWarning by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.lowestTempWarning else "") }
-    var inputTemperature by remember { mutableStateOf(if(state.initSetup!=null) state.initSetup.temperature else "") }
-    var selectedItemFullScreenAds by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.fullScreenAds else "ON")) }
-    var selectedItemWithdrawalAllowed by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.withdrawalAllowed else "ON")) }
-    var selectedItemAutoStartApplication by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.autoStartApplication else "ON")) }
-    var selectedItemLayoutHomeScreen by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.layoutHomeScreen else "3")) }
-    var selectedItemDropSensor by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.dropSensor else "ON")) }
-    var selectedItemInchingMode by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.inchingMode else "0")) }
-    var selectedItemTimeJumpToAdsScreen by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.timeoutJumpToBigAdsScreen else "60s")) }
-    var selectedItemGlassHeatingMode by remember { mutableStateOf(AnnotatedString(if(state.initSetup!=null) state.initSetup.glassHeatingMode else "ON")) }
+    var inputVendingMachineCode by remember { mutableStateOf("") }
+    var inputTimeTurnOnLight by remember { mutableStateOf("00:00") }
+    var inputTimeTurnOffLight by remember { mutableStateOf("00:00") }
+    var inputHighestTempWarning by remember { mutableStateOf("") }
+    var inputLowestTempWarning by remember { mutableStateOf("") }
+    var inputTemperature by remember { mutableStateOf("") }
+    var selectedItemFullScreenAds by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemWithdrawalAllowed by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemAutoStartApplication by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemLayoutHomeScreen by remember { mutableStateOf(AnnotatedString("3")) }
+    var selectedItemDropSensor by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemInchingMode by remember { mutableStateOf(AnnotatedString("0")) }
+    var selectedItemTimeJumpToAdsScreen by remember { mutableStateOf(AnnotatedString("60s")) }
+    var selectedItemGlassHeatingMode by remember { mutableStateOf(AnnotatedString("ON")) }
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     val appVersionName = packageInfo.versionName
     val keyboardController = LocalSoftwareKeyboardController.current
-//    val selectedTimeTurnOn = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
-//    val selectedTimeTurnOff = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
-//    // Function to update the selected time
-//    val onTimeSelectedTurnOn: (Int, Int) -> Unit = { hour, minute ->
-//        selectedTimeTurnOn.value = Pair(hour, minute)
-//    }
-//    val onTimeSelectedTurnOff: (Int, Int) -> Unit = { hour, minute ->
-//        selectedTimeTurnOff.value = Pair(hour, minute)
-//    }
+    val selectedTimeTurnOn = remember { mutableStateOf(Pair(0, 0)) }
+    val selectedTimeTurnOff = remember { mutableStateOf(Pair(0, 0)) }
+    val onTimeSelectedTurnOn: (Int, Int) -> Unit = { hour, minute -> selectedTimeTurnOn.value = Pair(hour, minute) }
+    val onTimeSelectedTurnOff: (Int, Int) -> Unit = { hour, minute -> selectedTimeTurnOff.value = Pair(hour, minute) }
+    var partsTurnOnLight by remember { mutableStateOf(listOf("0", "0")) }
+    var partsTurnOffLight by remember { mutableStateOf(listOf("0", "0")) }
+    var hourTurnOnLight by remember { mutableIntStateOf(0) }
+    var minuteTurnOnLight by remember { mutableIntStateOf(0) }
+    var hourTurnOffLight by remember { mutableIntStateOf(0) }
+    var minuteTurnOffLight by remember { mutableIntStateOf(0) }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp - 40.dp
-//    val partsTurnOnLight = state.initSetup!!.timeTurnOnLight.split(":")
-//    val hourTurnOnLight = partsTurnOnLight[0].toIntOrNull() ?: 0
-//    val minuteTurnOnLight = partsTurnOnLight.getOrNull(1)?.toIntOrNull() ?: 0
-//    val partsTurnOffLight = state.initSetup.timeTurnOffLight.split(":")
-//    val hourTurnOffLight = partsTurnOffLight[0].toIntOrNull() ?: 0
-//    val minuteTurnOffLight = partsTurnOffLight.getOrNull(1)?.toIntOrNull() ?: 0
     val seralSimId = state.serialSimId.ifEmpty { "No sim found" }
 
     LaunchedEffect(state.initSetup) {
@@ -174,8 +182,14 @@ fun SetupSystemMainContentComposable(
         selectedItemLayoutHomeScreen = AnnotatedString(state.initSetup?.layoutHomeScreen ?: "3")
         selectedItemDropSensor = AnnotatedString(state.initSetup?.dropSensor ?: "ON")
         selectedItemInchingMode = AnnotatedString(state.initSetup?.inchingMode ?: "0")
-        selectedItemTimeJumpToAdsScreen = AnnotatedString(state.initSetup?.timeoutJumpToBigAdsScreen ?: "60s")
+        selectedItemTimeJumpToAdsScreen = AnnotatedString(if(state.initSetup?.timeoutJumpToBigAdsScreen!=null) "${state.initSetup.timeoutJumpToBigAdsScreen}s" else "60s")
         selectedItemGlassHeatingMode = AnnotatedString(state.initSetup?.glassHeatingMode ?: "ON")
+        partsTurnOnLight = if (state.initSetup?.timeTurnOnLight != null) state.initSetup.timeTurnOnLight.split(":") else listOf("0", "0")
+        hourTurnOnLight = partsTurnOnLight[0].toIntOrNull() ?: 0
+        minuteTurnOnLight = partsTurnOnLight.getOrNull(1)?.toIntOrNull() ?: 0
+        partsTurnOffLight = if (state.initSetup?.timeTurnOffLight != null) state.initSetup.timeTurnOffLight.split(":") else listOf("0", "0")
+        hourTurnOffLight = partsTurnOffLight[0].toIntOrNull() ?: 0
+        minuteTurnOffLight = partsTurnOffLight.getOrNull(1)?.toIntOrNull() ?: 0
     }
 
     Column(
@@ -341,20 +355,38 @@ fun SetupSystemMainContentComposable(
             .padding(bottom = 18.dp)) {
             Column(modifier = Modifier.width(screenWidthDp/2)) {
                 BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-//                TimePickerWrapperComposable(
-//                    defaultHour = hourTurnOnLight,
-//                    defaultMinute = minuteTurnOnLight,
-//                    onTimeSelected = onTimeSelectedTurnOn
-//                )
+                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
+                if(state.initSetup!=null) {
+                    TimePickerWrapperComposable(
+                        defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
+                        defaultMinute = state.initSetup.timeTurnOnLight.split(":")[1].toInt(),
+                        onTimeSelected = onTimeSelectedTurnOn
+                    )
+                } else {
+                    TimePickerWrapperComposable(
+                        defaultHour = 0,
+                        defaultMinute = 0,
+                        onTimeSelected = onTimeSelectedTurnOn
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.width(screenWidthDp/2)) {
                 BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-//                TimePickerWrapperComposable(
-//                    defaultHour = hourTurnOffLight,
-//                    defaultMinute = minuteTurnOffLight,
-//                    onTimeSelected = onTimeSelectedTurnOff
-//                )
+                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
+                if(state.initSetup!=null) {
+                    TimePickerWrapperComposable(
+                        defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
+                        defaultMinute = state.initSetup.timeTurnOffLight.split(":")[1].toInt(),
+                        onTimeSelected = onTimeSelectedTurnOff
+                    )
+                } else {
+                    TimePickerWrapperComposable(
+                        defaultHour = 0,
+                        defaultMinute = 0,
+                        onTimeSelected = onTimeSelectedTurnOff
+                    )
+                }
             }
         }
 
@@ -367,10 +399,10 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
-//            viewModel.updateTimeTurnOnTurnOffLightInLocal(
-//                timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
-//                timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
-//            )
+            viewModel.updateTimeTurnOnTurnOffLightInLocal(
+                timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
+                timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
+            )
         }
 
         CustomButtonComposable(
@@ -382,7 +414,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
-            viewModel.check()
+            viewModel.checkDropSensor()
         }
 
         BodyTextComposable(title = "Drop sensor", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
@@ -429,7 +461,6 @@ fun SetupSystemMainContentComposable(
 
         BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
         TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("10s"),
             AnnotatedString("30s"),
             AnnotatedString("60s"),
             AnnotatedString("90s"),
@@ -480,21 +511,34 @@ fun SetupSystemMainContentComposable(
 
             Column(modifier = Modifier.width(screenWidthDp/2)) {
                 BodyTextComposable(title = "Lowest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-                EditTextComposable(initText = if(state.initSetup!=null) state.initSetup.lowestTempWarning else "", keyboardTypeNumber = true) {
-                    inputLowestTempWarning = it
+                if(state.initSetup!=null) {
+                    EditTextComposable(initText = state.initSetup.lowestTempWarning, keyboardTypeNumber = true) {
+                        inputLowestTempWarning = it
+                    }
+                } else {
+                    EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                        inputLowestTempWarning = it
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.width(screenWidthDp/2)) {
                 BodyTextComposable(title = "Highest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-                EditTextComposable(initText =if(state.initSetup!=null) state.initSetup.highestTempWarning else "", keyboardTypeNumber = true) {
-                    inputHighestTempWarning = it
+                if(state.initSetup!=null) {
+                    EditTextComposable(initText = state.initSetup.highestTempWarning, keyboardTypeNumber = true) {
+                        inputHighestTempWarning = it
+                    }
+                } else {
+                    EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                        inputHighestTempWarning = it
+                    }
                 }
             }
         }
         CustomButtonComposable(
             title = "SAVE",
             cornerRadius = 4.dp,
+            titleAlignment = TextAlign.Center,
             height = 60.dp,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
@@ -505,8 +549,24 @@ fun SetupSystemMainContentComposable(
 
         BodyTextComposable(title = "Temperature", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
-        TitleAndEditTextComposable(title = "", paddingBottom = 12.dp, initText = if(state.initSetup!=null) state.initSetup.temperature else "", keyboardTypeNumber = true) {
-            inputTemperature = it
+        if(state.initSetup!=null) {
+            TitleAndEditTextComposable(
+                title = "",
+                paddingBottom = 12.dp,
+                initText = state.initSetup.temperature,
+                keyboardTypeNumber = true
+            ) {
+                inputTemperature = it
+            }
+        } else {
+            TitleAndEditTextComposable(
+                title = "",
+                paddingBottom = 12.dp,
+                initText = "",
+                keyboardTypeNumber = true
+            ) {
+                inputTemperature = it
+            }
         }
         CustomButtonComposable(
             title = "SAVE",
@@ -522,8 +582,8 @@ fun SetupSystemMainContentComposable(
         }
 
 
-        BodyTextComposable(title = "Temperature 1: ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        BodyTextComposable(title = "Temperature 2: ", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        BodyTextComposable(title = "Temperature 1: ${state.temp1}${if(state.temp1.isNotEmpty()&&state.temp1!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        BodyTextComposable(title = "Temperature 2: ${state.temp2}${if(state.temp2.isNotEmpty()&&state.temp2!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
         CustomButtonComposable(
             title = "READ TEMPERATURE",
             wrap = true,
@@ -533,20 +593,19 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
-            keyboardController?.hide()
-            viewModel.updateTemperatureInLocal(inputTemperature)
+            viewModel.getTemp()
         }
 
-        CustomButtonComposable(
-            title = "RESET FACTORY",
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            titleAlignment = TextAlign.Center,
-            fontSize = 20.sp,
-            paddingBottom = 20.dp,
-        ) {
-            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
-        }
+//        CustomButtonComposable(
+//            title = "RESET FACTORY",
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            titleAlignment = TextAlign.Center,
+//            fontSize = 20.sp,
+//            paddingBottom = 20.dp,
+//        ) {
+//            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
+//        }
     }
 }

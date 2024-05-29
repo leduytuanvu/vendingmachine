@@ -43,7 +43,7 @@ internal fun ViewLogScreen(
     }
     ViewLogContent(
         state = state,
-        viewModel = viewModel,
+//        viewModel = viewModel,
         navController = navController,
     )
 }
@@ -52,14 +52,14 @@ internal fun ViewLogScreen(
 @Composable
 fun ViewLogContent(
     state: SettingsViewState,
-    viewModel: SettingsViewModel,
+//    viewModel: SettingsViewModel,
     navController: NavHostController,
 ) {
-    val itemsLog = listOf(
-        AnnotatedString("Error log"),
-    )
-
-    var selectedItem by remember { mutableStateOf(AnnotatedString("Error log")) }
+//    val itemsLog = listOf(
+//        AnnotatedString("Error log"),
+//    )
+//
+//    var selectedItem by remember { mutableStateOf(AnnotatedString("Error log")) }
 
     LoadingDialogComposable(isLoading = state.isLoading)
 
@@ -85,6 +85,7 @@ fun ViewLogContent(
                 LazyColumn {
                     items(state.listLogServerLocal.size) {
                         index -> Column {
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 "${state.listLogServerLocal[index].eventTime} ${state.listLogServerLocal[index].eventType.uppercase()}",
                                 color = when (state.listLogServerLocal[index].eventType) {
@@ -125,7 +126,12 @@ fun ViewLogContent(
                                 maxLines = 5,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                "Is sent: ${state.listLogServerLocal[index].isSent}:",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
                         }
                     }
                 }

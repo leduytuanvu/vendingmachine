@@ -30,6 +30,8 @@ import com.leduytuanvu.vendingmachine.R
 fun ConfirmDialogComposable(
     isConfirm: Boolean,
     titleDialogConfirm: String,
+    titleLeft: String = "OK",
+    titleRight: String = "CANCEL",
     onClickClose: () -> Unit,
     onClickConfirm: () -> Unit,
 ) {
@@ -76,7 +78,7 @@ fun ConfirmDialogComposable(
                         Spacer(modifier = Modifier.height(40.dp))
                         Row {
                             CustomButtonComposable(
-                                title = "OK",
+                                title = titleLeft,
                                 height = 65.dp,
                                 width = 160.dp,
                                 fontSize = 20.sp,
@@ -88,7 +90,7 @@ fun ConfirmDialogComposable(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             CustomButtonComposable(
-                                title = "CANCEL",
+                                title = titleRight,
                                 height = 65.dp,
                                 width = 160.dp,
                                 fontSize = 20.sp,

@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.core.di
 
 import android.content.Context
+import android.util.Base64
 import com.google.gson.Gson
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 //import com.leduytuanvu.vendingmachine.core.room.LogExceptionDao
@@ -64,6 +65,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun providePortConnectionHelperDataSource(): PortConnectionHelperDatasource = PortConnectionHelperDatasource()
+
+    @Provides
+    @Singleton
     fun provideByteArrays(): ByteArrays = ByteArrays()
 
     private var accessToken: String = ""
@@ -77,11 +82,12 @@ object AppModule {
             try {
                 runBlocking {
                     val initSetup: InitSetup = LocalStorageDatasource().getDataFromPath(pathFileInitSetup)!!
+                    val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
                     val loginResponse = authApi.login(
                         initSetup.vendCode,
                         LoginRequest(
                             initSetup.username,
-                            initSetup.password.substringBefore("_leduytuanvu", "")
+                            String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE", "")
                         )
                     )
                     accessToken = loginResponse.accessToken

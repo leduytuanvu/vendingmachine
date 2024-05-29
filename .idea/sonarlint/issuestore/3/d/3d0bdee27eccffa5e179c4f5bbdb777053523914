@@ -1,4 +1,7 @@
 
-hkotlin:S125,"Remove this commented out code.(˜¾ù’ùÿÿÿÿ8µüŠÔù1J$279e1f18-a6e5-4c27-b911-23602339acae
-ckotlin:S125i"Remove this commented out code.(òÕËÒ8õ‹Ôù1J$289f9d2b-8124-4a37-b232-5e117dfd36ae
-dkotlin:S125«"Remove this commented out code.(¢¶‰8ö‹Ôù1J$dbbc1162-2d80-47e2-bd0e-d74ca7494838
+dkotlin:S1128$"Remove this unused import.(ùÑ¿ÿÿÿÿÿ8ŒÓŞÇú1J$74da31b7-613f-40c2-8ae1-b3ae03325b6c
+”kotlin:S1192”"NDefine a constant instead of duplicating this literal "setup system" 12 times.(¢àŸË8¿ ÓÆú1J$3a79c726-058c-4c02-80d4-eb29dd55eafc
+—kotlin:S3776t"RRefactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.(®³¦š8Ğ—ÚÆú1J$4f17080d-da08-4405-bf7d-0de930cfb50a
+tkotlin:S1066‰".Merge this "if" statement with the nested one.(˜§ìä8Ş—ÚÆú1J$9ebd9794-61db-4405-9a93-76a9d5713a17
+‡kotlin:S6511w"=Merge chained "if" statements into a single "when" statement.(Úéîüÿÿÿÿ8Ò ÓÆú1J$87f95139-4c36-4b98-8a47-ce3a6d806843
+‚kotlin:S6511x"=Merge chained "if" statements into a single "when" statement.(­¶¼ò8Ò ÓÆú1J$cec2911c-80c5-4cd8-8f5a-6e3c1b443698

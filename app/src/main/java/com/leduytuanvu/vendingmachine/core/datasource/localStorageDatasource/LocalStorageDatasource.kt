@@ -86,6 +86,19 @@ class LocalStorageDatasource @Inject constructor() {
         }
     }
 
+    fun deleteFile(file: File) {
+        try {
+            if (file.exists()) {
+                file.delete()
+            } else {
+                println("File does not exist: ${file.absolutePath}")
+            }
+        } catch (e: Exception) {
+            // Handle exception if necessary
+            throw e
+        }
+    }
+
     fun createFolder(folderPath: String): Boolean {
         try {
             val folder = File(folderPath)

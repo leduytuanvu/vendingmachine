@@ -13,6 +13,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,22 +22,33 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 //import androidx.room.Room
 //import com.leduytuanvu.vendingmachine.core.room.VendingMachineDatabase
 import com.leduytuanvu.vendingmachine.core.util.Navigation
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -45,6 +57,7 @@ class MainActivity : ComponentActivity() {
     lateinit var portConnectionDataSource: PortConnectionDatasource
     private val crashHandler = Thread.getDefaultUncaughtExceptionHandler()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
@@ -114,20 +127,38 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-class BootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
-            Log.d("BootReceiver", "Device booted, starting MainActivity")
-            val startIntent = Intent(context, MainActivity::class.java)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(startIntent)
+class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
+    private val portConnectionDatasource = PortConnectionDatasource()
+    private val byteArrays = ByteArrays()
+    override fun doWork(): Result {
+        val taskName = inputData.getString("TASK_NAME")
+
+        return when (taskName) {
+            "TurnOnLightTask" -> {
+                Logger.debug("task scheduled turn on light")
+                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmTurnOnLight)
+                Result.success()
+            }
+            "TurnOffLightTask" -> {
+                Logger.debug("task scheduled turn off light")
+                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmTurnOffLight)
+                Result.success()
+            }
+            "ResetApp" -> {
+                Logger.debug("task scheduled reset app")
+                val appContext = applicationContext
+                restartApp(appContext)
+                Result.success()
+            }
+            else -> {
+                Result.failure()
+            }
         }
     }
 }
 
-class AlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        // Perform reset operation here
-        // This will be executed when the alarm triggers at 00:00
-    }
+fun restartApp(context: Context) {
+    val intent = Intent(context, MainActivity::class.java)
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    context.startActivity(intent)
 }

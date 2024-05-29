@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleTextComposable
 import com.leduytuanvu.vendingmachine.core.util.Screens
@@ -32,6 +34,7 @@ internal fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsContent(
         state = state,
+        viewModel = viewModel,
         navController = navController,
     )
 }
@@ -40,9 +43,16 @@ internal fun SettingsScreen(
 @Composable
 fun SettingsContent(
     state: SettingsViewState,
+    viewModel: SettingsViewModel,
     navController: NavHostController,
 ) {
     LoadingDialogComposable(isLoading = state.isLoading)
+    ConfirmDialogComposable(
+        isConfirm = state.isConfirm,
+        titleDialogConfirm = state.titleDialogConfirm,
+        onClickClose = { viewModel.hideDialogConfirm() },
+        onClickConfirm = { viewModel.deactivateMachine(navController = navController) },
+    )
     Scaffold(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -68,6 +78,9 @@ fun SettingsContent(
                 })
                 ButtonSettingsComposable("VIEW LOG", function = {
                     navController.navigate(Screens.ViewLogScreenRoute.route)
+                })
+                ButtonSettingsComposable("RESET FACTORY", function = {
+                    viewModel.showDialogConfirm("Are you sure you want to reset factory?")
                 })
             }
         )

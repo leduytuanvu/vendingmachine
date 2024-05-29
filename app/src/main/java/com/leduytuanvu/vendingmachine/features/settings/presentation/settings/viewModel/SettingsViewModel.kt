@@ -4,19 +4,22 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServerLocal
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTime
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
+import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
+import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
@@ -33,8 +36,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor (
     private val settingsRepository: SettingsRepository,
+    private val authRepository: AuthRepository,
     private val baseRepository: BaseRepository,
-    private val portConnectionDataSource: PortConnectionDatasource,
     private val logger: Logger,
     private val context: Context,
 ) : ViewModel() {
@@ -56,6 +59,28 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
+    fun showDialogConfirm(mess: String) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    titleDialogConfirm = mess,
+                    isConfirm = true,
+                )
+            }
+        }
+    }
+
+    fun hideDialogConfirm() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isConfirm = false,
+                    titleDialogConfirm = "",
+                )
+            }
+        }
+    }
+
     fun showDialogWarning(mess: String) {
         viewModelScope.launch {
             _state.update { it.copy(
@@ -65,31 +90,46 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun getInformationOfMachine() {
-        logger.debug("getInformationOfMachine")
+    fun deactivateMachine(navController: NavHostController) {
+        logger.debug("deactivateMachine")
         viewModelScope.launch {
             try {
-                _state.update { it.copy(isLoading = true) }
-                delay(500)
-                val informationOfMachine = settingsRepository.getInformationOfMachine()
-                _state.update { it.copy(informationOfMachine = informationOfMachine) }
+                _state.update { it.copy(isLoading = true, isConfirm = false) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val deactivateRequest = ActivateTheMachineRequest(
+                    machineCode = initSetup.vendCode,
+                    androidId = initSetup.androidId,
+                )
+                val response = authRepository.deactivateTheMachine(deactivateRequest)
+                if(response.code==200) {
+                    sendEvent(Event.Toast("Deactivated successfully"))
+                    baseRepository.deleteFile(pathFileInitSetup)
+                    baseRepository.addNewSetupLogToLocal(
+                        machineCode = initSetup.vendCode,
+                        operationContent = "reset factory",
+                        operationType = "settings",
+                        username = initSetup.username,
+                    )
+                    navController.navigate(Screens.SplashScreenRoute.route) {
+                        popUpTo(Screens.SettingScreenRoute.route) {
+                            inclusive = true
+                        }
+                    }
+                } else {
+                    sendEvent(Event.Toast(response.message))
+                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val logError = LogError(
+                baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
-                    errorType = "application",
                     errorContent = "get information machine from server fail: ${e.message}",
-                    eventTime = LocalDateTime.now().toDateTimeString(),
                 )
-                baseRepository.addNewLogToLocal(
-                    eventType = "error",
-                    severity = "normal",
-                    eventData = logError,
-                )
-                sendEvent(Event.Toast("${e.message}"))
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
@@ -101,19 +141,24 @@ class SettingsViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val listLogServerLocal: ArrayList<LogServerLocal> = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogServerLocal>>() {}.type,
+                val listLogServerLocal: ArrayList<LogsLocal> = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
                     path = pathFileLogServer
                 )!!
                 listLogServerLocal.sortByDescending { it.eventTime.toDateTime() }
                 _state.update { it.copy(listLogServerLocal = listLogServerLocal) }
             } catch (e: Exception) {
-                sendEvent(Event.Toast("${e.message}"))
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "load log server local fail in SettingsViewModel/getAllLogServerLocal(): ${e.message}",
+                )
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }
         }
     }
-
-
 }

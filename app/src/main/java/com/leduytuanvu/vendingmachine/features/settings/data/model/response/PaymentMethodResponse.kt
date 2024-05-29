@@ -10,11 +10,11 @@ data class DataPaymentMethodResponse(
 )
 
 data class PaymentMethodResponse(
-    @SerializedName("tutorial_content") var tutorialContent: String?,
     @SerializedName("method_name") var methodName: String?,
     @SerializedName("brief") var brief: String?,
     @SerializedName("is_must_online") var isMustOnline: String?,
-    @SerializedName("id") var id: String?,
+    @SerializedName("id") var id: Int?,
+    @SerializedName("status") var status: Int?,
     @SerializedName("image_url") var imageUrl: String?,
-    @SerializedName("help") var help: String?,
+    @SerializedName("store_id") var storeId: String?,
 )

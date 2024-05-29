@@ -1,7 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.screen
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
