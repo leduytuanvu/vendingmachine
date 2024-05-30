@@ -10,12 +10,16 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAn
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.LogServerRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.PromotionRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositAndWithdrawMoneyResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.SyncOrderResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -48,4 +52,12 @@ interface HomeApi {
     @Headers("Content-Type: application/json", "Accept-Language: en-US") // Add headers annotation
     @POST("/payment-service/payment/query")
     suspend fun checkResultPaymentOnline(@Body checkResultPaymentOnlineRequest: CheckPaymentResultOnlineRequest): BaseResponse<CheckPaymentResultOnlineResponse>
+
+    @Headers("Content-Type: application/json", "Accept-Language: en-US") // Add headers annotation
+    @POST("/payment-service/payment/update_delivery_status")
+    suspend fun updateDeliveryStatus(@Body updateDeliveryStatusRequest: UpdateDeliveryStatusRequest): BaseResponse<UpdateDeliveryStatusResponse>
+
+    @Headers("Content-Type: application/json", "Accept-Language: en-US") // Add headers annotation
+    @POST("/payment-service/payment/synchronize")
+    suspend fun syncOrder(@Body syncOrderRequest: SyncOrderRequest): BaseResponse<SyncOrderResponse>
 }

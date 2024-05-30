@@ -1,6 +1,8 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,10 +28,12 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.itemsPort
 import com.leduytuanvu.vendingmachine.core.util.itemsTypeVendingMachine
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.viewModel.SetupPortViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.viewState.SetupPortViewState
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun SetupPortScreen(
@@ -39,11 +44,48 @@ internal fun SetupPortScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitSetup()
     }
-    SetupPortContent(
-        state = state,
-        viewModel = viewModel,
-        navController = navController
-    )
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.SetupPortScreenRoute.route) {
+                        inclusive = true
+                    }
+                    popUpTo(Screens.SettingScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+    ) {
+        SetupPortContent(
+            state = state,
+            viewModel = viewModel,
+            navController = navController,
+            onClick = { lastInteractionTime = System.currentTimeMillis() }
+        )
+    }
+//    SetupPortContent(
+//        state = state,
+//        viewModel = viewModel,
+//        navController = navController
+//    )
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -52,6 +94,7 @@ fun SetupPortContent(
     state: SetupPortViewState,
     viewModel: SetupPortViewModel,
     navController: NavHostController,
+    onClick: () -> Unit,
 ) {
     var selectedItemTypeVendingMachine by remember {
         mutableStateOf(
@@ -76,11 +119,23 @@ fun SetupPortContent(
     }
 
     LoadingDialogComposable(isLoading = state.isLoading)
-    Scaffold(modifier = Modifier.fillMaxSize()) {
+    Scaffold(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+        detectTapGestures(
+            onTap = {
+                onClick()
+            }
+        )
+    }) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, top = 20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp).pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            onClick()
+                        }
+                    )
+                },
             content = {
                 CustomButtonComposable(
                     title = "BACK",
@@ -99,6 +154,7 @@ fun SetupPortContent(
                     selectedItem = selectedItemTypeVendingMachine,
                 ) {
                     selectedItemTypeVendingMachine = it
+                    onClick()
                 }
                 TitleAndDropdownComposable(
                     title = "Select the port to connect to vending machine",
@@ -106,6 +162,7 @@ fun SetupPortContent(
                     selectedItem = selectedItemPortVendingMachine,
                 ) {
                     selectedItemPortVendingMachine = it
+                    onClick()
                 }
                 TitleAndDropdownComposable(
                     title = "Select the port to connect to cash box",
@@ -113,6 +170,7 @@ fun SetupPortContent(
                     selectedItem = selectedItemPortCashBox,
                 ) {
                     selectedItemPortCashBox = it
+                    onClick()
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 CustomButtonComposable(
@@ -129,6 +187,7 @@ fun SetupPortContent(
                         portCashBox = selectedItemPortCashBox.toString(),
                         portVendingMachine = selectedItemPortVendingMachine.toString(),
                     )
+                    onClick()
                 }
             }
         )

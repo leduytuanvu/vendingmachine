@@ -1,8 +1,13 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -58,12 +63,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.google.android.gms.location.LocationServices
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
@@ -102,6 +109,22 @@ internal fun HomeScreen(
             viewModel.pollStatus()
         }
     }
+
+//    // State to hold the latest location
+//    val latestLocation = remember { mutableStateOf<Location?>(null) }
+//
+//    // Fetch GPS location when the composable is created or resumed
+//    LaunchedEffect(Unit) {
+//        viewModel.getGps { location ->
+//            latestLocation.value = location
+//        }
+//    }
+//
+//    LaunchedEffect(latestLocation.value) {
+//        latestLocation.value?.let { location ->
+//            Logger.debug("Latitude: ${location.latitude}, Longitude: ${location.longitude}")
+//        }
+//    }
 //    LaunchedEffect(Unit) {
 //        while (true) {
 //            delay(10000L)
@@ -319,7 +342,7 @@ fun HomeContent(
                 }
                 if(state.initSetup!=null) {
                     Box(modifier = Modifier.fillMaxHeight()) {
-                        val chunks = state.listSlotInHome.chunked(3)
+                        val chunks = state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
                         Column(
                             modifier = Modifier
                                 .padding(start = 20.dp, end = 20.dp)
@@ -1035,6 +1058,7 @@ fun HomeContent(
                         ) {
                             Image(
                                 modifier = Modifier
+                                    .clickable { viewModel.hideShowQrCode() }
                                     .align(Alignment.End)
                                     .height(38.dp)
                                     .width(38.dp),

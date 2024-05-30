@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,12 +47,14 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Loadi
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewModel.SetupSlotViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -58,11 +66,61 @@ internal fun SetupSlotScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitSetupListSlotListProduct()
     }
-    SetupSlotContent(
-        state = state,
-        viewModel = viewModel,
-        navController = navController,
-    )
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.SetupSlotScreenRoute.route) {
+                        inclusive = true
+                    }
+                    popUpTo(Screens.SettingScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    val nestedScrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPreScroll(available, source)
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+        ) {
+            SetupSlotContent(
+                state = state,
+                viewModel = viewModel,
+                navController = navController,
+                onClick = { lastInteractionTime = System.currentTimeMillis() },
+                nestedScrollConnection = nestedScrollConnection,
+            )
+        }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -71,47 +129,91 @@ fun SetupSlotContent(
     state: SetupSlotViewState,
     viewModel: SetupSlotViewModel,
     navController: NavHostController,
+    onClick: () -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
 ) {
     val localStorageDatasource = LocalStorageDatasource()
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
         isWarning = state.isWarning,
         titleDialogWarning = state.titleDialogWarning,
-        onClickClose = { viewModel.hideDialogWarning() },
+        onClickClose = {
+            onClick()
+            viewModel.hideDialogWarning()
+        },
     )
     ChooseNumberComposable(
         isChooseNumber = state.isChooseNumber,
         isChooseMoney = state.isChooseMoney,
         isInventory = state.isInventory,
         slot = state.slot,
-        hideDialogChooseNumber = { viewModel.hideDialogChooseNumber() },
-        chooseNumber = { number: Int -> viewModel.chooseNumber(number) }
+        hideDialogChooseNumber = {
+            onClick()
+            viewModel.hideDialogChooseNumber()
+        },
+        chooseNumber = { number: Int ->
+            onClick()
+            viewModel.chooseNumber(number)
+        }
     )
     ChooseImageComposable(
         isChooseImage = state.isChooseImage,
         listProduct = state.listProduct,
         listSlotAddMore = state.listSlotAddMore,
         slot = state.slot,
-        onClickAddOneProduct = { product: Product ->  viewModel.addSlotToLocalListSlot(product) },
-        onClickAddMoreProduct = { product: Product ->  viewModel.addMoreProductToLocalListSlot(product) },
-        onClickClose = { viewModel.hideDialogChooseImage() }
+        onClickAddOneProduct = { product: Product ->
+            onClick()
+            viewModel.addSlotToLocalListSlot(product)
+        },
+        onClickAddMoreProduct = { product: Product ->
+            onClick()
+            viewModel.addMoreProductToLocalListSlot(product)
+        },
+        onClickClose = {
+            onClick()
+            viewModel.hideDialogChooseImage()
+        }
     )
     ConfirmDialogComposable(
         isConfirm = state.isConfirm,
         titleDialogConfirm = state.titleDialogConfirm,
-        onClickClose = { viewModel.hideDialogConfirm() },
-        onClickConfirm = { viewModel.selectFunction() },
+        onClickClose = {
+            onClick()
+            viewModel.hideDialogConfirm()
+        },
+        onClickConfirm = {
+            onClick()
+            viewModel.selectFunction()
+        },
     )
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    onClick()
+                }
+            )
+        },
     ) {
         Column(
-            modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp),
+            modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            },
             content = {
                 Row(
                     modifier = Modifier
                         .wrapContentHeight()
-                        .padding(bottom = 10.dp),
+                        .padding(bottom = 10.dp).pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    onClick()
+                                }
+                            )
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CustomButtonComposable(
@@ -126,6 +228,7 @@ fun SetupSlotContent(
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     ButtonSetupSlotComposable("RESET", function = {
+                        onClick()
                         viewModel.showDialogConfirm(
                             mess = "Are you sure to reset all slot in vending machine?",
                             nameFunction = "resetAllSlot",
@@ -133,18 +236,22 @@ fun SetupSlotContent(
                     })
                     ButtonSetupSlotComposable("ADD MORE", function = {
                         if (state.listSlotAddMore.size > 0) {
+                            onClick()
                             viewModel.showDialogChooseImage(slot = null)
                         } else {
+                            onClick()
                             viewModel.showToast("Please choose slot to add more!")
                         }
                     })
                     ButtonSetupSlotComposable("FULL INVENTORY", function = {
+                        onClick()
                         viewModel.showDialogConfirm(
                             mess = "Are you sure to set full inventory for all slot?",
                             nameFunction = "setFullInventory",
                         )
                     })
                     ButtonSetupSlotComposable("GET LAYOUT", function = {
+                        onClick()
                         viewModel.showDialogConfirm(
                             mess = "Are you sure to get layout from server?",
                             nameFunction = "loadLayoutFromServer",
@@ -152,6 +259,13 @@ fun SetupSlotContent(
                     })
                 }
                 LazyVerticalGrid(
+                    modifier = Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }.nestedScroll(nestedScrollConnection),
                     columns = GridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -161,13 +275,31 @@ fun SetupSlotContent(
                         var isLock by remember { mutableStateOf(slot.isLock) }
                         if(slot.status==1) {
                             Box(
-                                modifier = Modifier
+                                modifier = Modifier.pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            onClick()
+                                        }
+                                    )
+                                }
                                     .height(546.dp)
                                     .padding(bottom = 10.dp)
                                     .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
                             ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                Column(modifier = Modifier.padding(12.dp).pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            onClick()
+                                        }
+                                    )
+                                }) {
+                                    Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onTap = {
+                                                onClick()
+                                            }
+                                        )
+                                    }, horizontalArrangement = Arrangement.Start) {
                                         Text(
                                             text = if(slot.isCombine == "yes") "${slot.slot}+${slot.slot+1}" else "${slot.slot}",
                                             fontSize = 24.sp,
@@ -198,6 +330,7 @@ fun SetupSlotContent(
                                                     .width(34.dp)
                                                     .height(34.dp)
                                                     .clickable {
+                                                        onClick()
                                                         viewModel.showDialogConfirm(
                                                             mess = "Are you sure to delete this product?",
                                                             slot = slot,
@@ -214,6 +347,7 @@ fun SetupSlotContent(
                                                     .width(34.dp)
                                                     .height(34.dp)
                                                     .clickable {
+                                                        onClick()
                                                         if(isChecked) {
                                                             viewModel.removeSlotToStateListAddMore(slot)
                                                         } else {
@@ -249,6 +383,7 @@ fun SetupSlotContent(
                                             height = 60.dp,
                                             cornerRadius = 4.dp
                                         ) {
+                                            onClick()
                                             if(slot.productCode.isNotEmpty()) {
                                                 viewModel.showDialogChooseNumber(slot = slot, isInventory = true)
                                             }
@@ -270,6 +405,7 @@ fun SetupSlotContent(
                                             height = 60.dp,
                                             cornerRadius = 4.dp
                                         ) {
+                                            onClick()
                                             if(slot.productCode.isNotEmpty()) {
                                                 viewModel.showDialogChooseNumber(isChooseMoney = true, slot = slot)
                                             }
@@ -291,6 +427,7 @@ fun SetupSlotContent(
                                             height = 60.dp,
                                             cornerRadius = 4.dp
                                         ) {
+                                            onClick()
                                             if(slot.productCode.isNotEmpty()) {
                                                 viewModel.showDialogChooseNumber(slot = slot, isCapacity = true)
                                             }
@@ -307,6 +444,7 @@ fun SetupSlotContent(
                                                 cornerRadius = 4.dp,
                                                 height = 60.dp,
                                                 function = {
+                                                    onClick()
                                                     isLock = false
                                                     viewModel.unlockSlot(slot)
                                                 },
@@ -319,7 +457,10 @@ fun SetupSlotContent(
                                                 titleAlignment = TextAlign.Center,
                                                 cornerRadius = 4.dp,
                                                 height = 60.dp,
-                                                function = { viewModel.splitSlot(slot) },
+                                                function = {
+                                                    onClick()
+                                                    viewModel.splitSlot(slot)
+                                                },
                                                 fontSize = 20.sp,
                                                 fontWeight = FontWeight.Bold,
                                             )
@@ -332,6 +473,7 @@ fun SetupSlotContent(
                                                 cornerRadius = 4.dp,
                                                 height = 60.dp,
                                                 function = {
+                                                    onClick()
                                                     isLock = false
                                                     viewModel.unlockSlot(slot)
                                                 },
@@ -349,7 +491,10 @@ fun SetupSlotContent(
                                                         titleAlignment = TextAlign.Center,
                                                         cornerRadius = 4.dp,
                                                         height = 60.dp,
-                                                        function = { viewModel.mergeSlot(slot) },
+                                                        function = {
+                                                            onClick()
+                                                            viewModel.mergeSlot(slot)
+                                                        },
                                                         fontSize = 20.sp,
                                                         fontWeight = FontWeight.Bold,
                                                     )

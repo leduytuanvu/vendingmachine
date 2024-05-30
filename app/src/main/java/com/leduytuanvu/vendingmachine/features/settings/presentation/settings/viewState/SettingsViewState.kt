@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState
 
+import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 //import com.leduytuanvu.vendingmachine.core.room.LogException
@@ -25,6 +26,6 @@ data class SettingsViewState (
 //    val serialSimId: String = "",
 //    val error: CustomError? = null,
     val informationOfMachine: DataInformationMachineResponse? = null,
-//    val initSetup: InitSetup? = null,
+    val initSetup: InitSetup? = null,
     val listLogServerLocal: ArrayList<LogsLocal> = arrayListOf(),
 )

@@ -1,6 +1,8 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.viewLog.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +18,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,9 +35,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.toJson
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun ViewLogScreen(
@@ -41,11 +50,62 @@ internal fun ViewLogScreen(
     LaunchedEffect(key1 = viewModel) {
         viewModel.getAllLogServerLocal()
     }
-    ViewLogContent(
-        state = state,
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.ViewLogScreenRoute.route) {
+                        inclusive = true
+                    }
+                    popUpTo(Screens.SettingScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    val nestedScrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPreScroll(available, source)
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+    ) {
+        ViewLogContent(
+            state = state,
 //        viewModel = viewModel,
-        navController = navController,
-    )
+            navController = navController,
+            onClick = { lastInteractionTime = System.currentTimeMillis() },
+            nestedScrollConnection = nestedScrollConnection,
+        )
+    }
+
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -54,6 +114,8 @@ fun ViewLogContent(
     state: SettingsViewState,
 //    viewModel: SettingsViewModel,
     navController: NavHostController,
+    onClick: () -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
 ) {
 //    val itemsLog = listOf(
 //        AnnotatedString("Error log"),
@@ -64,11 +126,22 @@ fun ViewLogContent(
     LoadingDialogComposable(isLoading = state.isLoading)
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {  }
+        modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    onClick()
+                }
+            )
+        }.nestedScroll(nestedScrollConnection),
     ) {
         Column(
-            modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp),
+            modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }.nestedScroll(nestedScrollConnection),
             content = {
                 CustomButtonComposable(
                     title = "BACK",
@@ -82,7 +155,13 @@ fun ViewLogContent(
                     navController.popBackStack()
                 }
 //                Spacer(modifier = Modifier.height(20.dp))
-                LazyColumn {
+                LazyColumn(modifier = Modifier.pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            onClick()
+                        }
+                    )
+                }.nestedScroll(nestedScrollConnection)) {
                     items(state.listLogServerLocal.size) {
                         index -> Column {
                             Spacer(modifier = Modifier.height(10.dp))
@@ -138,18 +217,4 @@ fun ViewLogContent(
             }
         )
     }
-}
-
-@Composable
-fun ButtonViewLogComposable(title: String, function: () -> Unit) {
-    CustomButtonComposable(
-        title = title,
-        titleAlignment = TextAlign.Start,
-        paddingBottom = 10.dp,
-        cornerRadius = 4.dp,
-        height = 65.dp,
-        function = function,
-        fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
-    )
 }

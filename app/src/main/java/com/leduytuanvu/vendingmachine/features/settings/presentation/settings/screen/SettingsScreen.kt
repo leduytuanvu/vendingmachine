@@ -1,13 +1,20 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.settings.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +32,7 @@ import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun SettingsScreen(
@@ -32,11 +40,47 @@ internal fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SettingsContent(
-        state = state,
-        viewModel = viewModel,
-        navController = navController,
-    )
+    LaunchedEffect(Unit) {
+        viewModel.loadInitData()
+    }
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.SettingScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+    ) {
+        SettingsContent(
+            state = state,
+            viewModel = viewModel,
+            navController = navController,
+        )
+    }
+//    SettingsContent(
+//        state = state,
+//        viewModel = viewModel,
+//        navController = navController,
+//    )
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -61,27 +105,43 @@ fun SettingsContent(
                 ButtonSettingsComposable("HOME", function = {
                     navController.navigate(Screens.HomeScreenRoute.route)
                 }, )
-                ButtonSettingsComposable("SET UP PORT", function = {
-                    navController.navigate(Screens.SetupPortScreenRoute.route)
-                })
+                if(state.initSetup!=null) {
+                    if(state.initSetup.role == "admin") {
+                        ButtonSettingsComposable("SET UP PORT", function = {
+                            navController.navigate(Screens.SetupPortScreenRoute.route)
+                        })
+                    }
+                }
                 ButtonSettingsComposable("SET UP PRODUCT", function = {
                     navController.navigate(Screens.SetupProductScreenRoute.route)
                 })
                 ButtonSettingsComposable("SET UP SLOT", function = {
                     navController.navigate(Screens.SetupSlotScreenRoute.route)
                 })
-                ButtonSettingsComposable("SET UP SYSTEM", function = {
-                    navController.navigate(Screens.SetupSystemScreenRoute.route)
-                })
-                ButtonSettingsComposable("SET UP PAYMENT", function = {
-                    navController.navigate(Screens.SetupPaymentScreenRoute.route)
-                })
+                if(state.initSetup!=null) {
+                    if(state.initSetup.role == "admin") {
+                        ButtonSettingsComposable("SET UP SYSTEM", function = {
+                            navController.navigate(Screens.SetupSystemScreenRoute.route)
+                        })
+                    }
+                }
+                if(state.initSetup!=null) {
+                    if(state.initSetup.role == "admin") {
+                        ButtonSettingsComposable("SET UP PAYMENT", function = {
+                            navController.navigate(Screens.SetupPaymentScreenRoute.route)
+                        })
+                    }
+                }
                 ButtonSettingsComposable("VIEW LOG", function = {
                     navController.navigate(Screens.ViewLogScreenRoute.route)
                 })
-                ButtonSettingsComposable("RESET FACTORY", function = {
-                    viewModel.showDialogConfirm("Are you sure you want to reset factory?")
-                })
+                if(state.initSetup!=null) {
+                    if(state.initSetup.role == "admin") {
+                        ButtonSettingsComposable("RESET FACTORY", function = {
+                            viewModel.showDialogConfirm("Are you sure you want to reset factory?")
+                        })
+                    }
+                }
             }
         )
     }

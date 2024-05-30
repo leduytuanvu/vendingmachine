@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.viewModel
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -40,13 +41,17 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.location.Location
 import android.os.BatteryManager
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.asImageBitmap
+import com.google.android.gms.location.LocationServices
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -60,6 +65,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaym
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductDetailRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.domain.model.CartExtra
 import com.leduytuanvu.vendingmachine.features.home.domain.model.Extra
@@ -69,6 +75,9 @@ import java.net.NetworkInterface
 import java.util.Collections
 
 import javax.inject.Inject
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.core.app.ActivityCompat
 
 enum class DropSensorResult(val data: String) {
     ANOTHER("ANOTHER"),
@@ -455,9 +464,13 @@ class HomeViewModel @Inject constructor (
                         logger.debug("Slot found: $slot")
                         if (slot != null) {
                             _statusDropProduct.value = DropSensorResult.ANOTHER
-                            productDispense(0, slot.slot)
+                            if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                productDispenseNotSensor(0, slot.slot)
+                            } else {
+                                productDispense(0, slot.slot)
+                            }
 
-                            val result = withTimeoutOrNull(10000L) {
+                            var result = withTimeoutOrNull(10000L) {
                                 statusDropProduct.first { it != DropSensorResult.ANOTHER }
                             }
 
@@ -466,6 +479,15 @@ class HomeViewModel @Inject constructor (
                                 listSlotDropFail.add(slot)
                                 homeRepository.lockSlot(slot.slot)
                                 continue
+                            }
+
+                            if(_state.value.initSetup!!.dropSensor=="OFF"
+                                && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                        || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                        || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                        || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                ) {
+                                result = DropSensorResult.SUCCESS
                             }
 
                             when (result) {
@@ -518,9 +540,13 @@ class HomeViewModel @Inject constructor (
                                         logger.debug("slotAnother found: $slotAnother")
                                         if (slotAnother != null) {
                                             _statusDropProduct.value = DropSensorResult.ANOTHER
-                                            productDispense(0, slotAnother.slot)
+                                            if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                                productDispenseNotSensor(0, slotAnother.slot)
+                                            } else {
+                                                productDispense(0, slotAnother.slot)
+                                            }
 
-                                            val anotherResult = withTimeoutOrNull(20000L) {
+                                            var anotherResult = withTimeoutOrNull(20000L) {
                                                 statusDropProduct.first { it != DropSensorResult.ANOTHER }
                                             }
 
@@ -529,6 +555,15 @@ class HomeViewModel @Inject constructor (
                                                 listSlotDropFail.add(slotAnother)
                                                 homeRepository.lockSlot(slotAnother.slot)
                                                 continue
+                                            }
+
+                                            if(_state.value.initSetup!!.dropSensor=="OFF"
+                                                && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                                        || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                                        || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                                        || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                            ) {
+                                                anotherResult = DropSensorResult.SUCCESS
                                             }
 
                                             when (anotherResult) {
@@ -597,8 +632,10 @@ class HomeViewModel @Inject constructor (
                 val quantityNotDropped = quantityNeedDrop - quantityDropped
                 val initSetup = _state.value.initSetup
                 val currentCash = initSetup!!.currentCash
-                val cashNeedReturnBack = currentCash - cashDropped
-                initSetup.currentCash = cashNeedReturnBack
+                if(_state.value.nameMethodPayment=="cash") {
+                    val cashNeedReturnBack = currentCash - cashDropped
+                    initSetup.currentCash = cashNeedReturnBack
+                }
                 baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
 
                 val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
@@ -625,12 +662,17 @@ class HomeViewModel @Inject constructor (
                     if(listSlotDropFail.isNotEmpty()) {
                         logger.debug("Danh sách slot rớt lỗi")
                     }
-                    logger.debug("Có ${quantityNotDropped} sản phẩm rơi thất bại trả lại $cashNeedReturnBack")
+//                    logger.debug("Có ${quantityNotDropped} sản phẩm rơi thất bại trả lại $cashNeedReturnBack")
                     var titleWarning = ""
                     if (sensorHasAnObstruction) {
                         titleWarning = "Cảm biến rơi hiện đang bị che. "
                     }
-                    titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng mua sản phẩm khác!"
+                    if(_state.value.nameMethodPayment=="cash") {
+                        titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng mua sản phẩm khác!"
+                    } else {
+                        titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng liên hệ 1900.99.99.80 để nhận lại tiền thừa!"
+                    }
+
                     _state.update {
                         it.copy(
                             isShowWaitForDropProduct = false,
@@ -675,9 +717,23 @@ class HomeViewModel @Inject constructor (
                             status = true,
                             extra = extra.toBase64(),
                         )
+                        val updateDeliveryStatusRequest = UpdateDeliveryStatusRequest(
+                            machineCode = initSetup.vendCode,
+                            androidId = initSetup.androidId,
+                            orderCode = _state.value.orderCode,
+                            deliveryStatus = "success"
+                        )
                         if(baseRepository.isHaveNetwork(context)) {
+                            logger.debug("Order code: ${_state.value.orderCode}")
+                            logger.debug("Order code: ${_state.value.initSetup!!.androidId}")
                             val responseUpdatePromotion = homeRepository.updatePromotion(updatePromotionRequest)
-                            logger.info("Promotion: $responseUpdatePromotion")
+                            if(responseUpdatePromotion.code==200) {
+                                logger.info("responseUpdatePromotion: $responseUpdatePromotion")
+                            }
+                            val responseUpdateDeliveryStatus = homeRepository.updateDeliveryStatus(updateDeliveryStatusRequest)
+//                            if(responseUpdateDeliveryStatus.code==200) {
+//                                logger.info("responseUpdatePromotion: $responseUpdateDeliveryStatus")
+//                            }
                         } else {
 //                            val list: InitSetup = baseRepository.getDataFromLocal(
 //                                type = object : TypeToken<InitSetup>() {}.type,
@@ -706,6 +762,38 @@ class HomeViewModel @Inject constructor (
         }
     }
 
+
+    @SuppressLint("MissingPermission") // Ensure permissions are handled before calling this
+    fun getGps(onLocationReceived: (Location?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return@launch
+                } else {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                        location?.let {
+                            onLocationReceived(it)
+                        } ?: run {
+                            // Handle the case where location is null
+                            onLocationReceived(null) // Call onLocationReceived with null if location is null
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                logger.debug("error: ${e.message}")
+                onLocationReceived(null) // Call onLocationReceived with null in case of exception
+            }
+        }
+    }
 
     fun hideDialogWarning() {
         viewModelScope.launch {
@@ -791,7 +879,7 @@ class HomeViewModel @Inject constructor (
                         0x09.toByte() -> processingCash(500000)
                     }
                 } else {
-                    logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
+//                    logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
                     _isCashBoxNormal.value = true
                 }
             } else if(dataByteArray.size == 6) {
@@ -800,7 +888,7 @@ class HomeViewModel @Inject constructor (
                     _setupCashBox.value = true
                 }
             } else {
-                logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
+//                logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
             }
 
 
@@ -1187,6 +1275,15 @@ class HomeViewModel @Inject constructor (
         logger.debug("hideAds")
         viewModelScope.launch {
             _state.update { it.copy(isShowBigAds = false) }
+        }
+    }
+
+    fun hideShowQrCode() {
+        logger.debug("hideShowQrCode")
+        viewModelScope.launch {
+            countdownTimer?.cancel()
+            countdownTimerCallApi?.cancel()
+            _state.update { it.copy(isShowQrCode = false) }
         }
     }
 
@@ -1642,9 +1739,10 @@ class HomeViewModel @Inject constructor (
                             androidId = _state.value.initSetup!!.androidId,
                             orderCode = orderCode,
                             orderTime = orderTime,
-                            totalAmount = totalAmount,
-                            totalDiscount = totalDiscount,
-                            paymentAmount = paymentAmount,
+//                            totalAmount = totalAmount,
+                            totalAmount = 1000,
+                            totalDiscount = 1000,
+                            paymentAmount = 1000,
                             paymentMethodId = paymentMethodId,
                             storeId = storeId,
                             productDetails = listProductDetailRequest,

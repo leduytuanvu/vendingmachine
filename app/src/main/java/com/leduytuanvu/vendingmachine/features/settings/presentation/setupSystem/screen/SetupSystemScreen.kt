@@ -3,6 +3,7 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.setupSyste
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -47,8 +53,10 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Title
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel.SetupSystemViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun SetupSystemScreen(
@@ -66,12 +74,63 @@ internal fun SetupSystemScreen(
             viewModel.closePort()
         }
     }
-    SetupSystemContent(
-        viewModel = viewModel,
-        state = state,
-        navController = navController,
-        context = context,
-    )
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.SetupSystemScreenRoute.route) {
+                        inclusive = true
+                    }
+                    popUpTo(Screens.SettingScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    val nestedScrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPreScroll(available, source)
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                lastInteractionTime = System.currentTimeMillis()
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+    ) {
+        SetupSystemContent(
+            viewModel = viewModel,
+            state = state,
+            navController = navController,
+            context = context,
+            onClick = { lastInteractionTime = System.currentTimeMillis() },
+            nestedScrollConnection = nestedScrollConnection,
+        )
+    }
+
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -81,43 +140,82 @@ fun SetupSystemContent(
     state: SetupSystemViewState,
     navController: NavHostController,
     context: Context,
+    onClick: () -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
 ) {
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
         isWarning = state.isWarning,
         titleDialogWarning = state.titleDialogWarning,
-        onClickClose = { viewModel.hideDialogWarning() },
+        onClickClose = {
+            onClick()
+            viewModel.hideDialogWarning()
+        },
     )
     ConfirmDialogComposable(
         isConfirm = state.isConfirm,
         titleDialogConfirm = state.titleDialogConfirm,
-        onClickClose = { viewModel.hideDialogConfirm() },
-        onClickConfirm = { viewModel.resetFactory(navController) },
+        onClickClose = {
+            onClick()
+            viewModel.hideDialogConfirm()
+        },
+        onClickConfirm = {
+            onClick()
+            viewModel.resetFactory(navController)
+        },
     )
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    onClick()
+                }
+            )
+        }.nestedScroll(nestedScrollConnection),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, top = 20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp).pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            onClick()
+                        }
+                    )
+                }.nestedScroll(nestedScrollConnection),
             content = {
                 SetupSystemMainContentComposable(
                     context = context,
                     state = state,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onClick = { onClick() },
+                    nestedScrollConnection = nestedScrollConnection,
                 )
-                SetupSystemBackContentComposable(navController = navController)
+                SetupSystemBackContentComposable(
+                    navController = navController,
+                    onClick = { onClick() },
+                    nestedScrollConnection = nestedScrollConnection,
+                )
             }
         )
     }
 }
 
 @Composable
-fun SetupSystemBackContentComposable(navController: NavHostController) {
+fun SetupSystemBackContentComposable(
+    navController: NavHostController,
+    onClick: () -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
+) {
     Box (modifier = Modifier
         .background(Color.White)
-        .fillMaxWidth()) {
+        .fillMaxWidth().pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    onClick()
+                }
+            )
+        }) {
         CustomButtonComposable(
             title = "BACK",
             wrap = true,
@@ -137,6 +235,8 @@ fun SetupSystemMainContentComposable(
     viewModel: SetupSystemViewModel,
     context: Context,
     state: SetupSystemViewState,
+    onClick: () -> Unit,
+    nestedScrollConnection: NestedScrollConnection,
 ) {
     var inputVendingMachineCode by remember { mutableStateOf("") }
     var inputTimeTurnOnLight by remember { mutableStateOf("00:00") }
@@ -196,7 +296,13 @@ fun SetupSystemMainContentComposable(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(top = 100.dp)
+            .padding(top = 100.dp).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }.nestedScroll(nestedScrollConnection),
     ) {
         Spacer(modifier = Modifier.height(20.dp))
         BodyTextComposable(
@@ -215,6 +321,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.getSerialSimId()
         }
 
@@ -234,6 +341,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.getInformationOfMachine()
         }
 
@@ -247,6 +355,7 @@ fun SetupSystemMainContentComposable(
                 paddingBottom = 12.dp,
                 initText = state.initSetup.vendCode
             ) {
+                onClick()
                 inputVendingMachineCode = it
             }
         } else {
@@ -255,6 +364,7 @@ fun SetupSystemMainContentComposable(
                 paddingBottom = 12.dp,
                 initText = ""
             ) {
+                onClick()
                 inputVendingMachineCode = it
             }
         }
@@ -268,34 +378,36 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             keyboardController?.hide()
             viewModel.updateVendCodeInLocal(inputVendingMachineCode)
         }
 
-        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemFullScreenAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            selectedItemFullScreenAds = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
-        }
+//        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+//        TitleAndDropdownComposable(title = "", items = listOf(
+//            AnnotatedString("ON"),
+//            AnnotatedString("OFF"),
+//        ), selectedItem = selectedItemFullScreenAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
+//            selectedItemFullScreenAds = it
+//        }
+//        CustomButtonComposable(
+//            title = "SAVE",
+//            wrap = true,
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp,
+//            paddingBottom = 50.dp,
+//        ) {
+//            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
+//        }
 
         BodyTextComposable(title = "Withdrawal allowed", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
         TitleAndDropdownComposable(title = "", items = listOf(
             AnnotatedString("ON"),
             AnnotatedString("OFF"),
         ), selectedItem = selectedItemWithdrawalAllowed, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemWithdrawalAllowed = it
         }
         CustomButtonComposable(
@@ -307,6 +419,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateWithdrawalAllowedInLocal(selectedItemWithdrawalAllowed.toString())
         }
 
@@ -315,6 +428,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("ON"),
             AnnotatedString("OFF"),
         ), selectedItem = selectedItemAutoStartApplication, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemAutoStartApplication = it
         }
         CustomButtonComposable(
@@ -326,6 +440,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateAutoStartApplicationInLocal(selectedItemAutoStartApplication.toString())
         }
 
@@ -336,6 +451,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("5"),
             AnnotatedString("6"),
         ), selectedItem = selectedItemLayoutHomeScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemLayoutHomeScreen = it
         }
         CustomButtonComposable(
@@ -347,13 +463,26 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
         }
 
         Row(modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 18.dp)) {
-            Column(modifier = Modifier.width(screenWidthDp/2)) {
+            .padding(bottom = 18.dp).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
+            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
                 BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
                 Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
                 if(state.initSetup!=null) {
@@ -371,7 +500,13 @@ fun SetupSystemMainContentComposable(
                 }
             }
             Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.width(screenWidthDp/2)) {
+            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
                 BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
                 Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
                 if(state.initSetup!=null) {
@@ -399,6 +534,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateTimeTurnOnTurnOffLightInLocal(
                 timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
                 timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
@@ -414,6 +550,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.checkDropSensor()
         }
 
@@ -422,6 +559,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("ON"),
             AnnotatedString("OFF"),
         ), selectedItem = selectedItemDropSensor, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemDropSensor = it
         }
         CustomButtonComposable(
@@ -433,6 +571,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateDropSensorInLocal(selectedItemDropSensor.toString())
         }
 
@@ -445,6 +584,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("4"),
             AnnotatedString("5"),
         ), selectedItem = selectedItemInchingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemInchingMode = it
         }
         CustomButtonComposable(
@@ -456,6 +596,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
         }
 
@@ -472,6 +613,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("270s"),
             AnnotatedString("300s"),
         ), selectedItem = selectedItemTimeJumpToAdsScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemTimeJumpToAdsScreen = it
         }
         CustomButtonComposable(
@@ -483,6 +625,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateTimeJumpToAdsScreenInLocal(selectedItemTimeJumpToAdsScreen.toString().substringBefore("s"))
         }
 
@@ -491,6 +634,7 @@ fun SetupSystemMainContentComposable(
             AnnotatedString("ON"),
             AnnotatedString("OFF"),
         ), selectedItem = selectedItemGlassHeatingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
             selectedItemGlassHeatingMode = it
         }
         CustomButtonComposable(
@@ -502,34 +646,57 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateGlassHeatingModeInLocal(selectedItemGlassHeatingMode.toString())
         }
 
         Row(modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 18.dp)) {
+            .padding(bottom = 18.dp).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
 
-            Column(modifier = Modifier.width(screenWidthDp/2)) {
+            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
                 BodyTextComposable(title = "Lowest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 if(state.initSetup!=null) {
                     EditTextComposable(initText = state.initSetup.lowestTempWarning, keyboardTypeNumber = true) {
+                        onClick()
                         inputLowestTempWarning = it
                     }
                 } else {
                     EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                        onClick()
                         inputLowestTempWarning = it
                     }
                 }
             }
             Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.width(screenWidthDp/2)) {
+            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            }) {
                 BodyTextComposable(title = "Highest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 if(state.initSetup!=null) {
                     EditTextComposable(initText = state.initSetup.highestTempWarning, keyboardTypeNumber = true) {
+                        onClick()
                         inputHighestTempWarning = it
                     }
                 } else {
                     EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                        onClick()
                         inputHighestTempWarning = it
                     }
                 }
@@ -544,6 +711,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.updateHighestAndLowestTempWarningInLocal(inputHighestTempWarning, inputLowestTempWarning)
         }
 
@@ -556,6 +724,7 @@ fun SetupSystemMainContentComposable(
                 initText = state.initSetup.temperature,
                 keyboardTypeNumber = true
             ) {
+                onClick()
                 inputTemperature = it
             }
         } else {
@@ -565,6 +734,7 @@ fun SetupSystemMainContentComposable(
                 initText = "",
                 keyboardTypeNumber = true
             ) {
+                onClick()
                 inputTemperature = it
             }
         }
@@ -577,6 +747,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             keyboardController?.hide()
             viewModel.updateTemperatureInLocal(inputTemperature)
         }
@@ -593,6 +764,7 @@ fun SetupSystemMainContentComposable(
             fontSize = 20.sp,
             paddingBottom = 50.dp,
         ) {
+            onClick()
             viewModel.getTemp()
         }
 

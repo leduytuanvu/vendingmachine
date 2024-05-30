@@ -1,16 +1,19 @@
 package com.leduytuanvu.vendingmachine.features.home.domain.repository
 
 import android.content.Context
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositAndWithdrawMoneyResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 
@@ -26,7 +29,7 @@ interface HomeRepository {
         voucherCode: String,
         listSlot: ArrayList<Slot>,
     ): PromotionResponse
-    suspend fun updatePromotion(updatePromotionRequest: UpdatePromotionRequest): UpdatePromotionResponse
+    suspend fun updatePromotion(updatePromotionRequest: UpdatePromotionRequest): BaseResponse<UpdatePromotionResponse>
 
     suspend fun getTotalAmount(listSlot: ArrayList<Slot>): Int
     suspend fun getSlotDrop(productCode: String): Slot?
@@ -37,4 +40,5 @@ interface HomeRepository {
     suspend fun pushDepositWithdrawToServer(depositWithdrawRequest: DepositAndWithdrawMoneyRequest): DepositAndWithdrawMoneyResponse
     suspend fun getQrCodeFromServer(getQrCodeRequest: GetQrCodeRequest): GetQrCodeResponse
     suspend fun checkResultPaymentOnline(checkPaymentResultOnlineRequest: CheckPaymentResultOnlineRequest): CheckPaymentResultOnlineResponse
+    suspend fun updateDeliveryStatus(updateDeliveryStatusRequest: UpdateDeliveryStatusRequest): BaseResponse<UpdateDeliveryStatusResponse>
 }

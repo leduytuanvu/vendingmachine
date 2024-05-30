@@ -44,6 +44,22 @@ class SettingsViewModel @Inject constructor (
     private val _state = MutableStateFlow(SettingsViewState())
     val state = _state.asStateFlow()
 
+    fun loadInitData() {
+        logger.debug("loadInitSetup")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                _state.update { it.copy(isLoading = false, initSetup = initSetup) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     fun showDialogConfirm(mess: String, slot: Slot?, nameFunction: String) {
         viewModelScope.launch {
             if (baseRepository.isHaveNetwork(context)) {

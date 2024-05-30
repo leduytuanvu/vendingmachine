@@ -60,8 +60,15 @@ class AuthViewModel @Inject constructor (
                             authyType = "login",
                             username = loginRequestHaveNetwork.username,
                         )
-                        navController.popBackStack()
-                        navController.navigate(Screens.SettingScreenRoute.route)
+                        navController.navigate(Screens.SettingScreenRoute.route) {
+                            popUpTo(Screens.LoginScreenRoute.route) {
+                                inclusive = true
+                            }
+                            popUpTo(Screens.HomeScreenRoute
+                                .route) {
+                                inclusive = true
+                            }
+                        }
                     } else {
                         sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                     }

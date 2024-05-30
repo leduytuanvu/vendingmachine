@@ -36,6 +36,10 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
+import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
+import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 //import androidx.room.Room
@@ -45,6 +49,7 @@ import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
+import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
@@ -152,6 +157,25 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
             }
             else -> {
                 Result.failure()
+            }
+        }
+    }
+}
+
+
+class BootReceiver : BroadcastReceiver() {
+    @Inject
+    lateinit var localStorageDatasource: LocalStorageDatasource
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            val initSetup: InitSetup? = localStorageDatasource.getDataFromPath(pathFileInitSetup)
+            if (initSetup != null) {
+                if(initSetup.autoStartApplication=="ON") {
+                    Log.d("BootReceiver", "Device booted, starting MainActivity...")
+                    val activityIntent = Intent(context, MainActivity::class.java)
+                    activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(activityIntent)
+                }
             }
         }
     }

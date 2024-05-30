@@ -9,5 +9,5 @@ data class CheckPaymentResultOnlineResponse(
     @SerializedName("sub_return_message") val subReturnMessage: String,
     @SerializedName("is_processing") val isProcessing: String,
     @SerializedName("amount") val amount: Int,
-    @SerializedName("zp_trans_id") val zpTransId: Int,
+    @SerializedName("zp_trans_id") val zpTransId: Long,
 )

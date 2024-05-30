@@ -2,6 +2,8 @@ package com.leduytuanvu.vendingmachine.features.auth.presentation.screen
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.TextField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -33,8 +38,11 @@ import com.leduytuanvu.vendingmachine.common.base.presentation.composables.Custo
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleTextComposable
+import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.features.auth.presentation.viewModel.AuthViewModel
 import com.leduytuanvu.vendingmachine.features.auth.presentation.viewState.AuthViewState
+import com.leduytuanvu.vendingmachine.features.settings.presentation.viewLog.screen.ViewLogContent
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun LoginScreen(
@@ -42,11 +50,41 @@ internal fun LoginScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LoginContent(
-        state = state,
-        viewModel = viewModel,
-        navController = navController,
-    )
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Launch a coroutine that checks for inactivity
+    LaunchedEffect(lastInteractionTime) {
+        while (true) {
+            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                navController.navigate(Screens.HomeScreenRoute.route) {
+                    popUpTo(Screens.LoginScreenRoute.route) {
+                        inclusive = true
+                    }
+                }
+                return@LaunchedEffect
+            }
+            delay(1000)
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        lastInteractionTime = System.currentTimeMillis()
+                    }
+                )
+            }
+    ) {
+        LoginContent(
+            state = state,
+            viewModel = viewModel,
+            navController = navController,
+            onClick = { lastInteractionTime = System.currentTimeMillis() },
+        )
+    }
+
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -55,6 +93,7 @@ fun LoginContent(
     state: AuthViewState,
     viewModel: AuthViewModel,
     navController: NavHostController,
+    onClick: () -> Unit,
 ) {
     var inputUsername by remember { mutableStateOf("admin") }
     var inputPassword by remember { mutableStateOf("AVF@1234") }
@@ -67,9 +106,21 @@ fun LoginContent(
 //        titleDialogWarning = state.titleDialogWarning,
 //        onClickClose = { viewModel.hideDialogWarning() },
 //    )
-    Scaffold(modifier = Modifier.fillMaxSize()) {
+    Scaffold(modifier = Modifier.fillMaxSize().fillMaxSize().pointerInput(Unit) {
+        detectTapGestures(
+            onTap = {
+                onClick()
+            }
+        )
+    }) {
         Column(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier.padding(20.dp).fillMaxWidth().fillMaxSize().pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    }
+                )
+            },
             content = {
                 CustomButtonComposable(
                     title = "BACK",
@@ -83,9 +134,11 @@ fun LoginContent(
 
                 TitleTextComposable(title = "LOGIN TO SETTINGS MACHINE")
                 TitleAndEditTextComposable(title = "Enter username") {
+                    onClick()
                     inputUsername = it
                 }
                 TitleAndEditTextComposable(title = "Enter password", keyboardTypePassword = true) {
+                    onClick()
                     inputPassword = it
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -97,6 +150,7 @@ fun LoginContent(
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                 ) {
+                    onClick()
                     viewModel.login(
                         context,
                         inputUsername,

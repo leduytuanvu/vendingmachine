@@ -2,6 +2,7 @@ package com.leduytuanvu.vendingmachine.features.home.data.repository
 
 import android.content.Context
 import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
@@ -16,12 +17,14 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCode
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemPromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.LogServerRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.PromotionRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositAndWithdrawMoneyResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.home.data.remote.HomeApi
 import com.leduytuanvu.vendingmachine.features.home.domain.repository.HomeRepository
@@ -104,10 +107,10 @@ class HomeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updatePromotion(updatePromotionRequest: UpdatePromotionRequest): UpdatePromotionResponse {
+    override suspend fun updatePromotion(updatePromotionRequest: UpdatePromotionRequest): BaseResponse<UpdatePromotionResponse> {
         try {
             val response = homeApi.updatePromotion(updatePromotionRequest)
-            return response.data
+            return response
         } catch (e: Exception) {
             throw e
         }
@@ -239,6 +242,15 @@ class HomeRepositoryImpl @Inject constructor(
         try {
             val response = homeApi.checkResultPaymentOnline(checkPaymentResultOnlineRequest)
             return response.data
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun updateDeliveryStatus(updateDeliveryStatusRequest: UpdateDeliveryStatusRequest): BaseResponse<UpdateDeliveryStatusResponse> {
+        try {
+            val response = homeApi.updateDeliveryStatus(updateDeliveryStatusRequest)
+            return response
         } catch (e: Exception) {
             throw e
         }

@@ -158,4 +158,5 @@ dependencies {
 
     implementation("com.google.zxing:core:3.4.1")
 
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }
