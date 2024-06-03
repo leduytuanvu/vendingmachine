@@ -5,5 +5,5 @@ data class LogUpdateDeliveryStatus (
     val androidId: String,
     val orderCode: String,
     val deliveryStatus: String,
-    val isSent: Boolean,
+    var isSent: Boolean,
 )

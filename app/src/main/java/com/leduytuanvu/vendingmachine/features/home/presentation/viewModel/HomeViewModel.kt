@@ -1177,7 +1177,87 @@ class HomeViewModel @Inject constructor (
                     }
                 }
             } catch (e: Exception) {
-                logger.debug("error in push log to server: ${e.message}")
+                logger.debug("error in push sync order log to server: ${e.message}")
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun pushUpdatePromotionToServer() {
+        logger.debug("pushUpdatePromotionToServer")
+        viewModelScope.launch {
+            try {
+                val listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                    path = pathFileUpdatePromotion,
+                )
+                if(!listUpdatePromotion.isNullOrEmpty()) {
+                    for(item in listUpdatePromotion) {
+                        if(!item.isSent) {
+                            val updatePromotionRequest = UpdatePromotionRequest(
+                                machineCode = item.machineCode,
+                                orderCode = item.orderCode,
+                                androidId = item.androidId,
+                                extra = item.extra,
+                                status = item.status,
+                                voucherCode = item.voucherCode,
+                                promotionId = item.promotionId,
+                                campaignId = item.campaignId,
+                            )
+                            try {
+                                val response = homeRepository.updatePromotion(updatePromotionRequest)
+                                logger.debug("===== response update promotion: ${response.toString()}")
+                                item.isSent = true
+                                baseRepository.writeDataToLocal(listUpdatePromotion, pathFileUpdatePromotion)
+                            } catch(e: Exception) {
+                                baseRepository.addNewErrorLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    errorContent = "upload log update promotion to server failed: ${e.message}",
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.debug("error in push log update promotion to server: ${e.message}")
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun pushUpdateDeliveryStatusToServer() {
+        logger.debug("pushUpdateDeliveryStatusToServer")
+        viewModelScope.launch {
+            try {
+                val listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                    path = pathFileUpdateDeliveryStatus,
+                )
+                if(!listUpdateDeliveryStatus.isNullOrEmpty()) {
+                    for(item in listUpdateDeliveryStatus) {
+                        if(!item.isSent) {
+                            val updateDeliveryStatus = UpdateDeliveryStatusRequest(
+                                machineCode = item.machineCode,
+                                orderCode = item.orderCode,
+                                androidId = item.androidId,
+                                deliveryStatus = item.deliveryStatus,
+                            )
+                            try {
+                                val response = homeRepository.updateDeliveryStatus(updateDeliveryStatus)
+                                logger.debug("===== response update delivery status: ${response.toString()}")
+                                item.isSent = true
+                                baseRepository.writeDataToLocal(listUpdateDeliveryStatus, pathFileUpdateDeliveryStatus)
+                            } catch(e: Exception) {
+                                baseRepository.addNewErrorLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    errorContent = "upload log update delivery status to server failed: ${e.message}",
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.debug("error in push log update delivery status to server: ${e.message}")
             }
         }
     }
