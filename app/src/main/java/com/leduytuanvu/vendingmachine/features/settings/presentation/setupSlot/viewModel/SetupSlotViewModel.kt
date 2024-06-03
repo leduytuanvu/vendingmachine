@@ -320,7 +320,6 @@ class SetupSlotViewModel @Inject constructor(
                     }
                 }
                 settingsRepository.writeListSlotToLocal(_state.value.listSlot)
-                sendEvent(Event.Toast("SUCCESS"))
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,

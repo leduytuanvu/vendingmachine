@@ -30,6 +30,12 @@ const val pathFilePaymentMethod = "/sdcard/VendingMachineData/Payment/PaymentMet
 const val pathFolderImagePayment = "/sdcard/VendingMachineData/Payment/Image"
 @SuppressLint("SdCardPath")
 const val pathFilePriceOfProduct = "/sdcard/VendingMachineData/Product/PriceOfProduct.json"
+@SuppressLint("SdCardPath")
+const val pathFileSyncOrder = "/sdcard/VendingMachineData/Log/SyncOrder.json"
+@SuppressLint("SdCardPath")
+const val pathFileUpdatePromotion = "/sdcard/VendingMachineData/Log/UpdatePromotion.json"
+@SuppressLint("SdCardPath")
+const val pathFileUpdateDeliveryStatus = "/sdcard/VendingMachineData/Log/UpdateDeliveryStatus.json"
 
 val itemsPort = listOf(
     AnnotatedString("ttyS1"),

@@ -1,7 +1,7 @@
 package com.leduytuanvu.vendingmachine.features.home.data.model.response
 
 import com.google.gson.annotations.SerializedName
-import com.leduytuanvu.vendingmachine.features.home.data.model.request.ListProductSyncOrder
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
 
 data class SyncOrderResponse(
     @SerializedName("machine_code") var machineCode: String?,
@@ -21,5 +21,5 @@ data class SyncOrderResponse(
     @SerializedName("payment_status") var paymentStatus: String?,
     @SerializedName("delivery_status") var deliveryStatus: String?,
     @SerializedName("voucher_code") var voucherCode: String?,
-    @SerializedName("product_details") var productDetails: ArrayList<ListProductSyncOrder>,
+    @SerializedName("product_details") var productDetails: ArrayList<ProductSyncOrderRequest>,
 )

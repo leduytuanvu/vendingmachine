@@ -6,6 +6,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
@@ -13,6 +14,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositA
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.SyncOrderResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -41,4 +43,5 @@ interface HomeRepository {
     suspend fun getQrCodeFromServer(getQrCodeRequest: GetQrCodeRequest): GetQrCodeResponse
     suspend fun checkResultPaymentOnline(checkPaymentResultOnlineRequest: CheckPaymentResultOnlineRequest): CheckPaymentResultOnlineResponse
     suspend fun updateDeliveryStatus(updateDeliveryStatusRequest: UpdateDeliveryStatusRequest): BaseResponse<UpdateDeliveryStatusResponse>
+    suspend fun syncOrder(syncOrderRequest: SyncOrderRequest): BaseResponse<SyncOrderResponse>
 }

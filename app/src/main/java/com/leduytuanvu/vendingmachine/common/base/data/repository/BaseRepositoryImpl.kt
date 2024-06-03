@@ -9,6 +9,7 @@ import android.provider.Settings
 import com.google.gson.Gson
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogAuthy
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdrawLocal
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDoor
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSensor
@@ -370,6 +371,41 @@ class BaseRepositoryImpl @Inject constructor(
                 severity = severity,
                 eventTime = LocalDateTime.now().toDateTimeString(),
                 eventData = logStatus.toBase64(),
+                isSent = false,
+            )
+            if (localStorageDatasource.checkFileExists(pathFileLogServer)) {
+                listLogServerLocal = localStorageDatasource.getDataFromPath(pathFileLogServer)!!
+            }
+            listLogServerLocal.add(logServerLocal)
+            localStorageDatasource.writeData(
+                pathFileLogServer,
+                gson.toJson(listLogServerLocal),
+            )
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun addNewDoorLogToLocal(
+        machineCode: String,
+        cabinetCode: String,
+        operationType: String,
+        severity: String
+    ) {
+        try {
+            val logDoor  = LogDoor(
+                machineCode = machineCode,
+                cabinetCode = cabinetCode,
+                operationType = operationType,
+                eventTime = LocalDateTime.now().toDateTimeString(),
+            )
+            var listLogServerLocal = arrayListOf<LogsLocal>()
+            val logServerLocal = LogsLocal (
+                eventId = LocalDateTime.now().toId(),
+                eventType = "door",
+                severity = severity,
+                eventTime = LocalDateTime.now().toDateTimeString(),
+                eventData = logDoor.toBase64(),
                 isSent = false,
             )
             if (localStorageDatasource.checkFileExists(pathFileLogServer)) {

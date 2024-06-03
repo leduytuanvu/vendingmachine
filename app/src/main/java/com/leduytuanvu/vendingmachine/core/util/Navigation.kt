@@ -15,6 +15,7 @@ import com.leduytuanvu.vendingmachine.features.settings.presentation.setupPort.s
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupProduct.screen.SetupProductScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.screen.SetupSlotScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.screen.SetupSystemScreen
+import com.leduytuanvu.vendingmachine.features.settings.presentation.transaction.screen.TransactionScreen
 import com.leduytuanvu.vendingmachine.features.settings.presentation.viewLog.screen.ViewLogScreen
 import com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.screen.InitSetupScreen
 
@@ -64,6 +65,10 @@ fun Navigation(navController: NavHostController) {
 
         composable(Screens.LoginScreenRoute.route) {
             LoginScreen(navController)
+        }
+
+        composable(Screens.TransactionScreenRoute.route) {
+            TransactionScreen(navController)
         }
     }
 }

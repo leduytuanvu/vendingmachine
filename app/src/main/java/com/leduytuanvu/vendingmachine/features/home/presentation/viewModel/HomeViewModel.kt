@@ -1,6 +1,5 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.viewModel
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -41,17 +40,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.location.Location
 import android.os.BatteryManager
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.asImageBitmap
-import com.google.android.gms.location.LocationServices
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -75,9 +70,14 @@ import java.net.NetworkInterface
 import java.util.Collections
 
 import javax.inject.Inject
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.core.app.ActivityCompat
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateDeliveryStatus
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdatePromotion
+import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
+import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
+import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 
 enum class DropSensorResult(val data: String) {
     ANOTHER("ANOTHER"),
@@ -117,6 +117,12 @@ class HomeViewModel @Inject constructor (
     private val _setupCashBox = MutableStateFlow(false)
     val setupCashBox: StateFlow<Boolean> = _setupCashBox.asStateFlow()
 
+    private val _dataTmpCashBox = MutableStateFlow("")
+    val dataTmpCashBox: StateFlow<String> = _dataTmpCashBox.asStateFlow()
+
+    private val _dataTmpVendingMachine = MutableStateFlow("")
+    val dataTmpVendingMachine: StateFlow<String> = _dataTmpVendingMachine.asStateFlow()
+
     private val _isCashBoxNormal = MutableStateFlow(false)
     val isCashBoxNormal: StateFlow<Boolean> = _isCashBoxNormal.asStateFlow()
 
@@ -126,60 +132,60 @@ class HomeViewModel @Inject constructor (
     private val _statusDropProduct = MutableStateFlow(DropSensorResult.ANOTHER)
     val statusDropProduct: StateFlow<DropSensorResult> = _statusDropProduct.asStateFlow()
 
-    fun initLoad() {
-        logger.debug("initLoad")
-        viewModelScope.launch {
-            try {
-                logger.debug("0")
-                portConnectionDatasource.openPortCashBox(_state.value.initSetup!!.portCashBox)
-                if(!portConnectionDatasource.checkPortCashBoxStillStarting()) {
-                    portConnectionDatasource.startReadingCashBox()
-                }
-                portConnectionDatasource.openPortVendingMachine(_state.value.initSetup!!.portVendingMachine)
-                portConnectionDatasource.startReadingVendingMachine()
-                logger.debug("1")
-                _setupCashBox.value = false
-                sendCommandCashBox(byteArrays.cbEnableType3456789)
-                logger.debug("2")
-                delay(260)
-                if(_setupCashBox.value) {
-                    logger.debug("set cbEnableType3456789 success")
-                } else {
-                    logger.debug("set cbEnableType3456789 fail")
-                }
-                logger.debug("3")
-                _setupCashBox.value = false
-                sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
-                delay(260)
-                if(_setupCashBox.value) {
-                    logger.debug("set cbSetRecyclingBillType4 success")
-                } else {
-                    logger.debug("set cbSetRecyclingBillType4 fail")
-                }
-                sendCommandVendingMachine(byteArrays.vmReadTemp)
-                logger.debug("4")
-            } catch (e: Exception) {
-                sendEvent(Event.Toast("${e.message}"))
-            } finally {
-                _state.update { it.copy(isLoading = false) }
-            }
-        }
-    }
+//    fun initLoad() {
+//        logger.debug("initLoad")
+//        viewModelScope.launch {
+//            try {
+//                logger.debug("0")
+//                portConnectionDatasource.openPortCashBox(_state.value.initSetup!!.portCashBox)
+//                if(!portConnectionDatasource.checkPortCashBoxStillStarting()) {
+//                    portConnectionDatasource.startReadingCashBox()
+//                }
+//                portConnectionDatasource.openPortVendingMachine(_state.value.initSetup!!.portVendingMachine)
+//                portConnectionDatasource.startReadingVendingMachine()
+//                logger.debug("1")
+//                _setupCashBox.value = false
+//                sendCommandCashBox(byteArrays.cbEnableType3456789)
+//                logger.debug("2")
+//                delay(260)
+//                if(_setupCashBox.value) {
+//                    logger.debug("set cbEnableType3456789 success")
+//                } else {
+//                    logger.debug("set cbEnableType3456789 fail")
+//                }
+//                logger.debug("3")
+//                _setupCashBox.value = false
+//                sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
+//                delay(260)
+//                if(_setupCashBox.value) {
+//                    logger.debug("set cbSetRecyclingBillType4 success")
+//                } else {
+//                    logger.debug("set cbSetRecyclingBillType4 fail")
+//                }
+//                sendCommandVendingMachine(byteArrays.vmReadTemp)
+//                logger.debug("4")
+//            } catch (e: Exception) {
+//                sendEvent(Event.Toast("${e.message}"))
+//            } finally {
+//                _state.update { it.copy(isLoading = false) }
+//            }
+//        }
+//    }
 
-    fun checkDriverBoardsAndCargoLanes() {
-        viewModelScope.launch {
-            val totalDriverBoards = 10
-            var totalCargoLanes = 6
-            for(indexCargoLane in 1 ..  totalCargoLanes) {
-                for(indexDriverBoard in 0 until  totalDriverBoards) {
-                    logger.debug("indexDriverBoard: $indexDriverBoard, indexCargoLane: ${indexCargoLane}")
-                    val command = createCommandCheckDriverBoardsAndCargoLanes(indexDriverBoard, indexCargoLane)
-                    sendCommandVendingMachine(command)
-                    delay(2000)
-                }
-            }
-        }
-    }
+//    fun checkDriverBoardsAndCargoLanes() {
+//        viewModelScope.launch {
+//            val totalDriverBoards = 10
+//            var totalCargoLanes = 6
+//            for(indexCargoLane in 1 ..  totalCargoLanes) {
+//                for(indexDriverBoard in 0 until  totalDriverBoards) {
+//                    logger.debug("indexDriverBoard: $indexDriverBoard, indexCargoLane: ${indexCargoLane}")
+//                    val command = createCommandCheckDriverBoardsAndCargoLanes(indexDriverBoard, indexCargoLane)
+//                    sendCommandVendingMachine(command)
+//                    delay(2000)
+//                }
+//            }
+//        }
+//    }
 
     fun createCommandCheckDriverBoardsAndCargoLanes(driverBoard: Int, cargoLane: Int): ByteArray {
         val firstByte = driverBoard.toByte()
@@ -191,19 +197,19 @@ class HomeViewModel @Inject constructor (
         return byteArrayOf(firstByte, secondByte, thirdByte, fourthByte, fifthByte, sixthByte)
     }
 
-    fun sendCommandAndGetResponse(command: ByteArray): ByteArray {
-        // Simulate sending command and getting response
-        // Replace this with actual communication code
-        return when (command[2]) {
-            0.toByte() -> byteArrayOf(0x00, 0xFF.toByte(), 0x79.toByte(), 0x86.toByte(), 0x55.toByte(), 0xAA.toByte())
-            else -> byteArrayOf(0x01, 0xFE.toByte(), 0x7A.toByte(), 0x85.toByte(), 0x55.toByte(), 0xAA.toByte())
-        }
-    }
+//    fun sendCommandAndGetResponse(command: ByteArray): ByteArray {
+//        // Simulate sending command and getting response
+//        // Replace this with actual communication code
+//        return when (command[2]) {
+//            0.toByte() -> byteArrayOf(0x00, 0xFF.toByte(), 0x79.toByte(), 0x86.toByte(), 0x55.toByte(), 0xAA.toByte())
+//            else -> byteArrayOf(0x01, 0xFE.toByte(), 0x7A.toByte(), 0x85.toByte(), 0x55.toByte(), 0xAA.toByte())
+//        }
+//    }
 
-    fun analyzeResponse(response: ByteArray): Boolean {
-        // Analyze the response based on the provided examples
-        return response[2] == 0x79.toByte() || response[2] == 0x7A.toByte()
-    }
+//    fun analyzeResponse(response: ByteArray): Boolean {
+//        // Analyze the response based on the provided examples
+//        return response[2] == 0x79.toByte() || response[2] == 0x7A.toByte()
+//    }
 
     fun sendCommandCashBox(byteArray: ByteArray) {
         logger.debug("send cash box: ${byteArrayToHexString(byteArray)}")
@@ -229,22 +235,22 @@ class HomeViewModel @Inject constructor (
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
-    fun getTypeNetworkAndBatteryStatus() {
-        logger.debug("getTemp")
-        viewModelScope.launch {
-            try {
-                val networkType = getNetworkType(context)
-//                val batteryStatus = getBatteryStatus(context)
-                logger.debug("+++++++++ networkType: $networkType")
-//                logger.debug("+++++++++ batteryStatus: $batteryStatus")
-            } catch (e: Exception) {
-                sendEvent(Event.Toast("${e.message}"))
-            } finally {
-                _state.update { it.copy(isLoading = false) }
-            }
-        }
-    }
+//    @RequiresApi(Build.VERSION_CODES.R)
+//    fun getTypeNetworkAndBatteryStatus() {
+//        logger.debug("getTemp")
+//        viewModelScope.launch {
+//            try {
+//                val networkType = getNetworkType(context)
+////                val batteryStatus = getBatteryStatus(context)
+//                logger.debug("+++++++++ networkType: $networkType")
+////                logger.debug("+++++++++ batteryStatus: $batteryStatus")
+//            } catch (e: Exception) {
+//                sendEvent(Event.Toast("${e.message}"))
+//            } finally {
+//                _state.update { it.copy(isLoading = false) }
+//            }
+//        }
+//    }
 
     fun sendCommandVendingMachine(byteArray: ByteArray) {
 //        logger.debug("send vending machine: ${byteArrayToHexString(byteArray)}")
@@ -338,105 +344,134 @@ class HomeViewModel @Inject constructor (
     private suspend fun processDataFromVendingMachine(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            logger.debug("============================== data: $dataHexString")
-            if(dataByteArray.size==5) {
-                if(dataByteArray[0] == 0x00.toByte()
-                    && dataByteArray[1] == 0x5D.toByte()
-                    && (dataByteArray[4] == 0x66.toByte()
-                            || dataByteArray[4] == 0x65.toByte()
-                            || dataByteArray[4] == 0x6B.toByte()
-                            || dataByteArray[4] == 0x67.toByte()
-                            || dataByteArray[4] == 0x68.toByte()
-                            || dataByteArray[4] == 0x69.toByte()
-                            || dataByteArray[4] == 0x63.toByte()
-                            || dataByteArray[4] == 0x64.toByte())
-                ) {
-                    if(dataByteArray[2] == 0xEB.toByte()) {
-                        _state.update { it.copy(temp1 = "không thể kết nối") }
-                        baseRepository.addNewTemperatureLogToLocal(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            cabinetCode = "MT01",
-                            currentTemperature = "temp 1 không thể kết nối",
-                        )
-                    } else {
-                        _state.update { it.copy(temp1 = "${dataByteArray[2].toInt()}") }
-                        baseRepository.addNewTemperatureLogToLocal(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            cabinetCode = "MT01",
-                            currentTemperature = "${dataByteArray[2].toInt()}",
-                        )
+            logger.debug("============================== data from vending machine: $dataHexString")
+            if(dataHexString.isNotEmpty()) {
+                if(_state.value.isVendingMachineBusy) {
+                    val result = when (dataHexString) {
+                        "00,5D,00,00,5D" -> DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                        "00,5D,00,AA,07" -> DropSensorResult.SUCCESS
+                        "00,5C,40,00,9C" -> DropSensorResult.NOT_ROTATED
+                        "00,5C,02,00,5E" -> DropSensorResult.NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM
+                        "00,5D,00,CC,29" -> DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
+                        "00,5D,00,33,90" -> DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                        "00,5C,03,00,5F" -> DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                        else -> DropSensorResult.ANOTHER
                     }
-                    if(dataByteArray[3] == 0xEB.toByte()) {
-                        _state.update { it.copy(temp2 = "không thể kết nối") }
-                        baseRepository.addNewTemperatureLogToLocal(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            cabinetCode = "MT01",
-                            currentTemperature = "temp 2 không thể kết nối",
-                        )
-                    } else {
-                        _state.update { it.copy(temp2 = "${dataByteArray[3].toInt()}") }
-                        baseRepository.addNewTemperatureLogToLocal(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            cabinetCode = "MT01",
-                            currentTemperature = "${dataByteArray[3].toInt()}",
-                        )
+
+                    if (result != DropSensorResult.ANOTHER) {
+                        _statusDropProduct.tryEmit(result)
+                        logger.debug("Result emitted to dispenseResults: $result")
+                    }
+                } else {
+//                    if(dataByteArray[0] == 0x00.toByte()
+//                        && dataByteArray[1] == 0x5D.toByte()
+//                        && (dataByteArray[4] == 0x66.toByte()
+//                                || dataByteArray[4] == 0x65.toByte()
+//                                || dataByteArray[4] == 0x6B.toByte()
+//                                || dataByteArray[4] == 0x67.toByte()
+//                                || dataByteArray[4] == 0x68.toByte()
+//                                || dataByteArray[4] == 0x69.toByte()
+//                                || dataByteArray[4] == 0x63.toByte()
+//                                || dataByteArray[4] == 0x64.toByte())
+                    if(_dataTmpVendingMachine.value != dataHexString) {
+                        _dataTmpVendingMachine.value = dataHexString
+                        if(dataByteArray[0] == 0x00.toByte()
+                            && dataByteArray[1] == 0x5D.toByte()
+                            && (dataByteArray[4] != 0x5D.toByte())
+                            && (dataByteArray[4] != 0x5E.toByte())
+                        ) {
+                            if(dataByteArray[2] == 0xEB.toByte()) {
+                                _state.update { it.copy(temp1 = "không thể kết nối") }
+                                baseRepository.addNewTemperatureLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    cabinetCode = "MT01",
+                                    currentTemperature = "temp 1 không thể kết nối",
+                                )
+                            }
+                            else {
+                                _state.update { it.copy(temp1 = "${dataByteArray[2].toInt()}") }
+                                baseRepository.addNewTemperatureLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    cabinetCode = "MT01",
+                                    currentTemperature = "${dataByteArray[2].toInt()}",
+                                )
+                            }
+                            if(dataByteArray[3] == 0xEB.toByte()) {
+                                _state.update { it.copy(temp2 = "không thể kết nối") }
+                                baseRepository.addNewTemperatureLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    cabinetCode = "MT01",
+                                    currentTemperature = "temp 2 không thể kết nối",
+                                )
+                            }
+                            else {
+                                _state.update { it.copy(temp2 = "${dataByteArray[3].toInt()}") }
+                                baseRepository.addNewTemperatureLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    cabinetCode = "MT01",
+                                    currentTemperature = "${dataByteArray[3].toInt()}",
+                                )
+                            }
+                        }
+                        else {
+                            if(dataByteArray[4] == 0x5D.toByte() || dataByteArray[4] == 0x5E.toByte()) {
+                                if(dataByteArray[4] == 0x5D.toByte()) {
+                                    baseRepository.addNewDoorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        cabinetCode = "MT01",
+                                        operationType = "door open",
+                                    )
+                                    Logger.info("door open")
+                                } else {
+                                    baseRepository.addNewDoorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        cabinetCode = "MT01",
+                                        operationType = "door close",
+                                    )
+                                    Logger.info("door close")
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            val result = when (dataHexString) {
-                "00,5D,00,00,5D" -> DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
-                "00,5D,00,AA,07" -> DropSensorResult.SUCCESS
-                "00,5C,40,00,9C" -> DropSensorResult.NOT_ROTATED
-                "00,5C,02,00,5E" -> DropSensorResult.NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM
-                "00,5D,00,CC,29" -> DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
-                "00,5D,00,33,90" -> DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                "00,5C,03,00,5F" -> DropSensorResult.SENSOR_HAS_AN_OBSTACLE
-                else -> DropSensorResult.ANOTHER
-            }
-
-            if (result != DropSensorResult.ANOTHER) {
-                _statusDropProduct.tryEmit(result)
-                logger.debug("Result emitted to dispenseResults: $result")
-            }
-
         } catch (e: Exception) {
             Logger.error("Error processing vending machine data: ${e.message}", e)
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
-    fun getNetworkType(context: Context): String {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetwork = connectivityManager.activeNetwork ?: return "No Connection"
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return "No Connection"
+//    @RequiresApi(Build.VERSION_CODES.R)
+//    fun getNetworkType(context: Context): String {
+//        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//        val activeNetwork = connectivityManager.activeNetwork ?: return "No Connection"
+//        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return "No Connection"
+//
+//        return when {
+//            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
+//            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+//                when (networkCapabilities.networkSpecifier?.toString()!!.lowercase()) {
+//                    "lte" -> "4G"
+//                    "nr" -> "5G"
+//                    else -> "Mobile Data"
+//                }
+//            }
+//            else -> "Unknown"
+//        }
+//    }
 
-        return when {
-            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
-            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                when (networkCapabilities.networkSpecifier?.toString()!!.lowercase()) {
-                    "lte" -> "4G"
-                    "nr" -> "5G"
-                    else -> "Mobile Data"
-                }
-            }
-            else -> "Unknown"
-        }
-    }
-
-    fun getBatteryStatus(context: Context): BatteryStatus {
-        val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        val batteryStatus: Intent? = context.registerReceiver(null, intentFilter)
-
-        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-        val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-        val batteryPct = (level / scale.toFloat() * 100).toInt()
-
-        val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-
-        return BatteryStatus(batteryPct, isCharging)
-    }
+//    fun getBatteryStatus(context: Context): BatteryStatus {
+//        val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+//        val batteryStatus: Intent? = context.registerReceiver(null, intentFilter)
+//
+//        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+//        val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+//        val batteryPct = (level / scale.toFloat() * 100).toInt()
+//
+//        val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+//        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+//
+//        return BatteryStatus(batteryPct, isCharging)
+//    }
 
 
     fun dropProduct() {
@@ -724,21 +759,108 @@ class HomeViewModel @Inject constructor (
                             deliveryStatus = "success"
                         )
                         if(baseRepository.isHaveNetwork(context)) {
-                            logger.debug("Order code: ${_state.value.orderCode}")
-                            logger.debug("Order code: ${_state.value.initSetup!!.androidId}")
-                            val responseUpdatePromotion = homeRepository.updatePromotion(updatePromotionRequest)
-                            if(responseUpdatePromotion.code==200) {
-                                logger.info("responseUpdatePromotion: $responseUpdatePromotion")
-                            }
-                            val responseUpdateDeliveryStatus = homeRepository.updateDeliveryStatus(updateDeliveryStatusRequest)
-//                            if(responseUpdateDeliveryStatus.code==200) {
-//                                logger.info("responseUpdatePromotion: $responseUpdateDeliveryStatus")
+//                            logger.debug("Order code: ${_state.value.orderCode}")
+//                            logger.debug("android id: ${_state.value.initSetup!!.androidId}")
+//                            try {
+//                                val responseUpdatePromotion = homeRepository.updatePromotion(updatePromotionRequest)
+//                                if(responseUpdatePromotion.code==200) {
+//                                    logger.info("responseUpdatePromotion: $responseUpdatePromotion")
+//                                }
+//                            } catch(e: Exception) {
+//                                var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+//                                    type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+//                                    path = pathFileUpdatePromotion
+//                                )
+//                                val logUpdatePromotion = LogUpdatePromotion(
+//                                    machineCode = updatePromotionRequest.machineCode!!,
+//                                    androidId = updatePromotionRequest.androidId!!,
+//                                    campaignId = updatePromotionRequest.campaignId!!,
+//                                    voucherCode = updatePromotionRequest.voucherCode!!,
+//                                    orderCode = updatePromotionRequest.orderCode!!,
+//                                    promotionId = updatePromotionRequest.promotionId!!,
+//                                    status = true,
+//                                    extra = updatePromotionRequest.extra!!,
+//                                    isSent = false,
+//                                )
+//                                if(listUpdatePromotion.isNullOrEmpty()) {
+//                                    listUpdatePromotion = arrayListOf()
+//                                }
+//                                listUpdatePromotion.add(logUpdatePromotion)
+//                                baseRepository.writeDataToLocal(
+//                                    listUpdatePromotion,
+//                                    pathFileUpdatePromotion
+//                                )
+//                            }
+//                            try {
+//                                val responseUpdateDeliveryStatus = homeRepository.updateDeliveryStatus(updateDeliveryStatusRequest)
+//                                if(responseUpdateDeliveryStatus.code==200) {
+//                                    logger.info("responseUpdatePromotion: $responseUpdateDeliveryStatus")
+//                                }
+//                            } catch(e: Exception) {
+//                                var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+//                                    type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+//                                    path = pathFileUpdateDeliveryStatus
+//                                )
+//                                val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+//                                    machineCode = updateDeliveryStatusRequest.machineCode!!,
+//                                    androidId = updateDeliveryStatusRequest.androidId!!,
+//                                    orderCode = updateDeliveryStatusRequest.orderCode!!,
+//                                    deliveryStatus = updateDeliveryStatusRequest.deliveryStatus!!,
+//                                    isSent = false,
+//                                )
+//                                if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+//                                    listUpdateDeliveryStatus = arrayListOf()
+//                                }
+//                                listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+//                                baseRepository.writeDataToLocal(
+//                                    listUpdateDeliveryStatus,
+//                                    pathFileUpdateDeliveryStatus
+//                                )
 //                            }
                         } else {
-//                            val list: InitSetup = baseRepository.getDataFromLocal(
-//                                type = object : TypeToken<InitSetup>() {}.type,
-//                                path = pathFileInitSetup
-//                            )!!
+                            var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                                type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                                path = pathFileUpdatePromotion
+                            )
+                            val logUpdatePromotion = LogUpdatePromotion(
+                                machineCode = updatePromotionRequest.machineCode!!,
+                                androidId = updatePromotionRequest.androidId!!,
+                                campaignId = updatePromotionRequest.campaignId!!,
+                                voucherCode = updatePromotionRequest.voucherCode!!,
+                                orderCode = updatePromotionRequest.orderCode!!,
+                                promotionId = updatePromotionRequest.promotionId!!,
+                                status = true,
+                                extra = updatePromotionRequest.extra!!,
+                                isSent = false,
+                            )
+                            if(listUpdatePromotion.isNullOrEmpty()) {
+                                listUpdatePromotion = arrayListOf()
+                            }
+                            listUpdatePromotion.add(logUpdatePromotion)
+                            baseRepository.writeDataToLocal(
+                                listUpdatePromotion,
+                                pathFileUpdatePromotion
+                            )
+
+                            var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                                type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                                path = pathFileUpdateDeliveryStatus
+                            )
+                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                                machineCode = updateDeliveryStatusRequest.machineCode!!,
+                                androidId = updateDeliveryStatusRequest.androidId!!,
+                                orderCode = updateDeliveryStatusRequest.orderCode!!,
+                                deliveryStatus = updateDeliveryStatusRequest.deliveryStatus!!,
+                                isSent = false,
+                            )
+                            if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+                                listUpdateDeliveryStatus = arrayListOf()
+                            }
+                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                            baseRepository.writeDataToLocal(
+                                listUpdateDeliveryStatus,
+                                pathFileUpdateDeliveryStatus
+                            )
                         }
                     }
                     _state.update {
@@ -758,42 +880,44 @@ class HomeViewModel @Inject constructor (
                     errorContent = "payment confirmation fail in HomeViewModel/paymentConfirmation(): ${e.message}",
                 )
                 sendEvent(Event.Toast("${e.message}"))
+            } finally {
+                _state.update { it.copy(isVendingMachineBusy = false) }
             }
         }
     }
 
 
-    @SuppressLint("MissingPermission") // Ensure permissions are handled before calling this
-    fun getGps(onLocationReceived: (Location?) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-                if (ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    return@launch
-                } else {
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                        location?.let {
-                            onLocationReceived(it)
-                        } ?: run {
-                            // Handle the case where location is null
-                            onLocationReceived(null) // Call onLocationReceived with null if location is null
-                        }
-                    }
-                }
-
-            } catch (e: Exception) {
-                logger.debug("error: ${e.message}")
-                onLocationReceived(null) // Call onLocationReceived with null in case of exception
-            }
-        }
-    }
+//    @SuppressLint("MissingPermission") // Ensure permissions are handled before calling this
+//    fun getGps(onLocationReceived: (Location?) -> Unit) {
+//        viewModelScope.launch {
+//            try {
+//                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+//                if (ActivityCompat.checkSelfPermission(
+//                        context,
+//                        Manifest.permission.ACCESS_FINE_LOCATION
+//                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+//                        context,
+//                        Manifest.permission.ACCESS_COARSE_LOCATION
+//                    ) != PackageManager.PERMISSION_GRANTED
+//                ) {
+//                    return@launch
+//                } else {
+//                    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+//                        location?.let {
+//                            onLocationReceived(it)
+//                        } ?: run {
+//                            // Handle the case where location is null
+//                            onLocationReceived(null) // Call onLocationReceived with null if location is null
+//                        }
+//                    }
+//                }
+//
+//            } catch (e: Exception) {
+//                logger.debug("error: ${e.message}")
+//                onLocationReceived(null) // Call onLocationReceived with null in case of exception
+//            }
+//        }
+//    }
 
     fun hideDialogWarning() {
         viewModelScope.launch {
@@ -821,7 +945,7 @@ class HomeViewModel @Inject constructor (
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-//            Logger.info("-------> data from cash box: $dataHexString")
+            Logger.info("-------> data from cash box: $dataHexString")
             if(dataHexString.contains("01,01,03,00,00,")) {
                 _numberRottenBoxBalance.value = -1
                 // Define the byte to balance map
@@ -868,19 +992,42 @@ class HomeViewModel @Inject constructor (
                 // Update the state
                 _numberRottenBoxBalance.value = numberRottenBoxBalance
             } else if (dataByteArray.size == 19) {
+                _isCashBoxNormal.value = true
                 if (dataByteArray[6] == 0x00.toByte()) {
-                    when (dataByteArray[7]) {
-                        0x03.toByte() -> processingCash(5000)
-                        0x04.toByte() -> processingCash(10000)
-                        0x05.toByte() -> processingCash(20000)
-                        0x06.toByte() -> processingCash(50000)
-                        0x07.toByte() -> processingCash(100000)
-                        0x08.toByte() -> processingCash(200000)
-                        0x09.toByte() -> processingCash(500000)
+                    if(dataHexString != _dataTmpCashBox.value) {
+                        _dataTmpCashBox.value = dataHexString
+                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbStack)
+                        when (dataByteArray[7]) {
+                            0x03.toByte() -> processingCash(5000)
+                            0x04.toByte() -> processingCash(10000)
+                            0x05.toByte() -> processingCash(20000)
+                            0x06.toByte() -> processingCash(50000)
+                            0x07.toByte() -> processingCash(100000)
+                            0x08.toByte() -> processingCash(200000)
+                            0x09.toByte() -> processingCash(500000)
+                        }
                     }
                 } else {
-//                    logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
                     _isCashBoxNormal.value = true
+//                    logger.debug("poll status: $dataHexString")
+                    if(dataByteArray[6] == 0xFF.toByte()) {
+                        if(dataHexString != _dataTmpCashBox.value) {
+                            _dataTmpCashBox.value = dataHexString
+                            when (dataByteArray[7]) {
+                                0x0A.toByte() -> processingWhenCashBoxHasProblem("Recycled module jam problem")
+                                0x0B.toByte() -> processingWhenCashBoxHasProblem("Recycled module is disconnected")
+                                0x09.toByte() -> processingWhenCashBoxHasProblem("Recycled module motor problem")
+                                0x08.toByte() -> processingWhenCashBoxHasProblem("Recycled module sensor problem")
+                                0x07.toByte() -> processingWhenCashBoxHasProblem("Stacker faulty")
+                                0x06.toByte() -> processingWhenCashBoxHasProblem("Stacker remove")
+                                0x05.toByte() -> processingWhenCashBoxHasProblem("Bill Reject")
+                                0x04.toByte() -> processingWhenCashBoxHasProblem("Bill Remove")
+                                0x03.toByte() -> processingWhenCashBoxHasProblem("Bill Jam")
+                                0x02.toByte() -> processingWhenCashBoxHasProblem("Sensor problem")
+                                0x01.toByte() -> processingWhenCashBoxHasProblem("Motor problem")
+                            }
+                        }
+                    }
                 }
             } else if(dataByteArray.size == 6) {
                 _setupCashBox.value = false
@@ -902,10 +1049,21 @@ class HomeViewModel @Inject constructor (
         }
     }
 
+    private fun processingWhenCashBoxHasProblem(message: String) {
+        viewModelScope.launch {
+            logger.debug("ERRRRRRRRRRRRRRRRRRRRRRRRRRR: $message")
+            baseRepository.addNewErrorLogToLocal(
+                machineCode = _state.value.initSetup!!.vendCode,
+                errorContent = "cash box error: $message",
+                severity = "highest"
+            )
+        }
+
+    }
+
     private fun processingCash(cash: Int) {
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandCashBox(byteArrays.cbStack)
                 logger.debug("cash = $cash")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -1161,7 +1319,7 @@ class HomeViewModel @Inject constructor (
                 observePortData()
                 _setupCashBox.value = false
                 sendCommandCashBox(byteArrays.cbEnableType3456789)
-                delay(260)
+                delay(300)
                 if(_setupCashBox.value) {
                     logger.debug("set cbEnableType3456789 success")
                 } else {
@@ -1169,11 +1327,19 @@ class HomeViewModel @Inject constructor (
                 }
                 _setupCashBox.value = false
                 sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
-                delay(260)
+                delay(300)
                 if(_setupCashBox.value) {
                     logger.debug("set cbSetRecyclingBillType4 success")
                 } else {
                     logger.debug("set cbSetRecyclingBillType4 fail")
+                }
+                _setupCashBox.value = false
+                sendCommandCashBox(byteArrays.cbEscrowOn)
+                delay(300)
+                if(_setupCashBox.value) {
+                    logger.debug("set cbEscrowOn success")
+                } else {
+                    logger.debug("set cbEscrowOn fail")
                 }
                 sendCommandVendingMachine(byteArrays.vmReadTemp)
             } catch (e: Exception) {
@@ -1330,78 +1496,101 @@ class HomeViewModel @Inject constructor (
 
     fun showPayment() {
         viewModelScope.launch {
-            _state.update { it.copy (
-                isShowCart = true,
-                isLoading = true
-            ) }
             try {
-                _isCashBoxNormal.value = false
-                sendCommandCashBox(byteArrays.cbPollStatus)
-                val listPaymentMethod: ArrayList<PaymentMethodResponse> = baseRepository.getDataFromLocal(
+                _state.update { it.copy (
+                    isShowCart = true,
+                    isLoading = true,
+                    promotion = null,
+                    nameMethodPayment = "",
+                ) }
+                var listPaymentMethod: ArrayList<PaymentMethodResponse>? = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<PaymentMethodResponse>>() {}.type,
                     path = pathFilePaymentMethod
-                )!!
-                delay(300)
-                if(!_isCashBoxNormal.value) {
+                )
+                val totalAmount = homeRepository.getTotalAmount(_state.value.listSlotInCard)
+                if(listPaymentMethod.isNullOrEmpty()) {
+                    _state.update { it.copy (
+                        listPaymentMethod = arrayListOf(),
+                        totalAmount = totalAmount,
+                    ) }
+                } else {
+                    _isCashBoxNormal.value = false
                     sendCommandCashBox(byteArrays.cbPollStatus)
                     delay(300)
                     if(!_isCashBoxNormal.value) {
                         sendCommandCashBox(byteArrays.cbPollStatus)
                         delay(300)
                         if(!_isCashBoxNormal.value) {
-                            for(item in listPaymentMethod) {
-                                if(item.methodName == "cash") {
-                                    listPaymentMethod.remove(item)
-                                    break
+                            sendCommandCashBox(byteArrays.cbPollStatus)
+                            delay(300)
+                            if(!_isCashBoxNormal.value) {
+                                for(item in listPaymentMethod) {
+                                    if(item.methodName == "cash") {
+                                        listPaymentMethod.remove(item)
+                                        break
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                val totalAmount = homeRepository.getTotalAmount(_state.value.listSlotInCard)
-                if(baseRepository.isHaveNetwork(context)) {
-                    if(_state.value.initSetup!!.initPromotion == "ON") {
-                        val promotion = homeRepository.getPromotion(
-                            voucherCode = _state.value.voucherCode,
-                            listSlot = _state.value.listSlotInCard,
-                        )
-                        _state.update { it.copy (
-                            promotion = promotion,
-                            totalAmount = promotion.paymentAmount ?: totalAmount,
-                            listPaymentMethod = listPaymentMethod,
-                            isLoading = false,
-                        ) }
+                    logger.debug("666")
+                    if(!baseRepository.isHaveNetwork(context)) {
+                        var paymentMethodResponse: PaymentMethodResponse? = null
+                        for(item in listPaymentMethod) {
+                            logger.debug("item $item")
+                            if(item.methodName == "cash") {
+                                paymentMethodResponse = item
+                            }
+                        }
+                        listPaymentMethod = arrayListOf()
+                        if(paymentMethodResponse != null) {
+                            listPaymentMethod.add(paymentMethodResponse)
+                        }
+                    }
+                    logger.debug("777")
+                    _state.update { it.copy (listPaymentMethod = listPaymentMethod) }
+                    if(baseRepository.isHaveNetwork(context)) {
+                        if(_state.value.initSetup!!.initPromotion == "ON") {
+                            try {
+                                logger.debug("888")
+                                val promotion = homeRepository.getPromotion(
+                                    voucherCode = _state.value.voucherCode,
+                                    listSlot = _state.value.listSlotInCard,
+                                )
+                                logger.debug("999: promotion: $promotion")
+                                _state.update { it.copy (
+                                    promotion = promotion,
+                                    totalAmount = promotion.paymentAmount ?: totalAmount,
+                                ) }
+                            } catch (e: Exception) {
+                                logger.debug("error in show payment: ${e.message}")
+                                baseRepository.addNewErrorLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    errorContent = "get init promotion fail HomeViewModel/showPayment(): ${e.message}",
+                                )
+                                _state.update { it.copy (
+                                    totalAmount = totalAmount,
+                                ) }
+                            }
+                        } else {
+                            _state.update { it.copy (
+                                totalAmount = totalAmount,
+                            ) }
+                        }
                     } else {
                         _state.update { it.copy (
                             totalAmount = totalAmount,
-                            listPaymentMethod = listPaymentMethod,
-                            isLoading = false,
                         ) }
                     }
-                } else {
-                    val listPaymentMethodTmp: ArrayList<PaymentMethodResponse> = arrayListOf()
-                    if(!baseRepository.isHaveNetwork(context)) {
-                        for (item in listPaymentMethod) {
-                            if(item.methodName == "cash") {
-                                listPaymentMethodTmp.add(item)
-                            }
-                        }
-                    }
-                    _state.update { it.copy (
-                        totalAmount = totalAmount,
-                        listPaymentMethod = listPaymentMethodTmp,
-                        isLoading = false,
-                    ) }
                 }
             } catch (e: Exception) {
+                logger.debug("error in show payment: ${e.message}")
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
-                    errorContent = "get promotion fail HomeViewModel/showPayment(): ${e.message}",
+                    errorContent = "show payment fail in HomeViewModel/showPayment(): ${e.message}",
                 )
-                sendEvent(Event.Toast("${e.message}"))
-                _state.update { it.copy (
-                    isLoading = false,
-                ) }
+            } finally {
+                _state.update { it.copy (isLoading = false) }
             }
         }
     }
@@ -1678,101 +1867,199 @@ class HomeViewModel @Inject constructor (
     fun paymentConfirmation() {
         logger.info("paymentConfirmation")
         viewModelScope.launch {
-            try {
-                _state.update { it.copy(countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong())) }
-                val orderCode = LocalDateTime.now().toId()
-                val orderTime = LocalDateTime.now().toDateTimeString()
-                val totalAmount = _state.value.totalAmount
-                val totalDiscount = if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount ?: 0 else 0
-                val paymentAmount = if(_state.value.promotion!=null) _state.value.promotion!!.paymentAmount ?: 0 else _state.value.totalAmount
-                val paymentMethodId = _state.value.nameMethodPayment
-                val listProductDetailRequest: ArrayList<ProductDetailRequest> = arrayListOf()
-                val listProductInCart = _state.value.listSlotInCard
-                when(_state.value.nameMethodPayment) {
-                    "cash" -> {
-                        logger.debug("method payment: cash")
-                        val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<InitSetup>() {}.type,
-                            path = pathFileInitSetup
-                        )!!
-                        if(initSetup.currentCash >= _state.value.totalAmount) {
-                            _state.update { it.copy(
-                                isShowCart = false,
-                                orderCode = orderCode,
-                                isShowWaitForDropProduct = true,
-                            ) }
-                            dropProduct()
-                        } else {
-                            _state.update { it.copy(
-                                orderCode = orderCode,
-                                isShowPushMoney = true,
-                                isShowCart = false,
-                            ) }
-                            startCountdownPaymentByCash()
-                        }
+            if(_state.value.nameMethodPayment.isEmpty()) {
+                sendEvent(Event.Toast("Hãy chọn phương thức thanh toán!"))
+            } else {
+                try {
+                    logger.debug("android id: ${_state.value.initSetup!!.androidId}")
+                    _state.update { it.copy(
+                        countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()),
+                        isVendingMachineBusy = true,
+                    ) }
+                    logger.debug("1")
+                    val orderCode = LocalDateTime.now().toId()
+                    val orderTime = LocalDateTime.now().toDateTimeString()
+                    val totalAmount = _state.value.totalAmount
+                    logger.debug("2")
+                    val totalDiscount = if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount ?: 0 else 0
+                    val paymentAmount = if(_state.value.promotion!=null) _state.value.promotion!!.paymentAmount ?: 0 else _state.value.totalAmount
+                    val paymentMethodId = _state.value.nameMethodPayment
+                    logger.debug("3")
+                    val rewardType = if(_state.value.promotion!=null) _state.value.promotion!!.rewardType ?: 0 else _state.value.nameMethodPayment
+                    val rewardValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardValue ?: 0 else 0
+                    val rewardMaxValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardMaxValue ?: 0 else 0
+                    val voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else ""
+                    val listProductInCart = _state.value.listSlotInCard
+                    logger.debug("4")
+                    val currentTime = LocalDateTime.now().toDateTimeString()
+                    val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
+                    for (item in listProductInCart) {
+                        val slot = homeRepository.getSlotDrop(item.productCode)
+                        val productDetailRequest = ProductSyncOrderRequest(
+                            productCode = item.productCode,
+                            productName = item.productName,
+                            price = item.price.toString(),
+                            quantity = item.inventory,
+                            discount = 0,
+                            amount = (item.inventory*item.price).toString(),
+                            slot = slot!!.slot,
+                            cabinetCode = "MT01",
+                        )
+                        productDetails.add(productDetailRequest)
                     }
-                    "momo", "vnpay", "zalopay" -> {
-                        _state.update { it.copy(isLoading = true)}
-                        var storeId = ""
-                        for(item in _state.value.listPaymentMethod) {
-                            if(item.methodName == _state.value.nameMethodPayment) {
-                                storeId = item.storeId ?: ""
-                                break
+                    val syncOrderRequest = SyncOrderRequest(
+                        machineCode = _state.value.initSetup!!.vendCode,
+                        orderCode = _state.value.orderCode,
+                        androidId = _state.value.initSetup!!.androidId,
+                        orderTime = currentTime,
+                        totalAmount = totalAmount,
+                        totalDiscount = totalDiscount,
+                        paymentAmount = paymentAmount,
+                        paymentMethodId = paymentMethodId,
+                        paymentTime = currentTime,
+                        timeSynchronizedToServer = currentTime,
+                        timeReleaseProducts = currentTime,
+                        rewardType = rewardType.toString(),
+                        rewardValue = rewardValue.toString(),
+                        rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
+                        paymentStatus = "success",
+                        deliveryStatus = "true",
+                        voucherCode = voucherCode,
+                        productDetails = productDetails,
+                    )
+                    logger.debug("5")
+                    if(_state.value.nameMethodPayment != "cash") {
+                        val response = homeRepository.syncOrder(syncOrderRequest)
+                        if(response.code==200) {
+                            logger.info("${response}")
+                        } else {
+                            logger.info("${response}")
+                        }
+                    } else {
+                        val listSyncOrderTmp: ArrayList<LogSyncOrder> = arrayListOf()
+                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                            path = pathFileSyncOrder,
+                        )
+                        val logSyncOrder = LogSyncOrder(
+                            machineCode = syncOrderRequest.machineCode,
+                            orderCode = syncOrderRequest.orderCode,
+                            androidId = syncOrderRequest.androidId,
+                            orderTime = syncOrderRequest.orderTime,
+                            totalAmount = syncOrderRequest.totalAmount,
+                            totalDiscount = syncOrderRequest.totalDiscount,
+                            paymentAmount = syncOrderRequest.paymentAmount,
+                            paymentMethodId = syncOrderRequest.paymentMethodId,
+                            paymentTime = syncOrderRequest.paymentTime,
+                            timeSynchronizedToServer = syncOrderRequest.timeSynchronizedToServer,
+                            timeReleaseProducts = syncOrderRequest.timeReleaseProducts,
+                            rewardType = syncOrderRequest.rewardType,
+                            rewardValue = syncOrderRequest.rewardValue,
+                            rewardMaxValue = syncOrderRequest.rewardMaxValue ?: 0,
+                            paymentStatus = syncOrderRequest.paymentStatus,
+                            deliveryStatus = syncOrderRequest.deliveryStatus,
+                            voucherCode = syncOrderRequest.voucherCode,
+                            productDetails = syncOrderRequest.productDetails,
+                            isSent = false,
+                        )
+                        if(listSyncOrder.isNullOrEmpty()) {
+                            listSyncOrder = arrayListOf()
+                        }
+                        listSyncOrder.add(logSyncOrder)
+                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                    }
+                    logger.debug("6")
+                    val listProductDetailRequest: ArrayList<ProductDetailRequest> = arrayListOf()
+                    when(_state.value.nameMethodPayment) {
+                        "cash" -> {
+                            logger.debug("method payment: cash")
+                            val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                                type = object : TypeToken<InitSetup>() {}.type,
+                                path = pathFileInitSetup
+                            )!!
+                            if(initSetup.currentCash >= _state.value.totalAmount) {
+                                _state.update { it.copy(
+                                    isShowCart = false,
+                                    orderCode = orderCode,
+                                    isShowWaitForDropProduct = true,
+                                ) }
+                                dropProduct()
+                            } else {
+                                _state.update { it.copy(
+                                    orderCode = orderCode,
+                                    isShowPushMoney = true,
+                                    isShowCart = false,
+                                ) }
+                                startCountdownPaymentByCash()
                             }
                         }
-                        for(item in listProductInCart) {
-                            val slot = homeRepository.getSlotDrop(item.productCode)
-                            val productDetailRequest = ProductDetailRequest(
-                                productCode = item.productCode,
-                                productName = item.productName,
-                                price = item.price,
-                                quantity = item.inventory,
-                                discount = 0,
-                                amount = item.inventory*item.price,
-                                slot = if(slot!=null) item.slot else 0,
-                                cabinetCode = "MT01"
-                            )
-                            listProductDetailRequest.add(productDetailRequest)
-                        }
-                        val request = GetQrCodeRequest(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            orderCode = orderCode,
-                            orderTime = orderTime,
-//                            totalAmount = totalAmount,
-                            totalAmount = 1000,
-                            totalDiscount = 1000,
-                            paymentAmount = 1000,
-                            paymentMethodId = paymentMethodId,
-                            storeId = storeId,
-                            productDetails = listProductDetailRequest,
-                        )
-                        logger.debug("method: $paymentMethodId, storeId: ${storeId}")
-                        val response = homeRepository.getQrCodeFromServer(request)
-                        logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
-                        if(response.qrCodeUrl!!.isNotEmpty()) {
-                            val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
-                            val imageBitmap = qrCodeBitmap.asImageBitmap()
-                            _state.update { it.copy(
-                                isShowCart = false,
-                                isLoading = false,
+                        "momo", "vnpay", "zalopay" -> {
+                            logger.debug("11")
+                            _state.update { it.copy(isLoading = true)}
+                            var storeId = ""
+                            for(item in _state.value.listPaymentMethod) {
+                                if(item.methodName == _state.value.nameMethodPayment) {
+                                    storeId = item.storeId ?: ""
+                                    break
+                                }
+                            }
+                            logger.debug("22")
+                            for(item in listProductInCart) {
+                                val slot = homeRepository.getSlotDrop(item.productCode)
+                                val productDetailRequest = ProductDetailRequest(
+                                    productCode = item.productCode,
+                                    productName = item.productName,
+                                    price = item.price,
+                                    quantity = item.inventory,
+                                    discount = 0,
+                                    amount = item.inventory*item.price,
+                                    slot = if(slot!=null) item.slot else 0,
+                                    cabinetCode = "MT01"
+                                )
+                                listProductDetailRequest.add(productDetailRequest)
+                            }
+                            logger.debug("33")
+                            val request = GetQrCodeRequest(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
                                 orderCode = orderCode,
-                                imageBitmap = imageBitmap,
-                                isShowQrCode = true,
-                            ) }
-                            startCountdownPaymentByOnline(orderCode = orderCode, storeId = storeId)
-                        } else {
-                            _state.update { it.copy(isLoading = false)}
+                                orderTime = orderTime,
+//                            totalAmount = totalAmount,
+                                totalAmount = 1000,
+                                totalDiscount = 1000,
+                                paymentAmount = 1000,
+                                paymentMethodId = paymentMethodId,
+                                storeId = storeId,
+                                productDetails = listProductDetailRequest,
+                            )
+                            logger.debug("44")
+                            logger.debug("method: $paymentMethodId, storeId: ${storeId}")
+                            val response = homeRepository.getQrCodeFromServer(request)
+                            logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
+                            if(response.qrCodeUrl!!.isNotEmpty()) {
+                                val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
+                                val imageBitmap = qrCodeBitmap.asImageBitmap()
+                                _state.update { it.copy(
+                                    isShowCart = false,
+                                    isLoading = false,
+                                    orderCode = orderCode,
+                                    imageBitmap = imageBitmap,
+                                    isShowQrCode = true,
+                                ) }
+                                startCountdownPaymentByOnline(orderCode = orderCode, storeId = storeId)
+                            } else {
+                                _state.update { it.copy(isLoading = false)}
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    baseRepository.addNewErrorLogToLocal(
+                        machineCode = _state.value.initSetup!!.vendCode,
+                        errorContent = "payment confirmation fail in HomeViewModel/paymentConfirmation(): ${e.message}",
+                    )
+                    sendEvent(Event.Toast("${e.message}"))
+                    _state.update { it.copy(isLoading = false) }
                 }
-            } catch (e: Exception) {
-                baseRepository.addNewErrorLogToLocal(
-                    machineCode = _state.value.initSetup!!.vendCode,
-                    errorContent = "payment confirmation fail in HomeViewModel/paymentConfirmation(): ${e.message}",
-                )
-                sendEvent(Event.Toast("${e.message}"))
-                _state.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -1797,6 +2084,7 @@ class HomeViewModel @Inject constructor (
                         orderCode = orderCode,
                         storeId = storeId
                     )
+                    logger.info("Check result online")
                     val resultPaymentByOnline =
                         homeRepository.checkResultPaymentOnline(checkResultPaymentOnline)
                     logger.debug("resultPaymentByOnline: $resultPaymentByOnline")
@@ -1836,16 +2124,16 @@ class HomeViewModel @Inject constructor (
         return bitmap
     }
 
-    fun showDialogConfirm(mess: String) {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    titleDialogConfirm = mess,
-                    isConfirm = true,
-                )
-            }
-        }
-    }
+//    fun showDialogConfirm(mess: String) {
+//        viewModelScope.launch {
+//            _state.update {
+//                it.copy(
+//                    titleDialogConfirm = mess,
+//                    isConfirm = true,
+//                )
+//            }
+//        }
+//    }
 
     fun hideDialogConfirm() {
         viewModelScope.launch {

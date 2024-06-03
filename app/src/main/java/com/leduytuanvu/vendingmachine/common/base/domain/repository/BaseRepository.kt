@@ -69,6 +69,12 @@ interface BaseRepository {
         powerInfo: String,
         severity: String = "normal",
     )
+    suspend fun addNewDoorLogToLocal(
+        machineCode: String,
+        cabinetCode: String,
+        operationType: String,
+        severity: String = "normal",
+    )
     suspend fun getAndroidId() : String
     suspend fun isHaveNetwork(context: Context): Boolean
     suspend fun <T> writeDataToLocal(data: T, path: String)

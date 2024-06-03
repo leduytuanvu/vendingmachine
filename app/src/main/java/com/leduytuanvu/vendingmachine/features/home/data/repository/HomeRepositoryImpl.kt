@@ -17,6 +17,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCode
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemPromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.LogServerRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.PromotionRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
@@ -24,6 +25,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositA
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.GetQrCodeResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.SyncOrderResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.home.data.remote.HomeApi
@@ -250,6 +252,15 @@ class HomeRepositoryImpl @Inject constructor(
     override suspend fun updateDeliveryStatus(updateDeliveryStatusRequest: UpdateDeliveryStatusRequest): BaseResponse<UpdateDeliveryStatusResponse> {
         try {
             val response = homeApi.updateDeliveryStatus(updateDeliveryStatusRequest)
+            return response
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun syncOrder(syncOrderRequest: SyncOrderRequest): BaseResponse<SyncOrderResponse> {
+        try {
+            val response = homeApi.syncOrder(syncOrderRequest)
             return response
         } catch (e: Exception) {
             throw e

@@ -62,10 +62,10 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getListAccount(vendCode: String): ArrayList<AccountResponse> {
+    override suspend fun getListAccount(vendCode: String): BaseListResponse<AccountResponse> {
         try {
             val response = authApi.getListAccount(vendCode)
-            return response.data
+            return response
         } catch (e: Exception) {
             throw e
         }

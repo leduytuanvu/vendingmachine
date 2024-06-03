@@ -8,6 +8,7 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 
 data class HomeViewState (
     val isLoading: Boolean = false,
+    val isVendingMachineBusy: Boolean = false,
     val isShowAds: Boolean = true,
     val isShowCart: Boolean = false,
     val isConfirm: Boolean = false,
@@ -19,7 +20,7 @@ data class HomeViewState (
     val titleDialogWarning: String = "",
     val titleDialogConfirm: String = "",
     val setUpCashBox: Boolean = false,
-    val nameMethodPayment: String = "cash",
+    val nameMethodPayment: String = "",
     val temp1: String = "",
     val temp2: String = "",
     val orderCode: String = "",

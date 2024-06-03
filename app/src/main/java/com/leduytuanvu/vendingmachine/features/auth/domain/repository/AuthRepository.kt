@@ -14,5 +14,5 @@ interface AuthRepository {
     suspend fun deactivateTheMachine(deactivateTheMachineRequest: ActivateTheMachineRequest) : BaseResponse<String>
     suspend fun decodePassword(password: String) : String
     suspend fun encodePassword(decodeString: String) : String
-    suspend fun getListAccount(vendCode: String) : ArrayList<AccountResponse>
+    suspend fun getListAccount(vendCode: String) : BaseListResponse<AccountResponse>
 }

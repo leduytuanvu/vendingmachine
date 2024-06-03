@@ -132,6 +132,9 @@ fun SettingsContent(
                         })
                     }
                 }
+                ButtonSettingsComposable("VIEW TRANSACTIONS IN THE LAST 7 DAYS", function = {
+                    navController.navigate(Screens.TransactionScreenRoute.route)
+                })
                 ButtonSettingsComposable("VIEW LOG", function = {
                     navController.navigate(Screens.ViewLogScreenRoute.route)
                 })

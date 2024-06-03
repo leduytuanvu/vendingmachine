@@ -1,13 +1,8 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.screens
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -63,14 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.google.android.gms.location.LocationServices
 import com.leduytuanvu.vendingmachine.R
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
@@ -105,39 +96,21 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-            delay(2500)
+            delay(1000)
             viewModel.pollStatus()
         }
     }
 
-//    // State to hold the latest location
-//    val latestLocation = remember { mutableStateOf<Location?>(null) }
-//
-//    // Fetch GPS location when the composable is created or resumed
-//    LaunchedEffect(Unit) {
-//        viewModel.getGps { location ->
-//            latestLocation.value = location
-//        }
-//    }
-//
-//    LaunchedEffect(latestLocation.value) {
-//        latestLocation.value?.let { location ->
-//            Logger.debug("Latitude: ${location.latitude}, Longitude: ${location.longitude}")
-//        }
-//    }
-//    LaunchedEffect(Unit) {
-//        while (true) {
-//            delay(10000L)
-//            viewModel.getTypeNetworkAndBatteryStatus()
-//        }
-//    }
-//    LaunchedEffect(Unit) {
-//        while (true) {
-//            delay(3000)
-//            viewModel.writeLogStatusNetworkAndPower()
-////            viewModel.readDoor()
-//        }
-//    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+            if(!state.isVendingMachineBusy) {
+                viewModel.readDoor()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(300000)
@@ -650,323 +623,336 @@ fun HomeContent(
                 }
             }
             if(state.isShowCart && state.listSlotInCard.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .border(
-                            width = 0.dp,
-                            color = Color.White,
-                            shape = RoundedCornerShape(
-                                topStart = 22.dp,
-                                topEnd = 22.dp,
-                                bottomEnd = 0.dp,
-                                bottomStart = 0.dp
+                Box(modifier = Modifier.fillMaxSize().clickable { }) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .border(
+                                width = 0.dp,
+                                color = Color.White,
+                                shape = RoundedCornerShape(
+                                    topStart = 22.dp,
+                                    topEnd = 22.dp,
+                                    bottomEnd = 0.dp,
+                                    bottomStart = 0.dp
+                                )
                             )
-                        )
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(
-                                topStart = 22.dp,
-                                topEnd = 22.dp,
-                                bottomEnd = 0.dp,
-                                bottomStart = 0.dp
-                            )
-                        ),
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        CustomButtonComposable(
-                            title = "Quay lại",
-                            wrap = true,
-                            paddingBottom = 36.dp,
-                            fontSize = 20.sp,
-                            height = 60.dp,
-                            fontWeight = FontWeight.Bold,
-                            cornerRadius = 6.dp,
-                        ) {
-                            viewModel.backDebounced()
-                        }
-                        Column(
-                            modifier = Modifier
-                                .heightIn(max = 400.dp)
-                                .fillMaxWidth()
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            state.listSlotInCard.forEach { item ->
-                                Row (
-                                    modifier = Modifier.padding(bottom = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    val imageModifier = Modifier
-                                        .width(130.dp)
-                                        .height(130.dp)
-                                        .padding(end = 10.dp)
-                                    val imagePainter = if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                            pathFolderImageProduct + "/${item.productCode}.png"
-                                        )
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(
+                                    topStart = 22.dp,
+                                    topEnd = 22.dp,
+                                    bottomEnd = 0.dp,
+                                    bottomStart = 0.dp
+                                )
+                            ),
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            CustomButtonComposable(
+                                title = "Quay lại",
+                                wrap = true,
+                                paddingBottom = 36.dp,
+                                fontSize = 20.sp,
+                                height = 60.dp,
+                                fontWeight = FontWeight.Bold,
+                                cornerRadius = 6.dp,
+                            ) {
+                                viewModel.backDebounced()
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .heightIn(max = 400.dp)
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                state.listSlotInCard.forEach { item ->
+                                    Row (
+                                        modifier = Modifier.padding(bottom = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                            .data(pathFolderImageProduct + "/${item.productCode}.png")
-                                            .build()
-                                        rememberAsyncImagePainter(imageRequest)
-                                    } else {
-                                        painterResource(id = R.drawable.image_error)
-                                    }
-                                    Image(
-                                        modifier = imageModifier,
-                                        painter = imagePainter,
-                                        contentDescription = ""
-                                    )
-
-                                    Column() {
-                                        Text(
-                                            item.productName,
-                                            fontSize = 19.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text("Đơn giá: ${item.price.toVietNamDong()}/lon", fontSize = 14.sp)
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        Row(
-                                            modifier = Modifier,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .width(50.dp)
-                                                    .height(40.dp)
-                                                    .border(
-                                                        width = 0.2.dp,
-                                                        color = Color.Gray,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    )
-                                                    .background(
-                                                        Color.White,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    ),
-                                                contentAlignment = Alignment.Center,                                            ) {
-                                                Image(
-                                                    modifier = Modifier
-                                                        .height(20.dp)
-                                                        .width(20.dp)
-                                                        .clickable {
-                                                            viewModel.minusProductDebounced(item)
-                                                        },
-                                                    alignment = Alignment.Center,
-                                                    painter = painterResource(id = R.drawable.image_minus),
-                                                    contentDescription = ""
-                                                )
-                                            }
-
-                                            Text(
-                                                "${item.inventory}",
-                                                fontSize = 19.sp,
-                                                modifier = Modifier.padding(horizontal = 20.dp)
+                                        val imageModifier = Modifier
+                                            .width(130.dp)
+                                            .height(130.dp)
+                                            .padding(end = 10.dp)
+                                        val imagePainter = if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                pathFolderImageProduct + "/${item.productCode}.png"
                                             )
-                                            Box(
-                                                modifier = Modifier
-                                                    .width(50.dp)
-                                                    .height(40.dp)
-                                                    .border(
-                                                        width = 0.2.dp,
-                                                        color = Color.Gray,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    )
-                                                    .background(
-                                                        Color.White,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    ),
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                Image(
-                                                    modifier = Modifier
-                                                        .height(20.dp)
-                                                        .width(20.dp)
-                                                        .clickable {
-                                                            viewModel.plusProductDebounced(item)
-                                                        },
-                                                    alignment = Alignment.Center,
-                                                    painter = painterResource(id = R.drawable.image_plus),
-                                                    contentDescription = ""
-                                                )
-                                            }
+                                        ) {
+                                            val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                                .data(pathFolderImageProduct + "/${item.productCode}.png")
+                                                .build()
+                                            rememberAsyncImagePainter(imageRequest)
+                                        } else {
+                                            painterResource(id = R.drawable.image_error)
+                                        }
+                                        Image(
+                                            modifier = imageModifier,
+                                            painter = imagePainter,
+                                            contentDescription = ""
+                                        )
 
-                                            Spacer(modifier = Modifier.weight(1f))
-                                            Text((item.price*item.inventory).toVietNamDong(), color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
+                                        Column() {
+                                            Text(
+                                                item.productName,
+                                                fontSize = 19.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text("Đơn giá: ${item.price.toVietNamDong()}/lon", fontSize = 14.sp)
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Row(
+                                                modifier = Modifier,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(50.dp)
+                                                        .height(40.dp)
+                                                        .border(
+                                                            width = 0.2.dp,
+                                                            color = Color.Gray,
+                                                            shape = RoundedCornerShape(6.dp)
+                                                        )
+                                                        .background(
+                                                            Color.White,
+                                                            shape = RoundedCornerShape(6.dp)
+                                                        ),
+                                                    contentAlignment = Alignment.Center,                                            ) {
+                                                    Image(
+                                                        modifier = Modifier
+                                                            .height(20.dp)
+                                                            .width(20.dp)
+                                                            .clickable {
+                                                                viewModel.minusProductDebounced(item)
+                                                            },
+                                                        alignment = Alignment.Center,
+                                                        painter = painterResource(id = R.drawable.image_minus),
+                                                        contentDescription = ""
+                                                    )
+                                                }
+
+                                                Text(
+                                                    "${item.inventory}",
+                                                    fontSize = 19.sp,
+                                                    modifier = Modifier.padding(horizontal = 20.dp)
+                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(50.dp)
+                                                        .height(40.dp)
+                                                        .border(
+                                                            width = 0.2.dp,
+                                                            color = Color.Gray,
+                                                            shape = RoundedCornerShape(6.dp)
+                                                        )
+                                                        .background(
+                                                            Color.White,
+                                                            shape = RoundedCornerShape(6.dp)
+                                                        ),
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
+                                                    Image(
+                                                        modifier = Modifier
+                                                            .height(20.dp)
+                                                            .width(20.dp)
+                                                            .clickable {
+                                                                viewModel.plusProductDebounced(item)
+                                                            },
+                                                        alignment = Alignment.Center,
+                                                        painter = painterResource(id = R.drawable.image_plus),
+                                                        contentDescription = ""
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.weight(1f))
+                                                Text((item.price*item.inventory).toVietNamDong(), color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
+                                            }
                                         }
                                     }
                                 }
-                            }
 
 
-                        }
-                        Row(
-                            modifier = Modifier
-                                .padding(top = 28.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            var text by remember { mutableStateOf("") }
-                            OutlinedTextField(
-                                value = text,
-                                onValueChange = { text = it },
-                                modifier = Modifier
-                                    .padding(end = 10.dp)
-                                    .height(60.dp)
-                                    .weight(1f),
-                                placeholder = { Text(text = "Mã giảm giá", fontSize = 18.sp) }, // Hint
-                                shape = RoundedCornerShape(4.dp),
-                                textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
-                                colors = outlinedTextFieldColors(
-                                    focusedBorderColor = Color.Gray,
-                                    unfocusedBorderColor = Color.Gray,
-                                )
-                            )
-                            CustomButtonComposable(
-                                title = "Áp dụng",
-                                cornerRadius = 6.dp,
-                                fontSize = 20.sp,
-                                wrap = true,
-                                height = 60.dp,
-                                fontWeight = FontWeight.Bold,
-                            ) {
-                                viewModel.applyPromotion(text)
                             }
-                        }
-                        Spacer(modifier = Modifier.height(34.dp))
-                        Row {
-                            Text(
-                                "Khuyến mãi",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(1f),
-                                fontSize = 20.sp,
-                            )
-                            Text(
-                                if(state.promotion == null) 0.toVietNamDong()
-                                else state.promotion.totalDiscount!!.toVietNamDong()
-                                , fontSize = 20.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(28.dp))
-                        Row {
-                            Text(
-                                "Tổng tiền thanh toán",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(1f),
-                                fontSize = 20.sp,
-                            )
-                            Text(state.totalAmount.toVietNamDong(), fontSize = 20.sp)
-                        }
-                        Spacer(modifier = Modifier.height(28.dp))
-                        Row {
-                            Text(
-                                "Số dư tiền mặt trên máy",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(1f),
-                                fontSize = 20.sp,
-                            )
-                            Text("${if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ"}", fontSize = 20.sp)
-                        }
-                        Spacer(modifier = Modifier.height(28.dp))
-                        Text(
-                            "Hình thức thanh toán",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                        )
-                        Box(modifier = Modifier) {
-                            val chunks = state.listPaymentMethod.chunked(3)
-                            Column(
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
                                     .padding(top = 28.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                chunks.forEach { rowItems ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                var text by remember { mutableStateOf("") }
+                                OutlinedTextField(
+                                    value = text,
+                                    onValueChange = { text = it },
+                                    modifier = Modifier
+                                        .padding(end = 10.dp)
+                                        .height(60.dp)
+                                        .weight(1f),
+                                    placeholder = { Text(text = "Mã giảm giá", fontSize = 18.sp) }, // Hint
+                                    shape = RoundedCornerShape(4.dp),
+                                    textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
+                                    colors = outlinedTextFieldColors(
+                                        focusedBorderColor = Color.Gray,
+                                        unfocusedBorderColor = Color.Gray,
+                                    )
+                                )
+                                CustomButtonComposable(
+                                    title = "Áp dụng",
+                                    cornerRadius = 6.dp,
+                                    fontSize = 20.sp,
+                                    wrap = true,
+                                    height = 60.dp,
+                                    fontWeight = FontWeight.Bold,
+                                ) {
+                                    viewModel.applyPromotion(text)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(34.dp))
+                            Row {
+                                Text(
+                                    "Khuyến mãi",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 20.sp,
+                                )
+                                Text(
+                                    if(state.promotion == null) 0.toVietNamDong()
+                                    else state.promotion.totalDiscount!!.toVietNamDong()
+                                    , fontSize = 20.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(28.dp))
+                            Row {
+                                Text(
+                                    "Tổng tiền thanh toán",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 20.sp,
+                                )
+                                Text(state.totalAmount.toVietNamDong(), fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.height(28.dp))
+                            Row {
+                                Text(
+                                    "Số dư tiền mặt trên máy",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 20.sp,
+                                )
+                                Text("${if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ"}", fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.height(28.dp))
+                            Text(
+                                "Hình thức thanh toán",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                            )
+                            if(state.listPaymentMethod.isEmpty()) {
+                                Text(
+                                    "Hiện không có phương thức thanh toán nào khả dụng! Xin vui lòng thử lại sau!",
+                                    modifier = Modifier.padding(top = 113.dp, bottom = 103.dp).fillMaxWidth(),
+                                    color = Color.Red,
+                                    textAlign = TextAlign.Center,
+                                )
+                            } else {
+                                Box(modifier = Modifier) {
+                                    val chunks = state.listPaymentMethod.chunked(3)
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 28.dp)
                                     ) {
-                                        rowItems.forEach { item ->
+                                        chunks.forEach { rowItems ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                            ) {
+                                                rowItems.forEach { item ->
 //                                            var isChoose by remember { mutableStateOf(false) }
 //                                            if(item.methodName == "cash") {
 //                                                isChoose = true
 //                                            }
 //                                            var nameMethodPayment by remember { mutableStateOf("cash") }
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .height(106.dp)
-                                                    .padding(bottom = 14.dp)
-                                                    .border(
-                                                        width = if (state.nameMethodPayment == item.methodName) 2.dp else 0.4.dp,
-                                                        color = if (state.nameMethodPayment == item.methodName) Color.Green else Color.Gray,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    )
-                                                    .background(
-                                                        Color.White,
-                                                        shape = RoundedCornerShape(6.dp)
-                                                    )
-                                                    .clickable {
-                                                        viewModel.updateNameMethod(item.methodName!!)
-                                                    },
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .padding(start = 24.dp, end = 10.dp)
-                                                        .fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                ) {
-                                                    val imageModifier = Modifier
-                                                        .width(44.dp)
-                                                        .height(44.dp)
-                                                        .clickable { }
-                                                    val imagePainter = if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                            pathFolderImagePayment + "/${item.methodName}.png"
-                                                        )
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(106.dp)
+                                                            .padding(bottom = 14.dp)
+                                                            .border(
+                                                                width = if (state.nameMethodPayment == item.methodName) 2.dp else 0.4.dp,
+                                                                color = if (state.nameMethodPayment == item.methodName) Color.Green else Color.Gray,
+                                                                shape = RoundedCornerShape(6.dp)
+                                                            )
+                                                            .background(
+                                                                Color.White,
+                                                                shape = RoundedCornerShape(6.dp)
+                                                            )
+                                                            .clickable {
+                                                                viewModel.updateNameMethod(item.methodName!!)
+                                                            },
+                                                        contentAlignment = Alignment.Center,
                                                     ) {
-                                                        val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                            .data(pathFolderImagePayment + "/${item.methodName}.png")
-                                                            .build()
-                                                        rememberAsyncImagePainter(imageRequest)
-                                                    } else {
-                                                        painterResource(id = R.drawable.image_error)
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .padding(start = 24.dp, end = 10.dp)
+                                                                .fillMaxWidth(),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                        ) {
+                                                            val imageModifier = Modifier
+                                                                .width(44.dp)
+                                                                .height(44.dp)
+                                                                .clickable { }
+                                                            val imagePainter = if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                                    pathFolderImagePayment + "/${item.methodName}.png"
+                                                                )
+                                                            ) {
+                                                                val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                                                    .data(pathFolderImagePayment + "/${item.methodName}.png")
+                                                                    .build()
+                                                                rememberAsyncImagePainter(imageRequest)
+                                                            } else {
+                                                                painterResource(id = R.drawable.image_error)
+                                                            }
+                                                            Image(
+                                                                modifier = imageModifier,
+                                                                painter = imagePainter,
+                                                                contentDescription = ""
+                                                            )
+                                                            Text(
+                                                                item.brief ?: "",
+                                                                modifier = Modifier.padding(20.dp),
+                                                                fontSize = 16.sp,
+                                                                maxLines = 2,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                            )
+                                                        }
                                                     }
-                                                    Image(
-                                                        modifier = imageModifier,
-                                                        painter = imagePainter,
-                                                        contentDescription = ""
-                                                    )
-                                                    Text(
-                                                        item.brief ?: "",
-                                                        modifier = Modifier.padding(20.dp),
-                                                        fontSize = 16.sp,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                    )
-                                                }
-                                            }
-                                            // Add spacers to fill up the row if there are less than 3 items
-                                            if (rowItems.size < 3) {
-                                                repeat(3 - rowItems.size) {
-                                                    Spacer(modifier = Modifier.weight(1f))
+                                                    // Add spacers to fill up the row if there are less than 3 items
+                                                    if (rowItems.size < 3) {
+                                                        repeat(3 - rowItems.size) {
+                                                            Spacer(modifier = Modifier.weight(1f))
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                        CustomButtonComposable(
-                            title = "Xác nhận thanh toán",
-                            cornerRadius = 6.dp,
-                            titleAlignment = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            height = 70.dp,
-                            fontSize = 20.sp,
-                            paddingTop = 12.dp,
-                        ) {
-                            viewModel.paymentConfirmation()
+                            if(state.listPaymentMethod.isNotEmpty()) {
+                                CustomButtonComposable(
+                                    title = "Xác nhận thanh toán",
+                                    cornerRadius = 6.dp,
+                                    titleAlignment = TextAlign.Center,
+                                    fontWeight = FontWeight.Bold,
+                                    height = 70.dp,
+                                    fontSize = 20.sp,
+                                    paddingTop = 12.dp,
+                                ) {
+                                    viewModel.paymentConfirmation()
+                                }
+                            }
                         }
                     }
                 }

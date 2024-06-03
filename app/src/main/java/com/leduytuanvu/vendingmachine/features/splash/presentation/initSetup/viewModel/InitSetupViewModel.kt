@@ -1,6 +1,8 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewModel
 
 import android.content.Context
+import android.graphics.Bitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -8,6 +10,8 @@ import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import coil.Coil
+import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.ScheduledTaskWorker
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
@@ -15,17 +19,26 @@ import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
+import com.leduytuanvu.vendingmachine.core.util.pathFilePaymentMethod
+import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImagePayment
+import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
+import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
+import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewState.InitSetupViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -34,6 +47,7 @@ import javax.inject.Inject
 class InitSetupViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
     private val authRepository: AuthRepository,
+    private val settingsRepository: SettingsRepository,
     private val logger: Logger,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -132,56 +146,118 @@ class InitSetupViewModel @Inject constructor(
                             )
                             baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                             val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
-                            val index = responseGetListAccount.indexOfFirst { it.username == loginRequest.username }
-                            if(index != -1 && !responseGetListAccount[index].role.isNullOrEmpty()) {
-                                initSetup.role = responseGetListAccount[index].role!!
-                                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
-                                val activateTheMachineRequest = ActivateTheMachineRequest(
-                                    machineCode = inputVendingMachineCode,
-                                    androidId = androidId,
-                                )
-                                val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
-                                if(responseActivateTheMachine.code==200) {
-                                    logger.debug("responseActivateTheMachine: $responseActivateTheMachine")
-                                    val partsTimeTurnOnLight = initSetup.timeTurnOnLight.split(":")
-                                    val hourTurnOnLight = partsTimeTurnOnLight[0].toInt()
-                                    val minuteTurnOnLight = partsTimeTurnOnLight[1].toInt()
-                                    rescheduleDailyTask("TurnOnLightTask", hourTurnOnLight, minuteTurnOnLight)
-
-                                    val partsTimeTurnOffLight = initSetup.timeTurnOffLight.split(":")
-                                    val hourTurnOffLight = partsTimeTurnOffLight[0].toInt()
-                                    val minuteTurnOffLight = partsTimeTurnOffLight[1].toInt()
-                                    rescheduleDailyTask("TurnOffLightTask", hourTurnOffLight, minuteTurnOffLight)
-
-                                    val partsTimeResetApp = initSetup.timeResetOnEveryDay.split(":")
-                                    val hourReset = partsTimeResetApp[0].toInt()
-                                    val minuteReset = partsTimeResetApp[1].toInt()
-                                    rescheduleDailyTask("ResetAppTask", hourReset, minuteReset)
-
-                                    baseRepository.addNewSetupLogToLocal(
+                            if(responseGetListAccount.code == 200) {
+                                val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
+                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
+                                    initSetup.role = responseGetListAccount.data[index].role!!
+                                    baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                                    val activateTheMachineRequest = ActivateTheMachineRequest(
                                         machineCode = inputVendingMachineCode,
-                                        operationContent = "setup init: $initSetup",
-                                        operationType = "setup system",
-                                        username = loginRequest.username,
+                                        androidId = androidId,
                                     )
-                                    navController.navigate(Screens.SettingScreenRoute.route) {
-                                        popUpTo(Screens.InitSetupScreenRoute.route) {
-                                            inclusive = true
+                                    val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
+                                    if(responseActivateTheMachine.code==200 || responseGetListAccount.code == 400) {
+                                        val listPaymentMethod = settingsRepository.getListPaymentMethodFromServer()
+                                        if (!baseRepository.isFolderExists(pathFolderImagePayment)) {
+                                            baseRepository.createFolder(pathFolderImagePayment)
                                         }
+                                        for (item in listPaymentMethod) {
+                                            if(item.imageUrl!!.isNotEmpty()) {
+                                                var notHaveError = true
+                                                for (i in 1..3) {
+                                                    try {
+                                                        val request = ImageRequest.Builder(context = context)
+                                                            .data(item.imageUrl)
+                                                            .build()
+                                                        val result = withContext(Dispatchers.IO) {
+                                                            Coil.imageLoader(context).execute(request).drawable
+                                                        }
+                                                        if (result != null) {
+                                                            val file =
+                                                                File(pathFolderImagePayment, "${item.methodName}.png")
+                                                            withContext(Dispatchers.IO) {
+                                                                file.outputStream().use { outputStream ->
+                                                                    result.toBitmap().compress(
+                                                                        Bitmap.CompressFormat.PNG,
+                                                                        1,
+                                                                        outputStream
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        logger.debug("download ${item.imageUrl} success")
+                                                    } catch (e: Exception) {
+                                                        notHaveError = false
+                                                        logger.debug("${e.message}")
+                                                    } finally {
+                                                        if (notHaveError) break
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        baseRepository.writeDataToLocal(data = listPaymentMethod, path = pathFilePaymentMethod)
+                                        val listSlot = arrayListOf<Slot>()
+                                        for(i in 1..60) {
+                                            listSlot.add(
+                                                Slot(
+                                                    slot = i,
+                                                    productCode = "",
+                                                    productName = "",
+                                                    inventory = 10,
+                                                    capacity = 10,
+                                                    price = 10000,
+                                                    isCombine = "no",
+                                                    springType = "lo xo don",
+                                                    status = 1,
+                                                    slotCombine = 0,
+                                                    isLock = false
+                                                )
+                                            )
+                                        }
+                                        baseRepository.writeDataToLocal(listSlot, pathFileSlot)
+                                        val partsTimeTurnOnLight = initSetup.timeTurnOnLight.split(":")
+                                        val hourTurnOnLight = partsTimeTurnOnLight[0].toInt()
+                                        val minuteTurnOnLight = partsTimeTurnOnLight[1].toInt()
+                                        rescheduleDailyTask("TurnOnLightTask", hourTurnOnLight, minuteTurnOnLight)
+                                        val partsTimeTurnOffLight = initSetup.timeTurnOffLight.split(":")
+                                        val hourTurnOffLight = partsTimeTurnOffLight[0].toInt()
+                                        val minuteTurnOffLight = partsTimeTurnOffLight[1].toInt()
+                                        rescheduleDailyTask("TurnOffLightTask", hourTurnOffLight, minuteTurnOffLight)
+                                        val partsTimeResetApp = initSetup.timeResetOnEveryDay.split(":")
+                                        val hourReset = partsTimeResetApp[0].toInt()
+                                        val minuteReset = partsTimeResetApp[1].toInt()
+                                        rescheduleDailyTask("ResetAppTask", hourReset, minuteReset)
+                                        baseRepository.addNewSetupLogToLocal(
+                                            machineCode = inputVendingMachineCode,
+                                            operationContent = "setup init: $initSetup",
+                                            operationType = "setup system",
+                                            username = loginRequest.username,
+                                        )
+                                        navController.navigate(Screens.SettingScreenRoute.route) {
+                                            popUpTo(Screens.InitSetupScreenRoute.route) {
+                                                inclusive = true
+                                            }
+                                        }
+                                        sendEvent(Event.Toast("Setup init success"))
+                                    } else {
+                                        baseRepository.deleteFile(pathFileInitSetup)
+                                        baseRepository.addNewErrorLogToLocal(
+                                            machineCode = initSetup.vendCode,
+                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
+                                        )
                                     }
-                                    sendEvent(Event.Toast("Setup init success"))
                                 } else {
                                     baseRepository.deleteFile(pathFileInitSetup)
                                     baseRepository.addNewErrorLogToLocal(
                                         machineCode = initSetup.vendCode,
-                                        errorContent = "activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
+                                        errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
                                     )
                                 }
                             } else {
                                 baseRepository.deleteFile(pathFileInitSetup)
                                 baseRepository.addNewErrorLogToLocal(
                                     machineCode = initSetup.vendCode,
-                                    errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
+                                    errorContent = "get list account from server fail in InitSetupViewModel/writeInitSetupToLocal()",
                                 )
                             }
                         } else {
