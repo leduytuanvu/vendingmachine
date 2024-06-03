@@ -33,6 +33,7 @@ data class HomeViewState (
     val initSetup: InitSetup? = null,
     val slotAtBottom: Slot? = null,
     val listAds: ArrayList<String> = arrayListOf(),
+    val listBigAds: ArrayList<String> = arrayListOf(),
     val listSlot: ArrayList<Slot> = arrayListOf(),
     val listSlotInCard: ArrayList<Slot> = arrayListOf(),
     val listSlotInHome: ArrayList<Slot> = arrayListOf(),

@@ -116,6 +116,9 @@ internal fun HomeScreen(
             delay(300000)
             viewModel.pushLogToServer()
             viewModel.pushDepositWithdrawToServer()
+            viewModel.pushSyncOrderToServer()
+            viewModel.pushUpdatePromotionToServer()
+            viewModel.pushUpdateDeliveryStatusToServer()
         }
     }
 
