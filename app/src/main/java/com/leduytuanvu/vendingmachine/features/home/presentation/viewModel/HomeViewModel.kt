@@ -490,7 +490,6 @@ class HomeViewModel @Inject constructor (
                 var quantityNeedDrop = 0
                 var quantityDropped = 0
                 var cashDropped = 0
-
                 outerLoop@ for (item in listSlotInCart) {
                     quantityNeedDrop += item.inventory
                     logger.debug("Slot drop: $item")
@@ -697,7 +696,6 @@ class HomeViewModel @Inject constructor (
                     if(listSlotDropFail.isNotEmpty()) {
                         logger.debug("Danh sách slot rớt lỗi")
                     }
-//                    logger.debug("Có ${quantityNotDropped} sản phẩm rơi thất bại trả lại $cashNeedReturnBack")
                     var titleWarning = ""
                     if (sensorHasAnObstruction) {
                         titleWarning = "Cảm biến rơi hiện đang bị che. "
@@ -720,7 +718,27 @@ class HomeViewModel @Inject constructor (
                         )
                     }
                 } else {
+                    var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrder,
+                    )
+                    if(listSyncOrder.isNullOrEmpty()) {
+                        listSyncOrder = arrayListOf()
+                    }
+                    listSyncOrder.add(_state.value.logSyncOrder!!)
+                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+
                     if(_state.value.promotion!=null) {
+                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                            path = pathFileSyncOrder,
+                        )
+                        if(listSyncOrder.isNullOrEmpty()) {
+                            listSyncOrder = arrayListOf()
+                        }
+                        listSyncOrder.add(_state.value.logSyncOrder!!)
+                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+
                         val listCartExtra: ArrayList<CartExtra> = arrayListOf()
                         for(item in listSlotInCart) {
                             val cartExtra = CartExtra(
@@ -752,117 +770,56 @@ class HomeViewModel @Inject constructor (
                             status = true,
                             extra = extra.toBase64(),
                         )
-                        val updateDeliveryStatusRequest = UpdateDeliveryStatusRequest(
-                            machineCode = initSetup.vendCode,
-                            androidId = initSetup.androidId,
-                            orderCode = _state.value.orderCode,
-                            deliveryStatus = "success"
-                        )
-                        if(baseRepository.isHaveNetwork(context)) {
-//                            logger.debug("Order code: ${_state.value.orderCode}")
-//                            logger.debug("android id: ${_state.value.initSetup!!.androidId}")
-//                            try {
-//                                val responseUpdatePromotion = homeRepository.updatePromotion(updatePromotionRequest)
-//                                if(responseUpdatePromotion.code==200) {
-//                                    logger.info("responseUpdatePromotion: $responseUpdatePromotion")
-//                                }
-//                            } catch(e: Exception) {
-//                                var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
-//                                    type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
-//                                    path = pathFileUpdatePromotion
-//                                )
-//                                val logUpdatePromotion = LogUpdatePromotion(
-//                                    machineCode = updatePromotionRequest.machineCode!!,
-//                                    androidId = updatePromotionRequest.androidId!!,
-//                                    campaignId = updatePromotionRequest.campaignId!!,
-//                                    voucherCode = updatePromotionRequest.voucherCode!!,
-//                                    orderCode = updatePromotionRequest.orderCode!!,
-//                                    promotionId = updatePromotionRequest.promotionId!!,
-//                                    status = true,
-//                                    extra = updatePromotionRequest.extra!!,
-//                                    isSent = false,
-//                                )
-//                                if(listUpdatePromotion.isNullOrEmpty()) {
-//                                    listUpdatePromotion = arrayListOf()
-//                                }
-//                                listUpdatePromotion.add(logUpdatePromotion)
-//                                baseRepository.writeDataToLocal(
-//                                    listUpdatePromotion,
-//                                    pathFileUpdatePromotion
-//                                )
-//                            }
-//                            try {
-//                                val responseUpdateDeliveryStatus = homeRepository.updateDeliveryStatus(updateDeliveryStatusRequest)
-//                                if(responseUpdateDeliveryStatus.code==200) {
-//                                    logger.info("responseUpdatePromotion: $responseUpdateDeliveryStatus")
-//                                }
-//                            } catch(e: Exception) {
-//                                var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-//                                    type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-//                                    path = pathFileUpdateDeliveryStatus
-//                                )
-//                                val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-//                                    machineCode = updateDeliveryStatusRequest.machineCode!!,
-//                                    androidId = updateDeliveryStatusRequest.androidId!!,
-//                                    orderCode = updateDeliveryStatusRequest.orderCode!!,
-//                                    deliveryStatus = updateDeliveryStatusRequest.deliveryStatus!!,
-//                                    isSent = false,
-//                                )
-//                                if(listUpdateDeliveryStatus.isNullOrEmpty()) {
-//                                    listUpdateDeliveryStatus = arrayListOf()
-//                                }
-//                                listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-//                                baseRepository.writeDataToLocal(
-//                                    listUpdateDeliveryStatus,
-//                                    pathFileUpdateDeliveryStatus
-//                                )
-//                            }
-                        } else {
-                            var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
-                                type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
-                                path = pathFileUpdatePromotion
-                            )
-                            val logUpdatePromotion = LogUpdatePromotion(
-                                machineCode = updatePromotionRequest.machineCode!!,
-                                androidId = updatePromotionRequest.androidId!!,
-                                campaignId = updatePromotionRequest.campaignId!!,
-                                voucherCode = updatePromotionRequest.voucherCode!!,
-                                orderCode = updatePromotionRequest.orderCode!!,
-                                promotionId = updatePromotionRequest.promotionId!!,
-                                status = true,
-                                extra = updatePromotionRequest.extra!!,
-                                isSent = false,
-                            )
-                            if(listUpdatePromotion.isNullOrEmpty()) {
-                                listUpdatePromotion = arrayListOf()
-                            }
-                            listUpdatePromotion.add(logUpdatePromotion)
-                            baseRepository.writeDataToLocal(
-                                listUpdatePromotion,
-                                pathFileUpdatePromotion
-                            )
 
-                            var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-                                type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-                                path = pathFileUpdateDeliveryStatus
-                            )
-                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                                machineCode = updateDeliveryStatusRequest.machineCode!!,
-                                androidId = updateDeliveryStatusRequest.androidId!!,
-                                orderCode = updateDeliveryStatusRequest.orderCode!!,
-                                deliveryStatus = updateDeliveryStatusRequest.deliveryStatus!!,
-                                isSent = false,
-                            )
-                            if(listUpdateDeliveryStatus.isNullOrEmpty()) {
-                                listUpdateDeliveryStatus = arrayListOf()
-                            }
-                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-                            baseRepository.writeDataToLocal(
-                                listUpdateDeliveryStatus,
-                                pathFileUpdateDeliveryStatus
-                            )
+                        var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                            path = pathFileUpdatePromotion
+                        )
+                        val logUpdatePromotion = LogUpdatePromotion(
+                            machineCode = updatePromotionRequest.machineCode!!,
+                            androidId = updatePromotionRequest.androidId!!,
+                            campaignId = updatePromotionRequest.campaignId!!,
+                            voucherCode = updatePromotionRequest.voucherCode!!,
+                            orderCode = updatePromotionRequest.orderCode!!,
+                            promotionId = updatePromotionRequest.promotionId!!,
+                            status = true,
+                            extra = updatePromotionRequest.extra!!,
+                            isSent = false,
+                        )
+                        if(listUpdatePromotion.isNullOrEmpty()) {
+                            listUpdatePromotion = arrayListOf()
                         }
+                        listUpdatePromotion.add(logUpdatePromotion)
+                        baseRepository.writeDataToLocal(
+                            listUpdatePromotion,
+                            pathFileUpdatePromotion
+                        )
                     }
+                    val updateDeliveryStatusRequest = UpdateDeliveryStatusRequest(
+                        machineCode = initSetup.vendCode,
+                        androidId = initSetup.androidId,
+                        orderCode = _state.value.orderCode,
+                        deliveryStatus = "success"
+                    )
+                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                        path = pathFileUpdateDeliveryStatus
+                    )
+                    val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                        machineCode = updateDeliveryStatusRequest.machineCode!!,
+                        androidId = updateDeliveryStatusRequest.androidId!!,
+                        orderCode = updateDeliveryStatusRequest.orderCode!!,
+                        deliveryStatus = updateDeliveryStatusRequest.deliveryStatus!!,
+                        isSent = false,
+                    )
+                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+                        listUpdateDeliveryStatus = arrayListOf()
+                    }
+                    listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                    baseRepository.writeDataToLocal(
+                        listUpdateDeliveryStatus,
+                        pathFileUpdateDeliveryStatus
+                    )
                     _state.update {
                         it.copy (
                             isShowWaitForDropProduct = false,
@@ -879,7 +836,6 @@ class HomeViewModel @Inject constructor (
                     machineCode = _state.value.initSetup!!.vendCode,
                     errorContent = "payment confirmation fail in HomeViewModel/paymentConfirmation(): ${e.message}",
                 )
-                sendEvent(Event.Toast("${e.message}"))
             } finally {
                 _state.update { it.copy(isVendingMachineBusy = false) }
             }
@@ -1502,6 +1458,8 @@ class HomeViewModel @Inject constructor (
                     isLoading = true,
                     promotion = null,
                     nameMethodPayment = "",
+                    logSyncOrder = null,
+                    orderCode = "",
                 ) }
                 var listPaymentMethod: ArrayList<PaymentMethodResponse>? = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<PaymentMethodResponse>>() {}.type,
@@ -1871,26 +1829,22 @@ class HomeViewModel @Inject constructor (
                 sendEvent(Event.Toast("Hãy chọn phương thức thanh toán!"))
             } else {
                 try {
-                    logger.debug("android id: ${_state.value.initSetup!!.androidId}")
                     _state.update { it.copy(
                         countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()),
                         isVendingMachineBusy = true,
                     ) }
-                    logger.debug("1")
                     val orderCode = LocalDateTime.now().toId()
+                    logger.debug("android id: ${_state.value.initSetup!!.androidId},orderCode: ${orderCode}")
                     val orderTime = LocalDateTime.now().toDateTimeString()
                     val totalAmount = _state.value.totalAmount
-                    logger.debug("2")
                     val totalDiscount = if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount ?: 0 else 0
                     val paymentAmount = if(_state.value.promotion!=null) _state.value.promotion!!.paymentAmount ?: 0 else _state.value.totalAmount
                     val paymentMethodId = _state.value.nameMethodPayment
-                    logger.debug("3")
                     val rewardType = if(_state.value.promotion!=null) _state.value.promotion!!.rewardType ?: 0 else _state.value.nameMethodPayment
                     val rewardValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardValue ?: 0 else 0
                     val rewardMaxValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardMaxValue ?: 0 else 0
                     val voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else ""
                     val listProductInCart = _state.value.listSlotInCard
-                    logger.debug("4")
                     val currentTime = LocalDateTime.now().toDateTimeString()
                     val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
                     for (item in listProductInCart) {
@@ -1907,9 +1861,9 @@ class HomeViewModel @Inject constructor (
                         )
                         productDetails.add(productDetailRequest)
                     }
-                    val syncOrderRequest = SyncOrderRequest(
+                    val logSyncOrder = LogSyncOrder(
                         machineCode = _state.value.initSetup!!.vendCode,
-                        orderCode = _state.value.orderCode,
+                        orderCode = orderCode,
                         androidId = _state.value.initSetup!!.androidId,
                         orderTime = currentTime,
                         totalAmount = totalAmount,
@@ -1926,49 +1880,10 @@ class HomeViewModel @Inject constructor (
                         deliveryStatus = "true",
                         voucherCode = voucherCode,
                         productDetails = productDetails,
+                        isSent = false,
                     )
-                    logger.debug("5")
-                    if(_state.value.nameMethodPayment != "cash") {
-                        val response = homeRepository.syncOrder(syncOrderRequest)
-                        if(response.code==200) {
-                            logger.info("${response}")
-                        } else {
-                            logger.info("${response}")
-                        }
-                    } else {
-                        val listSyncOrderTmp: ArrayList<LogSyncOrder> = arrayListOf()
-                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                            path = pathFileSyncOrder,
-                        )
-                        val logSyncOrder = LogSyncOrder(
-                            machineCode = syncOrderRequest.machineCode,
-                            orderCode = syncOrderRequest.orderCode,
-                            androidId = syncOrderRequest.androidId,
-                            orderTime = syncOrderRequest.orderTime,
-                            totalAmount = syncOrderRequest.totalAmount,
-                            totalDiscount = syncOrderRequest.totalDiscount,
-                            paymentAmount = syncOrderRequest.paymentAmount,
-                            paymentMethodId = syncOrderRequest.paymentMethodId,
-                            paymentTime = syncOrderRequest.paymentTime,
-                            timeSynchronizedToServer = syncOrderRequest.timeSynchronizedToServer,
-                            timeReleaseProducts = syncOrderRequest.timeReleaseProducts,
-                            rewardType = syncOrderRequest.rewardType,
-                            rewardValue = syncOrderRequest.rewardValue,
-                            rewardMaxValue = syncOrderRequest.rewardMaxValue ?: 0,
-                            paymentStatus = syncOrderRequest.paymentStatus,
-                            deliveryStatus = syncOrderRequest.deliveryStatus,
-                            voucherCode = syncOrderRequest.voucherCode,
-                            productDetails = syncOrderRequest.productDetails,
-                            isSent = false,
-                        )
-                        if(listSyncOrder.isNullOrEmpty()) {
-                            listSyncOrder = arrayListOf()
-                        }
-                        listSyncOrder.add(logSyncOrder)
-                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-                    }
-                    logger.debug("6")
+                    _state.update { it.copy(logSyncOrder = logSyncOrder) }
+
                     val listProductDetailRequest: ArrayList<ProductDetailRequest> = arrayListOf()
                     when(_state.value.nameMethodPayment) {
                         "cash" -> {
@@ -1994,7 +1909,6 @@ class HomeViewModel @Inject constructor (
                             }
                         }
                         "momo", "vnpay", "zalopay" -> {
-                            logger.debug("11")
                             _state.update { it.copy(isLoading = true)}
                             var storeId = ""
                             for(item in _state.value.listPaymentMethod) {
@@ -2003,7 +1917,6 @@ class HomeViewModel @Inject constructor (
                                     break
                                 }
                             }
-                            logger.debug("22")
                             for(item in listProductInCart) {
                                 val slot = homeRepository.getSlotDrop(item.productCode)
                                 val productDetailRequest = ProductDetailRequest(
@@ -2018,21 +1931,18 @@ class HomeViewModel @Inject constructor (
                                 )
                                 listProductDetailRequest.add(productDetailRequest)
                             }
-                            logger.debug("33")
                             val request = GetQrCodeRequest(
                                 machineCode = _state.value.initSetup!!.vendCode,
                                 androidId = _state.value.initSetup!!.androidId,
                                 orderCode = orderCode,
                                 orderTime = orderTime,
-//                            totalAmount = totalAmount,
-                                totalAmount = 1000,
-                                totalDiscount = 1000,
-                                paymentAmount = 1000,
+                                totalAmount = totalAmount,
+                                totalDiscount = totalDiscount,
+                                paymentAmount = paymentAmount,
                                 paymentMethodId = paymentMethodId,
                                 storeId = storeId,
                                 productDetails = listProductDetailRequest,
                             )
-                            logger.debug("44")
                             logger.debug("method: $paymentMethodId, storeId: ${storeId}")
                             val response = homeRepository.getQrCodeFromServer(request)
                             logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
@@ -2057,7 +1967,6 @@ class HomeViewModel @Inject constructor (
                         machineCode = _state.value.initSetup!!.vendCode,
                         errorContent = "payment confirmation fail in HomeViewModel/paymentConfirmation(): ${e.message}",
                     )
-                    sendEvent(Event.Toast("${e.message}"))
                     _state.update { it.copy(isLoading = false) }
                 }
             }
