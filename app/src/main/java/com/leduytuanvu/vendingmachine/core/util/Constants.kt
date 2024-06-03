@@ -25,6 +25,8 @@ const val pathFileLogDepositWithdrawServer = "/sdcard/VendingMachineData/Log/Dep
 @SuppressLint("SdCardPath")
 const val pathFolderAds = "/sdcard/VendingMachineData/Ads"
 @SuppressLint("SdCardPath")
+const val pathFolderBigAds = "/sdcard/VendingMachineData/BigAds"
+@SuppressLint("SdCardPath")
 const val pathFilePaymentMethod = "/sdcard/VendingMachineData/Payment/PaymentMethod.json"
 @SuppressLint("SdCardPath")
 const val pathFolderImagePayment = "/sdcard/VendingMachineData/Payment/Image"

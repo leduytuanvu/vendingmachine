@@ -76,6 +76,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdatePromotio
 import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
+import com.leduytuanvu.vendingmachine.core.util.pathFolderBigAds
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 
@@ -706,6 +707,16 @@ class HomeViewModel @Inject constructor (
                         titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng liên hệ 1900.99.99.80 để nhận lại tiền thừa!"
                     }
 
+                    var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrder,
+                    )
+                    if(listSyncOrder.isNullOrEmpty()) {
+                        listSyncOrder = arrayListOf()
+                    }
+                    listSyncOrder.add(_state.value.logSyncOrder!!)
+                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+
                     _state.update {
                         it.copy(
                             isShowWaitForDropProduct = false,
@@ -729,16 +740,6 @@ class HomeViewModel @Inject constructor (
                     baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
 
                     if(_state.value.promotion!=null) {
-                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                            path = pathFileSyncOrder,
-                        )
-                        if(listSyncOrder.isNullOrEmpty()) {
-                            listSyncOrder = arrayListOf()
-                        }
-                        listSyncOrder.add(_state.value.logSyncOrder!!)
-                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-
                         val listCartExtra: ArrayList<CartExtra> = arrayListOf()
                         for(item in listSlotInCart) {
                             val cartExtra = CartExtra(
@@ -1128,6 +1129,59 @@ class HomeViewModel @Inject constructor (
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun pushSyncOrderToServer() {
+        logger.debug("pushSyncOrderToServer")
+        viewModelScope.launch {
+            try {
+                val listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                    path = pathFileSyncOrder,
+                )
+                if(!listSyncOrder.isNullOrEmpty()) {
+                    for(item in listSyncOrder) {
+                        if(!item.isSent) {
+                            val syncOrderRequest = SyncOrderRequest(
+                                machineCode = item.machineCode,
+                                orderCode = item.orderCode,
+                                androidId = item.androidId,
+                                orderTime = item.orderTime,
+                                totalAmount = item.totalAmount,
+                                totalDiscount = item.totalDiscount,
+                                paymentAmount = item.paymentAmount,
+                                paymentMethodId = item.paymentMethodId,
+                                paymentTime = item.paymentTime,
+                                timeSynchronizedToServer = item.timeSynchronizedToServer,
+                                timeReleaseProducts = item.timeReleaseProducts,
+                                rewardType = item.rewardType,
+                                rewardValue = item.rewardValue,
+                                rewardMaxValue = item.rewardMaxValue,
+                                paymentStatus = item.paymentStatus,
+                                deliveryStatus = item.deliveryStatus,
+                                voucherCode = item.voucherCode,
+                                productDetails = item.productDetails,
+                            )
+                            try {
+                                val response = homeRepository.syncOrder(syncOrderRequest)
+                                logger.debug("===== response sync order: ${response.toString()}")
+                                item.isSent = true
+                                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                            } catch(e: Exception) {
+                                logger.debug("error log sync order: ${e.message}")
+                                baseRepository.addNewErrorLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    errorContent = "upload log sync order to server failed: ${e.message}",
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.debug("error in push log to server: ${e.message}")
+            }
+        }
+    }
+
 //    fun getNetworkStatus(): String {
 //        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 //        val network = connectivityManager.activeNetwork ?: return "No connection"
@@ -1237,6 +1291,29 @@ class HomeViewModel @Inject constructor (
                     )
                     listAds = homeRepository.getListVideoAdsFromLocal()
                 }
+                // Get list path ads
+                var listBigAds = homeRepository.getListVideoBigAdsFromLocal()
+                if (listBigAds.isEmpty()) {
+                    homeRepository.writeVideoAdsFromAssetToLocal(
+                        context,
+                        R.raw.ads1,
+                        "ads1.mp4",
+                        pathFolderBigAds,
+                    )
+                    homeRepository.writeVideoAdsFromAssetToLocal(
+                        context,
+                        R.raw.ads2,
+                        "ads2.mp4",
+                        pathFolderBigAds,
+                    )
+                    homeRepository.writeVideoAdsFromAssetToLocal(
+                        context,
+                        R.raw.ads3,
+                        "ads3.mp4",
+                        pathFolderBigAds,
+                    )
+                    listBigAds = homeRepository.getListVideoBigAdsFromLocal()
+                }
                 // Get list slot in local
                 val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<Slot>>() {}.type,
@@ -1258,6 +1335,7 @@ class HomeViewModel @Inject constructor (
                     it.copy(
                         initSetup = initSetup,
                         listAds = listAds,
+                        listBigAds = listBigAds,
                         listSlot = listSlot,
                         listSlotInHome = listSlotShowInHome,
                         listPaymentMethod = listPaymentMethod,

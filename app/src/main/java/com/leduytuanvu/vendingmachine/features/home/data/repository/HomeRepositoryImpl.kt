@@ -11,6 +11,7 @@ import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.pathFolderAds
+import com.leduytuanvu.vendingmachine.core.util.pathFolderBigAds
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
@@ -42,6 +43,18 @@ class HomeRepositoryImpl @Inject constructor(
     override suspend  fun getListVideoAdsFromLocal(): ArrayList<String> {
         try {
             val listPathAds = localStorageDatasource.getListPathFileInFolder(pathFolderAds)
+            for(item in listPathAds) {
+                logger.info(item)
+            }
+            return listPathAds
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun getListVideoBigAdsFromLocal(): ArrayList<String> {
+        try {
+            val listPathAds = localStorageDatasource.getListPathFileInFolder(pathFolderBigAds)
             for(item in listPathAds) {
                 logger.info(item)
             }

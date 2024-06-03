@@ -21,6 +21,7 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 
 interface HomeRepository {
     suspend fun getListVideoAdsFromLocal() : ArrayList<String>
+    suspend fun getListVideoBigAdsFromLocal() : ArrayList<String>
     suspend fun writeVideoAdsFromAssetToLocal(
         context: Context,
         rawResId: Int,
