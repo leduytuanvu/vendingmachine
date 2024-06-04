@@ -703,7 +703,7 @@ fun HomeContent(
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
-                                            Text("Đơn giá: ${item.price.toVietNamDong()}/lon", fontSize = 14.sp)
+                                            Text("Đơn giá: ${item.price.toVietNamDong()}", fontSize = 14.sp)
                                             Spacer(modifier = Modifier.height(10.dp))
                                             Row(
                                                 modifier = Modifier,
@@ -808,7 +808,7 @@ fun HomeContent(
                                     height = 60.dp,
                                     fontWeight = FontWeight.Bold,
                                 ) {
-                                    viewModel.applyPromotion(text)
+                                    viewModel.applyPromotionDebounced(text)
                                 }
                             }
                             Spacer(modifier = Modifier.height(34.dp))
