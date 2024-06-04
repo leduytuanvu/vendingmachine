@@ -137,7 +137,7 @@ class InitSetupViewModel @Inject constructor(
                                 highestTempWarning = "25",
                                 lowestTempWarning = "0",
                                 temperature = "25",
-                                initPromotion = "ON",
+                                initPromotion = "OFF",
                                 currentCash = 0,
                                 timeoutPaymentByCash = "60",
                                 timeoutPaymentByQrCode = "60",
@@ -155,8 +155,8 @@ class InitSetupViewModel @Inject constructor(
                                         machineCode = inputVendingMachineCode,
                                         androidId = androidId,
                                     )
-                                    val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
-                                    if(responseActivateTheMachine.code==200 || responseGetListAccount.code == 400) {
+//                                    val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
+//                                    if(responseActivateTheMachine.code==200 || responseGetListAccount.code == 400) {
                                         val listPaymentMethod = settingsRepository.getListPaymentMethodFromServer()
                                         if (!baseRepository.isFolderExists(pathFolderImagePayment)) {
                                             baseRepository.createFolder(pathFolderImagePayment)
@@ -239,13 +239,13 @@ class InitSetupViewModel @Inject constructor(
                                             }
                                         }
                                         sendEvent(Event.Toast("Setup init success"))
-                                    } else {
-                                        baseRepository.deleteFile(pathFileInitSetup)
-                                        baseRepository.addNewErrorLogToLocal(
-                                            machineCode = initSetup.vendCode,
-                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
-                                        )
-                                    }
+//                                    } else {
+//                                        baseRepository.deleteFile(pathFileInitSetup)
+//                                        baseRepository.addNewErrorLogToLocal(
+//                                            machineCode = initSetup.vendCode,
+//                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
+//                                        )
+//                                    }
                                 } else {
                                     baseRepository.deleteFile(pathFileInitSetup)
                                     baseRepository.addNewErrorLogToLocal(
