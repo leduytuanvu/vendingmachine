@@ -779,5 +779,18 @@ fun SetupSystemMainContentComposable(
 //        ) {
 //            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
 //        }
+
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.check1()
+        }
     }
 }

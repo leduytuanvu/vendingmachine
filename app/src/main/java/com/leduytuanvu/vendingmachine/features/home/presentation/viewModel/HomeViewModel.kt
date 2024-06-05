@@ -483,6 +483,18 @@ class HomeViewModel @Inject constructor (
                     countdownTimer!!.cancel()
                     countdownTimer = null
                 }
+
+                // Sync order
+                var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                    path = pathFileSyncOrder,
+                )
+                if(listSyncOrder.isNullOrEmpty()) {
+                    listSyncOrder = arrayListOf()
+                }
+                listSyncOrder.add(_state.value.logSyncOrder!!)
+                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+
                 val listSlotDropFail: ArrayList<Slot> = arrayListOf()
                 val listSlotNotFound: ArrayList<Slot> = arrayListOf()
                 val listSlotShowInHome: ArrayList<Slot> = arrayListOf()
@@ -688,17 +700,6 @@ class HomeViewModel @Inject constructor (
                         }
                     }
                 }
-
-                // Sync order
-                var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                    path = pathFileSyncOrder,
-                )
-                if(listSyncOrder.isNullOrEmpty()) {
-                    listSyncOrder = arrayListOf()
-                }
-                listSyncOrder.add(_state.value.logSyncOrder!!)
-                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
 
                 if (quantityNotDropped != 0) {
                     if(listSlotNotFound.isEmpty()) {
@@ -1713,7 +1714,7 @@ class HomeViewModel @Inject constructor (
                                 logger.debug("999: promotion: $promotion")
                                 _state.update { it.copy (
                                     promotion = promotion,
-                                    totalAmount = promotion.paymentAmount ?: totalAmount,
+                                    totalAmount = promotion.totalAmount ?: totalAmount,
                                 ) }
                             } catch (e: Exception) {
                                 logger.debug("error in show payment: ${e.message}")
@@ -2000,7 +2001,7 @@ class HomeViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                if(_state.value.initSetup!!.initPromotion == "ON") {
+//                if(_state.value.initSetup!!.initPromotion == "ON") {
                     if(baseRepository.isHaveNetwork(context)) {
                         val promotionResponse = homeRepository.getPromotion(
                             voucherCode = voucherCode,
@@ -2009,32 +2010,33 @@ class HomeViewModel @Inject constructor (
                         logger.debug("promotion response: $promotionResponse")
                         _state.update { it.copy(
                             promotion = promotionResponse,
+                            totalAmount = promotionResponse.totalAmount ?: _state.value.totalAmount,
                             isLoading = false,
                         ) }
                     } else {
                         sendEvent(Event.Toast("Not have internet, please connect with internet!"))
                         _state.update { it.copy(isLoading = false) }
                     }
-                } else {
-                    if(voucherCode!="") {
-                        if(baseRepository.isHaveNetwork(context)) {
-                            val promotionResponse = homeRepository.getPromotion(
-                                voucherCode = voucherCode,
-                                listSlot = _state.value.listSlotInCard,
-                            )
-                            logger.debug("promotion response: $promotionResponse")
-                            _state.update { it.copy(
-                                promotion = promotionResponse,
-                                isLoading = false,
-                            ) }
-                        } else {
-                            sendEvent(Event.Toast("Not have internet, please connect with internet!"))
-                            _state.update { it.copy(isLoading = false) }
-                        }
-                    } else {
-                        _state.update { it.copy(isLoading = false) }
-                    }
-                }
+//                } else {
+//                    if(voucherCode!="") {
+//                        if(baseRepository.isHaveNetwork(context)) {
+//                            val promotionResponse = homeRepository.getPromotion(
+//                                voucherCode = voucherCode,
+//                                listSlot = _state.value.listSlotInCard,
+//                            )
+//                            logger.debug("promotion response: $promotionResponse")
+//                            _state.update { it.copy(
+//                                promotion = promotionResponse,
+//                                isLoading = false,
+//                            ) }
+//                        } else {
+//                            sendEvent(Event.Toast("Not have internet, please connect with internet!"))
+//                            _state.update { it.copy(isLoading = false) }
+//                        }
+//                    } else {
+//                        _state.update { it.copy(isLoading = false) }
+//                    }
+//                }
             } catch (e: Exception) {
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
@@ -2058,13 +2060,13 @@ class HomeViewModel @Inject constructor (
                         isVendingMachineBusy = true,
                     ) }
                     val orderCode = LocalDateTime.now().toId()
-                    logger.debug("android id: ${_state.value.initSetup!!.androidId},orderCode: ${orderCode}")
+                    logger.debug("android id: ${_state.value.initSetup!!.androidId}, orderCode: ${orderCode}")
                     val orderTime = LocalDateTime.now().toDateTimeString()
-                    val totalAmount = _state.value.totalAmount
+                    val totalAmount = if(_state.value.promotion!=null) _state.value.promotion!!.totalAmount ?: _state.value.totalAmount else _state.value.totalAmount
                     val totalDiscount = if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount ?: 0 else 0
-                    val paymentAmount = if(_state.value.promotion!=null) _state.value.promotion!!.paymentAmount ?: 0 else _state.value.totalAmount
+                    val paymentAmount = if(_state.value.promotion!=null) _state.value.promotion!!.paymentAmount ?: _state.value.totalAmount else _state.value.totalAmount
                     val paymentMethodId = _state.value.nameMethodPayment
-                    val rewardType = if(_state.value.promotion!=null) _state.value.promotion!!.rewardType ?: 0 else _state.value.nameMethodPayment
+                    val rewardType = if(_state.value.promotion!=null) _state.value.promotion!!.rewardType ?: "percent" else "percent"
                     val rewardValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardValue ?: 0 else 0
                     val rewardMaxValue = if(_state.value.promotion!=null) _state.value.promotion!!.rewardMaxValue ?: 0 else 0
                     val voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else ""
@@ -2097,7 +2099,7 @@ class HomeViewModel @Inject constructor (
                         paymentTime = currentTime,
                         timeSynchronizedToServer = currentTime,
                         timeReleaseProducts = currentTime,
-                        rewardType = rewardType.toString(),
+                        rewardType = rewardType,
                         rewardValue = rewardValue.toString(),
                         rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
                         paymentStatus = "success",
@@ -2163,7 +2165,8 @@ class HomeViewModel @Inject constructor (
                                 totalAmount = totalAmount,
                                 totalDiscount = totalDiscount,
                                 paymentAmount = paymentAmount,
-                                paymentMethodId = paymentMethodId,
+                                paymentMethodId =
+                                ,
                                 storeId = storeId,
                                 productDetails = listProductDetailRequest,
                             )
