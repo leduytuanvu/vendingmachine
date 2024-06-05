@@ -115,7 +115,7 @@ class SetupSystemViewModel @Inject constructor(
 
     fun startCollectingData() {
         vendingMachineJob = viewModelScope.launch {
-            portConnectionDatasource.dataFromCashBox.collect { data ->
+            portConnectionDatasource.dataFromVendingMachine.collect { data ->
                 processingDataFromVendingMachine(data)
             }
         }
@@ -969,5 +969,62 @@ class SetupSystemViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = false) }
             }
         }
+    }
+
+    fun check1() {
+        logger.debug("check1")
+        viewModelScope.launch {
+            val byteArrays = byteArrayOf(0x03.toByte(), 0x01.toByte(), 0x01.toByte(), 0x00.toByte(), 0x11.toByte(), 0xFF.toByte(), 0xED.toByte())
+            portConnectionDatasource.sendCommandVendingMachine(buildLedCommand())
+        }
+    }
+
+    fun buildLedCommand(): ByteArray {
+        val startByte: Byte = 0x02
+        val cmd: Byte = 0x05
+        val id: Byte = 0x00
+        val sn: Byte = generateSn()  // Implement this to generate SN (0-255)
+        val dataJson = """{"LEDS":1}"""  // JSON data to turn on the LED light
+        val dataBytes = dataJson.toByteArray(Charsets.UTF_8)
+        val len = intTo2ByteArray(dataBytes.size + 3)  // 2 bytes length
+        val endByte: Byte = 0x03
+
+        // Concatenate all parts to prepare for CRC16 calculation
+        val messageWithoutCrc = byteArrayOf(startByte) + len + byteArrayOf(cmd, id, sn) + dataBytes + byteArrayOf(endByte)
+
+        // Calculate CRC16 for the message
+        val crc = calculateCrc16(messageWithoutCrc)
+
+        // Build the final message including CRC16
+        return messageWithoutCrc + crc
+    }
+
+    // Utility function to convert int to 2-byte array
+    fun intTo2ByteArray(value: Int): ByteArray {
+        return byteArrayOf((value shr 8).toByte(), (value and 0xFF).toByte())
+    }
+
+    // Implement CRC16 calculation based on the provided algorithm
+    fun calculateCrc16(data: ByteArray): ByteArray {
+        var crc = 0xFFFF
+        for (byte in data) {
+            crc = crc xor (byte.toInt() and 0xFF)
+            for (i in 0 until 8) {
+                if ((crc and 0x0001) != 0) {
+                    crc = (crc shr 1) xor 0xA001
+                } else {
+                    crc = crc shr 1
+                }
+            }
+        }
+        return byteArrayOf((crc and 0xFF).toByte(), ((crc shr 8) and 0xFF).toByte())
+    }
+
+    // Implement SN generation (0-255 loop)
+    var snCounter = 0
+    fun generateSn(): Byte {
+        val sn = snCounter.toByte()
+        snCounter = (snCounter + 1) % 256
+        return sn
     }
 }
