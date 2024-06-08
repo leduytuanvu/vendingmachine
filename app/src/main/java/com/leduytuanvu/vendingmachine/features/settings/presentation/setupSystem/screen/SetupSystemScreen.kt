@@ -81,14 +81,14 @@ internal fun SetupSystemScreen(
     LaunchedEffect(lastInteractionTime) {
         while (true) {
             if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
-                navController.navigate(Screens.HomeScreenRoute.route) {
-                    popUpTo(Screens.SetupSystemScreenRoute.route) {
-                        inclusive = true
-                    }
-                    popUpTo(Screens.SettingScreenRoute.route) {
-                        inclusive = true
-                    }
-                }
+//                navController.navigate(Screens.HomeScreenRoute.route) {
+//                    popUpTo(Screens.SetupSystemScreenRoute.route) {
+//                        inclusive = true
+//                    }
+//                    popUpTo(Screens.SettingScreenRoute.route) {
+//                        inclusive = true
+//                    }
+//                }
                 return@LaunchedEffect
             }
             delay(1000)
@@ -798,7 +798,7 @@ fun SetupSystemMainContentComposable(
 
             // Call the turnOnLed function with the generated SN and LED status
 //            turnOnLed()
-            viewModel.turnOnLed(1)
+            viewModel.turnOnLed()
         }
 
         CustomButtonComposable(
