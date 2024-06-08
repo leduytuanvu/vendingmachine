@@ -65,7 +65,7 @@ class SplashViewModel
                         val minuteReset = partsTimeResetApp[1].toInt()
                         scheduleDailyTask("ResetAppTask", hourReset, minuteReset)
 
-                        navController.navigate(Screens.HomeScreenRoute.route) {
+                        navController.navigate(Screens.SetupSystemScreenRoute.route) {
                             popUpTo(Screens.SplashScreenRoute.route) {
                                 inclusive = true
                             }

@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class SyncOrderRequest(
     @SerializedName("machine_code") var machineCode: String?,
+    @SerializedName("android_id") var androidId: String?,
     @SerializedName("order_code") var orderCode: String?,
     @SerializedName("order_time") var orderTime: String?,
     @SerializedName("total_amount") var totalAmount: Int?,
@@ -19,7 +20,6 @@ data class SyncOrderRequest(
     @SerializedName("payment_status") var paymentStatus: String?,
     @SerializedName("delivery_status") var deliveryStatus: String?,
     @SerializedName("voucher_code") var voucherCode: String?,
-    @SerializedName("android_id") var androidId: String?,
     @SerializedName("product_details") var productDetails: ArrayList<ProductSyncOrderRequest>,
 )
 

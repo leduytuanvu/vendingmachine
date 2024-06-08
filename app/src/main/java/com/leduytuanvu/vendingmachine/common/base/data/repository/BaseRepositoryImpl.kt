@@ -22,6 +22,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseReposito
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogDepositWithdrawServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import com.leduytuanvu.vendingmachine.core.util.toBase64
