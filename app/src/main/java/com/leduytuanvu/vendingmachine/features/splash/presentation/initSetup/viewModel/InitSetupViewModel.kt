@@ -104,16 +104,23 @@ class InitSetupViewModel @Inject constructor(
                         sendEvent(Event.Toast("Password must not empty!"))
                     } else {
                         val passwordEncode = authRepository.encodePassword(loginRequest.password)
+                        logger.debug("1")
                         val responseLogin = authRepository.login(inputVendingMachineCode, loginRequest)
-                        if (responseLogin.accessToken.isNotEmpty()) {
+                        logger.debug("2")
+                        if (responseLogin.accessToken!!.isNotEmpty()) {
+                            logger.debug("3")
                             baseRepository.addNewAuthyLogToLocal(
                                 machineCode = inputVendingMachineCode,
                                 authyType = "login",
                                 username = loginRequest.username,
                             )
+                            logger.debug("3.0")
                             val baudRateCashBox = "9600"
+                            logger.debug("3.1")
                             val baudRateVendingMachine = "9600"
+                            logger.debug("3.2")
                             val androidId = baseRepository.getAndroidId()
+                            logger.debug("3.3")
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
                                 androidId = androidId,
@@ -144,11 +151,15 @@ class InitSetupViewModel @Inject constructor(
                                 timeResetOnEveryDay = "00:00",
                                 role = ""
                             )
+                            logger.debug("4")
                             baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                             val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
+                            logger.debug("5")
                             if(responseGetListAccount.code == 200) {
+                                logger.debug("6")
                                 val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
                                 if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
+                                    logger.debug("7")
                                     initSetup.role = responseGetListAccount.data[index].role!!
                                     baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                                     val activateTheMachineRequest = ActivateTheMachineRequest(
@@ -156,7 +167,9 @@ class InitSetupViewModel @Inject constructor(
                                         androidId = androidId,
                                     )
                                     val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
-                                    if(responseActivateTheMachine.code==200 || responseGetListAccount.code == 400) {
+                                    logger.debug("8")
+                                    if(responseActivateTheMachine.code==200 || responseActivateTheMachine.code == 400) {
+                                        logger.debug("9")
                                         val listPaymentMethod = settingsRepository.getListPaymentMethodFromServer()
                                         if (!baseRepository.isFolderExists(pathFolderImagePayment)) {
                                             baseRepository.createFolder(pathFolderImagePayment)
@@ -195,6 +208,7 @@ class InitSetupViewModel @Inject constructor(
                                                 }
                                             }
                                         }
+                                        logger.debug("10")
                                         baseRepository.writeDataToLocal(data = listPaymentMethod, path = pathFilePaymentMethod)
                                         val listSlot = arrayListOf<Slot>()
                                         for(i in 1..60) {
@@ -214,6 +228,7 @@ class InitSetupViewModel @Inject constructor(
                                                 )
                                             )
                                         }
+                                        logger.debug("11")
                                         baseRepository.writeDataToLocal(listSlot, pathFileSlot)
                                         val partsTimeTurnOnLight = initSetup.timeTurnOnLight.split(":")
                                         val hourTurnOnLight = partsTimeTurnOnLight[0].toInt()
@@ -233,6 +248,7 @@ class InitSetupViewModel @Inject constructor(
                                             operationType = "setup system",
                                             username = loginRequest.username,
                                         )
+                                        logger.debug("12")
                                         navController.navigate(Screens.SettingScreenRoute.route) {
                                             popUpTo(Screens.InitSetupScreenRoute.route) {
                                                 inclusive = true

@@ -36,6 +36,7 @@ class PortConnectionDatasource {
     // Open port vending machine
     fun openPortVendingMachine(port: String) : Int {
         fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+        Logger.debug("open port vending machine: $fdPortVendingMachine")
         return fdPortVendingMachine
     }
 
@@ -86,7 +87,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingVendingMachine(512) { data ->
-//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
                         }

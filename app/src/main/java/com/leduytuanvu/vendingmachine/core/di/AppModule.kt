@@ -90,7 +90,7 @@ object AppModule {
                             String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE", "")
                         )
                     )
-                    accessToken = loginResponse.accessToken
+                    accessToken = loginResponse.accessToken!!
                     response.close()
                     val newRequest = chain.request().newBuilder()
                         .header("Authorization", "Bearer ${loginResponse.accessToken}")

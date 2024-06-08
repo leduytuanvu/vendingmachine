@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.kotlinSymbolProcessing)
     alias(libs.plugins.daggerHiltAndroid)
+
+    kotlin("plugin.serialization") version "1.8.0" // Use the appropriate version
 }
 
 android {
@@ -159,4 +161,6 @@ dependencies {
     implementation("com.google.zxing:core:3.4.1")
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 }

@@ -12,16 +12,20 @@ import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.toSlot
+import com.leduytuanvu.vendingmachine.features.settings.data.model.request.ProductInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PriceResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ProductInventoryResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.remote.SettingsApi
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -212,6 +216,15 @@ class SettingsRepositoryImpl @Inject constructor(
         try {
             val listFileNameInFolder = localStorageDatasource.getListFileNamesInFolder(folderPath)
             return listFileNameInFolder
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun updateMultiInventory(productInventoryRequest: ProductInventoryRequest): BaseListResponse<ProductInventoryResponse> {
+        try {
+            val response = settingsApi.updateMultiInventory(productInventoryRequest)
+            return response
         } catch (e: Exception) {
             throw e
         }

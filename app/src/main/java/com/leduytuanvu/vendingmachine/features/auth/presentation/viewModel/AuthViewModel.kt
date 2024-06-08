@@ -54,7 +54,10 @@ class AuthViewModel @Inject constructor (
                         password,
                     )
                     val response = authRepository.login(initSetup.vendCode, loginRequestHaveNetwork)
-                    if(response.accessToken.isNotEmpty()) {
+                    if(response.accessToken.isNullOrEmpty()) {
+                        sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
+                    } else {
+                        Logger.debug("accessToken: ${response.accessToken}")
                         baseRepository.addNewAuthyLogToLocal(
                             machineCode = initSetup.vendCode,
                             authyType = "login",
@@ -69,10 +72,7 @@ class AuthViewModel @Inject constructor (
                                 inclusive = true
                             }
                         }
-                    } else {
-                        sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                     }
-
                 } else {
                     val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
                     val realPassword = String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE")

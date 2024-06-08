@@ -1,14 +1,20 @@
 package com.leduytuanvu.vendingmachine.features.settings.data.remote
 
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.LogServerRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServerResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.request.ProductInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataPaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.InformationOfMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.LayoutResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.LoadProductResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PriceResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ProductInventoryResponse
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -39,4 +45,8 @@ interface SettingsApi {
     @Headers("Content-Type: application/json", "Accept-Language: en-US")
     @GET("/product-service/product_to_machine/image_by_machine/{vend_code}")
     suspend fun getListImageOfProduct(@Path("vend_code") vendCode: String): BaseListResponse<ImageResponse>
+
+    @Headers("Content-Type: application/json", "Accept-Language: en-US")
+    @POST("/product-service/product_inventory/update_multi")
+    suspend fun updateMultiInventory(@Body request: ProductInventoryRequest): BaseListResponse<ProductInventoryResponse>
 }
