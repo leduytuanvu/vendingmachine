@@ -2,10 +2,7 @@ package com.leduytuanvu.vendingmachine.features.settings.data.repository
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.TelephonyManager
@@ -13,14 +10,13 @@ import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
-import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.toSlot
-import com.leduytuanvu.vendingmachine.features.settings.data.model.request.ProductInventoryRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
@@ -31,7 +27,6 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import java.lang.reflect.Type
-import java.util.Calendar
 import javax.inject.Inject
 
 class SettingsRepositoryImpl @Inject constructor(
@@ -216,15 +211,6 @@ class SettingsRepositoryImpl @Inject constructor(
         try {
             val listFileNameInFolder = localStorageDatasource.getListFileNamesInFolder(folderPath)
             return listFileNameInFolder
-        } catch (e: Exception) {
-            throw e
-        }
-    }
-
-    override suspend fun updateMultiInventory(productInventoryRequest: ProductInventoryRequest): BaseListResponse<ProductInventoryResponse> {
-        try {
-            val response = settingsApi.updateMultiInventory(productInventoryRequest)
-            return response
         } catch (e: Exception) {
             throw e
         }

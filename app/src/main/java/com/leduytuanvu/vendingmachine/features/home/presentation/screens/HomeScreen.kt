@@ -113,12 +113,12 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(300000)
+            delay(60000)
             viewModel.pushLogToServer()
-            viewModel.pushDepositWithdrawToServer()
-            viewModel.pushSyncOrderToServer()
-            viewModel.pushUpdatePromotionToServer()
-            viewModel.pushUpdateDeliveryStatusToServer()
+//            viewModel.pushDepositWithdrawToServer()
+//            viewModel.pushSyncOrderToServer()
+//            viewModel.pushUpdatePromotionToServer()
+//            viewModel.pushUpdateDeliveryStatusToServer()
         }
     }
 
@@ -721,15 +721,13 @@ fun HomeContent(
                                                         .background(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
-                                                        ),
+                                                        )
+                                                        .clickable { viewModel.minusProductDebounced(item) },
                                                     contentAlignment = Alignment.Center,                                            ) {
                                                     Image(
                                                         modifier = Modifier
                                                             .height(20.dp)
-                                                            .width(20.dp)
-                                                            .clickable {
-                                                                viewModel.minusProductDebounced(item)
-                                                            },
+                                                            .width(20.dp),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_minus),
                                                         contentDescription = ""
@@ -753,16 +751,14 @@ fun HomeContent(
                                                         .background(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
-                                                        ),
+                                                        )
+                                                        .clickable { viewModel.plusProductDebounced(item) },
                                                     contentAlignment = Alignment.Center,
                                                 ) {
                                                     Image(
                                                         modifier = Modifier
                                                             .height(20.dp)
-                                                            .width(20.dp)
-                                                            .clickable {
-                                                                viewModel.plusProductDebounced(item)
-                                                            },
+                                                            .width(20.dp),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_plus),
                                                         contentDescription = ""

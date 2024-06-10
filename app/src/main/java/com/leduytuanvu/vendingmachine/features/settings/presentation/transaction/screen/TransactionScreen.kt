@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -151,66 +152,38 @@ fun TransactionContent(
                 ) {
                     navController.popBackStack()
                 }
-//                Spacer(modifier = Modifier.height(20.dp))
-//                LazyColumn(modifier = Modifier.pointerInput(Unit) {
-//                    detectTapGestures(
-//                        onTap = {
-//                            onClick()
-//                        }
-//                    )
-//                }.nestedScroll(nestedScrollConnection)) {
-//                    items(state.listLogServerLocal.size) {
-//                            index -> Column {
-//                        Spacer(modifier = Modifier.height(10.dp))
-//                        Text(
-//                            "${state.listLogServerLocal[index].eventTime} ${state.listLogServerLocal[index].eventType.uppercase()}",
-//                            color = when (state.listLogServerLocal[index].eventType) {
-//                                "fill" -> {
-//                                    Color(0xFF00CC66)
-//                                }
-//                                "error" -> {
-//                                    Color(0xFFFF0000)
-//                                }
-//                                "spring" -> {
-//                                    Color(0xFFFF9933)
-//                                }
-//                                "setup" -> {
-//                                    Color(0xFFFF3399)
-//                                }
-//                                "door" -> {
-//                                    Color(0xFF0033FF)
-//                                }
-//                                "status" -> {
-//                                    Color(0xFF660033)
-//                                }
-//                                "authy" -> {
-//                                    Color(0xFF00FFCC)
-//                                }
-//                                "temperature" -> {
-//                                    Color(0xFFFFCC99)
-//                                }
-//                                "sensor" -> {
-//                                    Color(0xFF666600)
-//                                }
-//                                else -> {
-//                                    Color.Blue
-//                                }
-//                            }
-//                        )
-//                        Text(
-//                            "Content: ${state.listLogServerLocal[index].eventData.toJson()}:",
-//                            maxLines = 5,
-//                            overflow = TextOverflow.Ellipsis,
-//                        )
-//                        Text(
-//                            "Is sent: ${state.listLogServerLocal[index].isSent}:",
-//                            maxLines = 1,
-//                            overflow = TextOverflow.Ellipsis,
-//                        )
-//                        Spacer(modifier = Modifier.height(20.dp))
-//                    }
-//                    }
-//                }
+
+                Text("Thời gian kết phiên trước: ")
+                Text("Thời gian tính phiên hiện tại: ")
+                Text("Tổng giao dịch bằng tiền mặt: ")
+                Text("Số lượng giao dịch tiền mặt: ")
+                Text("Tổng giao dịch tiền thanh toán online: ")
+                Text("Số lượng giao dịch thanh toán online: ")
+                Text("Số tờ tiền trong hộp thối: ")
+
+                Row() {
+                    CustomButtonComposable(
+                        title = "Kết phiên tháng",
+                        wrap = true,
+                        height = 65.dp,
+                        fontSize = 20.sp,
+                        cornerRadius = 4.dp,
+                        fontWeight = FontWeight.Bold,
+                        paddingEnd = 10.dp,
+                    ) {
+                        navController.popBackStack()
+                    }
+                    CustomButtonComposable(
+                        title = "Kết phiên ngày",
+                        wrap = true,
+                        height = 65.dp,
+                        fontSize = 20.sp,
+                        cornerRadius = 4.dp,
+                        fontWeight = FontWeight.Bold,
+                    ) {
+                        navController.popBackStack()
+                    }
+                }
             }
         )
     }

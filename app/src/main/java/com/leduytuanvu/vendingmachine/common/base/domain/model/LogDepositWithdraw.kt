@@ -2,7 +2,7 @@ package com.leduytuanvu.vendingmachine.common.base.domain.model
 
 import com.google.gson.annotations.SerializedName
 
-data class LogDepositWithdrawLocal(
+data class LogDepositWithdraw(
     @SerializedName("vend_code") val vendCode: String,
     @SerializedName("transaction_type") val transactionType: String,
     @SerializedName("denomination_type") val denominationType: Int,

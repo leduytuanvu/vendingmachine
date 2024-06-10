@@ -158,9 +158,11 @@ class InitSetupViewModel @Inject constructor(
                             if(responseGetListAccount.code == 200) {
                                 logger.debug("6")
                                 val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
-                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
+//                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
+                                if(index != -1) {
                                     logger.debug("7")
-                                    initSetup.role = responseGetListAccount.data[index].role!!
+//                                    initSetup.role = responseGetListAccount.data[index].role!!
+                                    initSetup.role = "admin"
                                     baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                                     val activateTheMachineRequest = ActivateTheMachineRequest(
                                         machineCode = inputVendingMachineCode,

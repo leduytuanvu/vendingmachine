@@ -51,7 +51,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdrawLocal
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdraw
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogDepositWithdrawServer
 import com.leduytuanvu.vendingmachine.core.util.toBase64
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
@@ -72,14 +72,18 @@ import java.util.Collections
 import javax.inject.Inject
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateDeliveryStatus
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateInventory
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdatePromotion
+import com.leduytuanvu.vendingmachine.core.util.pathFileLogUpdateInventoryServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
 import com.leduytuanvu.vendingmachine.core.util.pathFolderBigAds
 import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.DataSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 
 enum class DropSensorResult(val data: String) {
     ANOTHER("ANOTHER"),
@@ -488,19 +492,8 @@ class HomeViewModel @Inject constructor (
                     countdownTimerCallApi!!.cancel()
                     countdownTimerCallApi = null
                 }
-
-                // Sync order
-                var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                    path = pathFileSyncOrder,
-                )
-                if(listSyncOrder.isNullOrEmpty()) {
-                    listSyncOrder = arrayListOf()
-                }
-                listSyncOrder.add(_state.value.logSyncOrder!!)
-                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-
                 val listSlotDropFail: ArrayList<Slot> = arrayListOf()
+                val listSlotDropSuccess: ArrayList<Slot> = arrayListOf()
                 val listSlotNotFound: ArrayList<Slot> = arrayListOf()
                 val listSlotShowInHome: ArrayList<Slot> = arrayListOf()
                 val listSlotInCart = _state.value.listSlotInCard
@@ -550,6 +543,7 @@ class HomeViewModel @Inject constructor (
 
                             when (result) {
                                 DropSensorResult.SUCCESS -> {
+                                    listSlotDropSuccess.add(slot)
                                     baseRepository.addNewSpringLogToLocal(
                                         machineCode = _state.value.initSetup!!.vendCode,
                                         slot = slot.slot,
@@ -589,16 +583,19 @@ class HomeViewModel @Inject constructor (
                                             numberOfRevolutions = 1,
                                         )
                                     }
-                                    logger.debug("+++++ELSE: $result")
-                                    val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                    if (indexSlotTmp!=-1) {
-                                        listSlotDropFail[indexSlotTmp].inventory++
-                                    } else {
-                                        slot.inventory = 1
-                                        listSlotDropFail.add(slot)
-                                    }
+
                                     homeRepository.lockSlot(slot.slot)
                                     val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
+                                    if(listAnotherSlot.isEmpty()) {
+                                        logger.debug("+++++ELSE: $result")
+                                        val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                        if (indexSlotTmp!=-1) {
+                                            listSlotDropFail[indexSlotTmp].inventory++
+                                        } else {
+                                            slot.inventory = 1
+                                            listSlotDropFail.add(slot)
+                                        }
+                                    }
                                     for (itemAnother in listAnotherSlot) {
                                         val slotAnother = homeRepository.getSlotDrop(item.productCode)
                                         logger.debug("slotAnother found: $slotAnother")
@@ -638,6 +635,7 @@ class HomeViewModel @Inject constructor (
 
                                             when (anotherResult) {
                                                 DropSensorResult.SUCCESS -> {
+                                                    listSlotDropSuccess.add(slotAnother)
                                                     baseRepository.addNewSensorLogToLocal(
                                                         machineCode = _state.value.initSetup!!.vendCode,
                                                         cabinetCode = "MT01",
@@ -705,13 +703,6 @@ class HomeViewModel @Inject constructor (
                     }
                 }
                 val quantityNotDropped = quantityNeedDrop - quantityDropped
-//                val initSetup = _state.value.initSetup
-//                val currentCash = initSetup!!.currentCash
-//                if(_state.value.nameMethodPayment=="cash") {
-//                    val cashNeedReturnBack = currentCash - cashDropped
-//                    initSetup.currentCash = cashNeedReturnBack
-//                }
-//                baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                 val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<Slot>>() {}.type,
                     path = pathFileSlot
@@ -726,6 +717,7 @@ class HomeViewModel @Inject constructor (
                         }
                     }
                 }
+
                 if(quantityDropped!=0) {
                     // Update promotion
                     if(_state.value.promotion!=null) {
@@ -775,6 +767,89 @@ class HomeViewModel @Inject constructor (
                         )
                     }
                 }
+
+                if(_state.value.nameMethodPayment == "cash") {
+                    if(listSlotDropFail.isNotEmpty()) {
+                        for(item in listSlotDropFail) {
+                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                            if(index!=-1) {
+                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
+                                _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                            }
+                        }
+                    }
+                    if(listSlotDropSuccess.isNotEmpty()) {
+                        for(item in listSlotDropSuccess) {
+                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                            if(index!=-1) {
+                                if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatus == "") {
+                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
+                                    _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                                } else {
+                                    val tmp = ProductSyncOrderRequest(
+                                        productCode = item.productCode,
+                                        productName = item.productName,
+                                        price = item.price.toString(),
+                                        quantity = item.inventory,
+                                        discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
+                                        amount = (item.inventory*item.price).toString(),
+                                        deliveryStatus = "success",
+                                        slot = item.slot,
+                                        cabinetCode = "MT01",
+                                    )
+                                    _state.value.logSyncOrder!!.productDetails.add(tmp)
+                                }
+                            }
+                        }
+                    }
+                    // Sync order
+                    var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrder,
+                    )
+                    if(listSyncOrder.isNullOrEmpty()) {
+                        listSyncOrder = arrayListOf()
+                    }
+                    listSyncOrder.add(_state.value.logSyncOrder!!)
+                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                }
+                else {
+                    // Update delivery status
+                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                        path = pathFileUpdateDeliveryStatus
+                    )
+                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+                        listUpdateDeliveryStatus = arrayListOf()
+                    }
+                    for(item in listSlotDropFail) {
+                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                            machineCode = _state.value.initSetup!!.vendCode,
+                            androidId = _state.value.initSetup!!.androidId,
+                            orderCode = _state.value.orderCode,
+                            deliveryStatus = "failed",
+                            productCode = item.productCode,
+                            isSent = false,
+                        )
+                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                    }
+                    for(item in listSlotDropSuccess) {
+                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                            machineCode = _state.value.initSetup!!.vendCode,
+                            androidId = _state.value.initSetup!!.androidId,
+                            orderCode = _state.value.orderCode,
+                            deliveryStatus = "success",
+                            productCode = item.productCode,
+                            isSent = false,
+                        )
+                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                    }
+                    baseRepository.writeDataToLocal(
+                        listUpdateDeliveryStatus,
+                        pathFileUpdateDeliveryStatus
+                    )
+                }
+
                 if (quantityNotDropped != 0) {
                     if(listSlotNotFound.isNotEmpty()) {
                         logger.debug("Danh sách slot không tìm thấy")
@@ -795,16 +870,20 @@ class HomeViewModel @Inject constructor (
                         if(promotion!= null) {
                             logger.debug("--------${promotion.rewardType}")
                             if(promotion.rewardType=="percent") {
-                                var cashNotDroppedTmp = 0
-                                for(item in listSlotDropFail) {
-                                    cashNotDroppedTmp += item.inventory * item.price
+                                if(listSlotDropSuccess.size != 0) {
+                                    var cashNotDroppedTmp = 0
+                                    for(item in listSlotDropFail) {
+                                        cashNotDroppedTmp += item.inventory * item.price
+                                    }
+                                    logger.debug("cash not dropped 1: ${cashNotDroppedTmp}")
+                                    cashNotDroppedTmp /= promotion.rewardValue!!
+                                    logger.debug("cash not dropped 2: ${cashNotDroppedTmp}")
+                                    val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
+                                    logger.debug("cash not dropped 3: ${currentCashTmp}")
+                                    initSetup.currentCash = currentCashTmp
+                                    logger.debug("cashNotDroppedTmp: ${cashNotDroppedTmp}, currentCashTmp: ${currentCashTmp}")
+                                    logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
                                 }
-                                logger.debug("cash not dropped 1: ${cashNotDroppedTmp}")
-                                cashNotDroppedTmp /= promotion.rewardValue!!
-                                logger.debug("cash not dropped 2: ${cashNotDroppedTmp}")
-                                val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
-                                logger.debug("cash not dropped 3: ${currentCashTmp}")
-                                initSetup.currentCash = currentCashTmp
                             } else {
                                 var totalAmountTmp = 0
                                 for(item in listSlotDropFail) {
@@ -815,15 +894,20 @@ class HomeViewModel @Inject constructor (
                                 for(item in listSlotDropFail) {
                                     totalAmountNotDropTmp += ((totalDiscountTmp!!*(item.price/totalDiscountTmp))*item.inventory)
                                 }
+                                logger.debug("totalAmountTmp: ${totalAmountTmp}, totalDiscountTmp: ${totalDiscountTmp}, totalAmountNotDropTmp: ${totalAmountNotDropTmp}")
                                 initSetup.currentCash = currentCash - _state.value.promotion!!.paymentAmount!! + totalAmountNotDropTmp
+                                logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
                             }
-                        } else {
+
+                        }
+                        else {
                             var cashNotDroppedTmp = 0
                             for(item in listSlotDropFail) {
                                 cashNotDroppedTmp += item.inventory * item.price
                             }
                             val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
                             initSetup.currentCash = currentCashTmp
+                            logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, cashNotDroppedTmp: ${cashNotDroppedTmp}")
                         }
                         baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     } else {
@@ -859,27 +943,6 @@ class HomeViewModel @Inject constructor (
                         titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng liên hệ 1900.99.99.80 để nhận lại ${cashReturnOnline.toVietNamDong()}!"
                     }
 
-                    // Update delivery status
-                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-                        path = pathFileUpdateDeliveryStatus
-                    )
-                    val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        androidId = _state.value.initSetup!!.androidId,
-                        orderCode = _state.value.orderCode,
-                        deliveryStatus = "fail",
-                        isSent = false,
-                    )
-                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
-                        listUpdateDeliveryStatus = arrayListOf()
-                    }
-                    listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-                    baseRepository.writeDataToLocal(
-                        listUpdateDeliveryStatus,
-                        pathFileUpdateDeliveryStatus
-                    )
-
                     _state.update {
                         it.copy(
                             isShowWaitForDropProduct = false,
@@ -906,27 +969,6 @@ class HomeViewModel @Inject constructor (
                         }
                         baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     }
-
-                    // Update delivery status
-                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-                        path = pathFileUpdateDeliveryStatus
-                    )
-                    val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        androidId = _state.value.initSetup!!.androidId,
-                        orderCode = _state.value.orderCode,
-                        deliveryStatus = "success",
-                        isSent = false,
-                    )
-                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
-                        listUpdateDeliveryStatus = arrayListOf()
-                    }
-                    listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-                    baseRepository.writeDataToLocal(
-                        listUpdateDeliveryStatus,
-                        pathFileUpdateDeliveryStatus
-                    )
 
                     _state.update {
                         it.copy (
@@ -1123,40 +1165,227 @@ class HomeViewModel @Inject constructor (
     fun pushLogToServer() {
         logger.debug("pushLogToServer")
         viewModelScope.launch {
-            try {
-                val listLogServerLocal: ArrayList<LogsLocal> = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
-                    path = pathFileLogServer
-                )!!
-                if(listLogServerLocal.isNotEmpty()) {
-                    val listLogServer: ArrayList<LogServer> = arrayListOf()
-                    for(item in listLogServerLocal) {
-                        if(!item.isSent) {
-                            val logServer = LogServer(
-                                eventId = item.eventId,
-                                eventType = item.eventType,
-                                severity = item.severity,
-                                eventTime = item.eventTime,
-                                eventData = item.eventData,
-                            )
-                            listLogServer.add(logServer)
+            if(baseRepository.isHaveNetwork(context)) {
+                try {
+                    val listLogServerLocal: ArrayList<LogsLocal> = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
+                        path = pathFileLogServer
+                    )!!
+                    if(listLogServerLocal.isNotEmpty()) {
+                        val listLogServer: ArrayList<LogServer> = arrayListOf()
+                        for(item in listLogServerLocal) {
+                            if(!item.isSent) {
+                                val logServer = LogServer(
+                                    eventId = item.eventId,
+                                    eventType = item.eventType,
+                                    severity = item.severity,
+                                    eventTime = item.eventTime,
+                                    eventData = item.eventData,
+                                )
+                                listLogServer.add(logServer)
+                            }
+                        }
+                        if(listLogServer.isNotEmpty()) {
+                            if(baseRepository.isHaveNetwork(context)) {
+                                val response = homeRepository.logMulti(listLogServer)
+                                logger.debug("response: $response")
+                                for(itemTmp in listLogServerLocal) {
+                                    if(!itemTmp.isSent) {
+                                        itemTmp.isSent = true
+                                    }
+                                }
+                                baseRepository.writeDataToLocal(listLogServerLocal, pathFileLogServer)
+                            }
                         }
                     }
-                    if(listLogServer.isNotEmpty()) {
-                        if(baseRepository.isHaveNetwork(context)) {
-                            val response = homeRepository.logMulti(listLogServer)
-                            logger.debug("response: $response")
-                            for(itemTmp in listLogServerLocal) {
-                                if(!itemTmp.isSent) {
-                                    itemTmp.isSent = true
+                } catch (e: Exception) {
+                    logger.debug("error in push log to server: ${e.message}")
+                }
+
+                try {
+                    val listUpdateInventory: ArrayList<LogUpdateInventory> = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogUpdateInventory>>() {}.type,
+                        path = pathFileLogUpdateInventoryServer
+                    )!!
+                    if(listUpdateInventory.isNotEmpty()) {
+                        for(item in listUpdateInventory) {
+                            if(!item.isSent) {
+                                val logServer = UpdateInventoryRequest(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    androidId = _state.value.initSetup!!.androidId,
+                                    productList = item.productList,
+                                )
+                                if(baseRepository.isHaveNetwork(context)) {
+                                    val response = homeRepository.updateInventory(logServer)
+                                    if(response.code==200) {
+                                        item.isSent = true
+                                        baseRepository.writeDataToLocal(listUpdateInventory, pathFileLogUpdateInventoryServer)
+                                    }
                                 }
                             }
-                            baseRepository.writeDataToLocal(listLogServerLocal, pathFileLogServer)
+                        }
+
+                    }
+                } catch (e: Exception) {
+                    logger.debug("error in push log to server: ${e.message}")
+                }
+
+                try {
+                    val listDepositWithdraw: ArrayList<LogDepositWithdraw> = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogDepositWithdraw>>() {}.type,
+                        path = pathFileLogDepositWithdrawServer
+                    )!!
+                    if(listDepositWithdraw.isNotEmpty()) {
+                        for(item in listDepositWithdraw) {
+                            if(!item.isSent) {
+                                val depositAndWithdrawMoneyRequest = DepositAndWithdrawMoneyRequest(
+                                    machineCode = item.vendCode,
+                                    androidId = _state.value.initSetup!!.androidId,
+                                    transactionType = item.transactionType,
+                                    denominationType = item.denominationType.toString(),
+                                    quantity = item.quantity.toString(),
+                                    currentBalance = item.currentBalance.toString(),
+                                    synTime = item.synTime,
+                                )
+                                try {
+                                    val response = homeRepository.pushDepositWithdrawToServer(depositAndWithdrawMoneyRequest)
+                                    logger.debug("===== response withdraw-deposit: ${response.toString()}")
+                                    item.isSent = true
+                                    baseRepository.writeDataToLocal(listDepositWithdraw, pathFileLogDepositWithdrawServer)
+                                } catch(e: Exception) {
+                                    logger.debug("error withdraw/deposit: ${e.message}")
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        errorContent = "upload deposit/withdraw to server failed: ${e.message}",
+                                    )
+                                }
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    logger.debug("error in push log to server: ${e.message}")
                 }
-            } catch (e: Exception) {
-                logger.debug("error in push log to server: ${e.message}")
+
+                try {
+                    val listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrder,
+                    )
+                    if(!listSyncOrder.isNullOrEmpty()) {
+                        for(item in listSyncOrder) {
+                            if(!item.isSent) {
+                                val dataSyncOrderRequest = DataSyncOrderRequest(
+                                    machineCode = item.machineCode,
+                                    orderCode = item.orderCode,
+                                    androidId = item.androidId,
+                                    orderTime = item.orderTime,
+                                    totalAmount = item.totalAmount,
+                                    totalDiscount = item.totalDiscount,
+                                    paymentAmount = item.paymentAmount,
+                                    paymentMethodId = item.paymentMethodId,
+                                    paymentTime = item.paymentTime,
+                                    timeSynchronizedToServer = item.timeSynchronizedToServer,
+                                    timeReleaseProducts = item.timeReleaseProducts,
+                                    rewardType = item.rewardType,
+                                    rewardValue = item.rewardValue,
+                                    rewardMaxValue = item.rewardMaxValue,
+                                    paymentStatus = item.paymentStatus,
+                                    deliveryStatus = item.deliveryStatus,
+                                    voucherCode = item.voucherCode,
+                                    productDetails = item.productDetails,
+                                )
+                                val orders: ArrayList<DataSyncOrderRequest> = arrayListOf()
+                                orders.add(dataSyncOrderRequest)
+                                val syncOrderRequest = SyncOrderRequest(
+                                    orders = orders,
+                                )
+                                try {
+                                    val response = homeRepository.syncOrder(syncOrderRequest)
+                                    logger.debug("===== response sync order: ${response.toString()}")
+                                    item.isSent = true
+                                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                                } catch(e: Exception) {
+                                    logger.debug("error log sync order: ${e.message}")
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        errorContent = "upload log sync order to server failed: ${e.message}",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.debug("error in push sync order log to server: ${e.message}")
+                }
+
+                try {
+                    val listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                        path = pathFileUpdatePromotion,
+                    )
+                    if(!listUpdatePromotion.isNullOrEmpty()) {
+                        for(item in listUpdatePromotion) {
+                            if(!item.isSent) {
+                                val updatePromotionRequest = UpdatePromotionRequest(
+                                    machineCode = item.machineCode,
+                                    orderCode = item.orderCode,
+                                    androidId = item.androidId,
+                                    extra = item.extra,
+                                    status = item.status,
+                                    voucherCode = item.voucherCode,
+                                    promotionId = item.promotionId,
+                                    campaignId = item.campaignId,
+                                )
+                                try {
+                                    val response = homeRepository.updatePromotion(updatePromotionRequest)
+                                    logger.debug("===== response update promotion: ${response.toString()}")
+                                    item.isSent = true
+                                    baseRepository.writeDataToLocal(listUpdatePromotion, pathFileUpdatePromotion)
+                                } catch(e: Exception) {
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        errorContent = "upload log update promotion to server failed: ${e.message}",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.debug("error in push log update promotion to server: ${e.message}")
+                }
+
+                try {
+                    val listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                        path = pathFileUpdateDeliveryStatus,
+                    )
+                    if(!listUpdateDeliveryStatus.isNullOrEmpty()) {
+                        for(item in listUpdateDeliveryStatus) {
+                            if(!item.isSent) {
+                                val updateDeliveryStatus = UpdateDeliveryStatusRequest(
+                                    machineCode = item.machineCode,
+                                    orderCode = item.orderCode,
+                                    androidId = item.androidId,
+                                    deliveryStatus = item.deliveryStatus,
+                                    productCode = item.productCode,
+                                )
+                                try {
+                                    val response = homeRepository.updateDeliveryStatus(updateDeliveryStatus)
+                                    logger.debug("===== response update delivery status: ${response.toString()}")
+                                    item.isSent = true
+                                    baseRepository.writeDataToLocal(listUpdateDeliveryStatus, pathFileUpdateDeliveryStatus)
+                                } catch(e: Exception) {
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        errorContent = "upload log update delivery status to server failed: ${e.message}",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.debug("error in push log update delivery status to server: ${e.message}")
+                }
             }
         }
     }
@@ -1166,8 +1395,8 @@ class HomeViewModel @Inject constructor (
         logger.debug("pushDepositWithdrawToServer")
         viewModelScope.launch {
             try {
-                val listDepositWithdraw: ArrayList<LogDepositWithdrawLocal> = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogDepositWithdrawLocal>>() {}.type,
+                val listDepositWithdraw: ArrayList<LogDepositWithdraw> = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogDepositWithdraw>>() {}.type,
                     path = pathFileLogDepositWithdrawServer
                 )!!
                 if(listDepositWithdraw.isNotEmpty()) {
@@ -1203,58 +1432,58 @@ class HomeViewModel @Inject constructor (
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun pushSyncOrderToServer() {
-        logger.debug("pushSyncOrderToServer")
-        viewModelScope.launch {
-            try {
-                val listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                    path = pathFileSyncOrder,
-                )
-                if(!listSyncOrder.isNullOrEmpty()) {
-                    for(item in listSyncOrder) {
-                        if(!item.isSent) {
-                            val syncOrderRequest = SyncOrderRequest(
-                                machineCode = item.machineCode,
-                                orderCode = item.orderCode,
-                                androidId = item.androidId,
-                                orderTime = item.orderTime,
-                                totalAmount = item.totalAmount,
-                                totalDiscount = item.totalDiscount,
-                                paymentAmount = item.paymentAmount,
-                                paymentMethodId = item.paymentMethodId,
-                                paymentTime = item.paymentTime,
-                                timeSynchronizedToServer = item.timeSynchronizedToServer,
-                                timeReleaseProducts = item.timeReleaseProducts,
-                                rewardType = item.rewardType,
-                                rewardValue = item.rewardValue,
-                                rewardMaxValue = item.rewardMaxValue,
-                                paymentStatus = item.paymentStatus,
-                                deliveryStatus = item.deliveryStatus,
-                                voucherCode = item.voucherCode,
-                                productDetails = item.productDetails,
-                            )
-                            try {
-                                val response = homeRepository.syncOrder(syncOrderRequest)
-                                logger.debug("===== response sync order: ${response.toString()}")
-                                item.isSent = true
-                                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-                            } catch(e: Exception) {
-                                logger.debug("error log sync order: ${e.message}")
-                                baseRepository.addNewErrorLogToLocal(
-                                    machineCode = _state.value.initSetup!!.vendCode,
-                                    errorContent = "upload log sync order to server failed: ${e.message}",
-                                )
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                logger.debug("error in push sync order log to server: ${e.message}")
-            }
-        }
-    }
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    fun pushSyncOrderToServer() {
+//        logger.debug("pushSyncOrderToServer")
+//        viewModelScope.launch {
+//            try {
+//                val listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+//                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+//                    path = pathFileSyncOrder,
+//                )
+//                if(!listSyncOrder.isNullOrEmpty()) {
+//                    for(item in listSyncOrder) {
+//                        if(!item.isSent) {
+//                            val syncOrderRequest = DataSyncOrderRequest(
+//                                machineCode = item.machineCode,
+//                                orderCode = item.orderCode,
+//                                androidId = item.androidId,
+//                                orderTime = item.orderTime,
+//                                totalAmount = item.totalAmount,
+//                                totalDiscount = item.totalDiscount,
+//                                paymentAmount = item.paymentAmount,
+//                                paymentMethodId = item.paymentMethodId,
+//                                paymentTime = item.paymentTime,
+//                                timeSynchronizedToServer = item.timeSynchronizedToServer,
+//                                timeReleaseProducts = item.timeReleaseProducts,
+//                                rewardType = item.rewardType,
+//                                rewardValue = item.rewardValue,
+//                                rewardMaxValue = item.rewardMaxValue,
+//                                paymentStatus = item.paymentStatus,
+//                                deliveryStatus = item.deliveryStatus,
+//                                voucherCode = item.voucherCode,
+//                                productDetails = item.productDetails,
+//                            )
+//                            try {
+//                                val response = homeRepository.syncOrder(syncOrderRequest)
+//                                logger.debug("===== response sync order: ${response.toString()}")
+//                                item.isSent = true
+//                                baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+//                            } catch(e: Exception) {
+//                                logger.debug("error log sync order: ${e.message}")
+//                                baseRepository.addNewErrorLogToLocal(
+//                                    machineCode = _state.value.initSetup!!.vendCode,
+//                                    errorContent = "upload log sync order to server failed: ${e.message}",
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                logger.debug("error in push sync order log to server: ${e.message}")
+//            }
+//        }
+//    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun pushUpdatePromotionToServer() {
@@ -1315,6 +1544,7 @@ class HomeViewModel @Inject constructor (
                                 orderCode = item.orderCode,
                                 androidId = item.androidId,
                                 deliveryStatus = item.deliveryStatus,
+                                productCode = item.productCode,
                             )
                             try {
                                 val response = homeRepository.updateDeliveryStatus(updateDeliveryStatus)
@@ -1331,8 +1561,8 @@ class HomeViewModel @Inject constructor (
                     }
                 }
             } catch (e: Exception) {
-                logger.debug("error in push log update delivery status to server: ${e.message}")
-            }
+            logger.debug("error in push log update delivery status to server: ${e.message}")
+        }
         }
     }
 
@@ -1981,6 +2211,7 @@ class HomeViewModel @Inject constructor (
             }
         }
     }
+    
 
     fun minusProductDebounced(slot: Slot) {
         debounceJob?.cancel()
@@ -2018,6 +2249,36 @@ class HomeViewModel @Inject constructor (
                         var total = 0
                         for(item in listSlotInCart) {
                             total+=(item.inventory*item.price)
+                        }
+                        if(_state.value.isShowCart) {
+                            if (_state.value.nameMethodPayment != "cash") {
+                                if (!_isCashBoxNormal.value) {
+                                    if(_state.value.initSetup!!.currentCash >= total) {
+                                        val listMethodPayment = _state.value.listPaymentMethod
+                                        var check = false
+                                        for(item in listMethodPayment) {
+                                            if(item.methodName == "cash") {
+                                                check = true
+                                            }
+                                        }
+                                        if(!check) {
+                                            val itemPaymentMethod = PaymentMethodResponse(
+                                                methodName = "cash",
+                                                brief = "Tiền Mặt",
+                                                isMustOnline = "no",
+                                                imageUrl = "https://i.imgur.com/xNRXpXu.png",
+                                                status = 1,
+                                                id = 4,
+                                                storeId = null,
+                                            )
+                                            listMethodPayment.add(itemPaymentMethod)
+                                            currentState.copy(
+                                                listPaymentMethod = listMethodPayment,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                         currentState.copy(
                             listSlotInCard = listSlotInCart,
@@ -2058,7 +2319,7 @@ class HomeViewModel @Inject constructor (
                         logger.debug("promotion response: $promotionResponse")
                         _state.update { it.copy(
                             promotion = promotionResponse,
-                            totalAmount = promotionResponse.totalAmount ?: _state.value.totalAmount,
+                            totalAmount = promotionResponse.paymentAmount ?: _state.value.totalAmount,
                             isLoading = false,
                         ) }
                     } else {
@@ -2120,47 +2381,48 @@ class HomeViewModel @Inject constructor (
                     val voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else ""
                     val listProductInCart = _state.value.listSlotInCard
                     val currentTime = LocalDateTime.now().toDateTimeString()
-                    val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
-                    for (item in listProductInCart) {
-                        val slot = homeRepository.getSlotDrop(item.productCode)
-                        val productDetailRequest = ProductSyncOrderRequest(
-                            productCode = item.productCode,
-                            productName = item.productName,
-                            price = item.price.toString(),
-                            quantity = item.inventory,
-                            discount = 0,
-                            amount = (item.inventory*item.price).toString(),
-                            slot = slot!!.slot,
-                            cabinetCode = "MT01",
-                        )
-                        productDetails.add(productDetailRequest)
-                    }
-                    val logSyncOrder = LogSyncOrder(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        orderCode = orderCode,
-                        androidId = _state.value.initSetup!!.androidId,
-                        orderTime = currentTime,
-                        totalAmount = totalAmount,
-                        totalDiscount = totalDiscount,
-                        paymentAmount = paymentAmount,
-                        paymentMethodId = paymentMethodId,
-                        paymentTime = currentTime,
-                        timeSynchronizedToServer = currentTime,
-                        timeReleaseProducts = currentTime,
-                        rewardType = rewardType,
-                        rewardValue = rewardValue.toString(),
-                        rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
-                        paymentStatus = "success",
-                        deliveryStatus = "true",
-                        voucherCode = voucherCode,
-                        productDetails = productDetails,
-                        isSent = false,
-                    )
-                    _state.update { it.copy(logSyncOrder = logSyncOrder) }
 
                     val listProductDetailRequest: ArrayList<ProductDetailRequest> = arrayListOf()
                     when(_state.value.nameMethodPayment) {
                         "cash" -> {
+                            val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
+                            for (item in listProductInCart) {
+                                val slot = homeRepository.getSlotDrop(item.productCode)
+                                val productDetailRequest = ProductSyncOrderRequest(
+                                    productCode = item.productCode,
+                                    productName = item.productName,
+                                    price = item.price.toString(),
+                                    quantity = item.inventory,
+                                    discount = 0,
+                                    amount = (item.inventory*item.price).toString(),
+                                    slot = slot!!.slot,
+                                    deliveryStatus = "",
+                                    cabinetCode = "MT01",
+                                )
+                                productDetails.add(productDetailRequest)
+                            }
+                            val logSyncOrder = LogSyncOrder(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                orderCode = orderCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                orderTime = currentTime,
+                                totalAmount = totalAmount,
+                                totalDiscount = totalDiscount,
+                                paymentAmount = paymentAmount,
+                                paymentMethodId = paymentMethodId,
+                                paymentTime = currentTime,
+                                timeSynchronizedToServer = currentTime,
+                                timeReleaseProducts = currentTime,
+                                rewardType = rewardType,
+                                rewardValue = rewardValue.toString(),
+                                rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
+                                paymentStatus = "success",
+                                deliveryStatus = "success",
+                                voucherCode = voucherCode,
+                                productDetails = productDetails,
+                                isSent = false,
+                            )
+
                             logger.debug("method payment: cash")
                             val initSetup: InitSetup = baseRepository.getDataFromLocal(
                                 type = object : TypeToken<InitSetup>() {}.type,
@@ -2171,6 +2433,7 @@ class HomeViewModel @Inject constructor (
                                     isShowCart = false,
                                     orderCode = orderCode,
                                     isShowWaitForDropProduct = true,
+                                    logSyncOrder = logSyncOrder,
                                 ) }
                                 dropProduct()
                             } else {
@@ -2178,6 +2441,7 @@ class HomeViewModel @Inject constructor (
                                     orderCode = orderCode,
                                     isShowPushMoney = true,
                                     isShowCart = false,
+                                    logSyncOrder = logSyncOrder,
                                 ) }
                                 startCountdownPaymentByCash()
                             }
