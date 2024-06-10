@@ -160,7 +160,6 @@ fun TransactionContent(
                 Text("Tổng giao dịch tiền thanh toán online: ")
                 Text("Số lượng giao dịch thanh toán online: ")
                 Text("Số tờ tiền trong hộp thối: ")
-
                 Row() {
                     CustomButtonComposable(
                         title = "Kết phiên tháng",
