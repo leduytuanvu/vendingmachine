@@ -23,6 +23,8 @@ const val pathFileLogServer = "/sdcard/VendingMachineData/Log/LogServer.json"
 @SuppressLint("SdCardPath")
 const val pathFileLogDepositWithdrawServer = "/sdcard/VendingMachineData/Log/DepositWithdrawServer.json"
 @SuppressLint("SdCardPath")
+const val pathFileLogUpdateInventoryServer = "/sdcard/VendingMachineData/Log/UpdateInventory.json"
+@SuppressLint("SdCardPath")
 const val pathFolderAds = "/sdcard/VendingMachineData/Ads/HomeAds"
 @SuppressLint("SdCardPath")
 const val pathFolderBigAds = "/sdcard/VendingMachineData/Ads/BigAds"

@@ -1,14 +1,9 @@
-package com.leduytuanvu.vendingmachine.features.settings.data.model.request
+package com.leduytuanvu.vendingmachine.features.home.data.model.response
 
 import com.google.gson.annotations.SerializedName
 
-data class ProductInventoryRequest(
-    @SerializedName("machine_code") val machineCode: String,
-    @SerializedName("android_id") val androidId: String,
-    @SerializedName("product_list") val productList: ArrayList<ItemProductInventoryRequest>,
-)
-
-data class ItemProductInventoryRequest(
+data class UpdateInventoryResponse(
+    @SerializedName("machine_code") val machineCode: String?,
     @SerializedName("cabinet_code") val cabinetCode: String?,
     @SerializedName("product_layout_id") val productLayoutId: String?,
     @SerializedName("slot") val slot: Int?,

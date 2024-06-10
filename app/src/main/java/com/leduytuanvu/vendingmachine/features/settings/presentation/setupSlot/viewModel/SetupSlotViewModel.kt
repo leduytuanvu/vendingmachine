@@ -7,16 +7,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
@@ -27,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDateTime
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -224,6 +220,12 @@ class SetupSlotViewModel @Inject constructor(
                     if(item.slot == _state.value.slot!!.slot) {
                         if(_state.value.isInventory) {
                             item.inventory = number
+                            val listSlotUpdateInventory = _state.value.listSlotUpdateInventory
+                            val index = listSlotUpdateInventory.indexOfFirst { it.slot == item.slot }
+                            if(index != -1) {
+                                listSlotUpdateInventory.removeAt(index)
+                            }
+                            listSlotUpdateInventory.add(item)
                         } else if(_state.value.isCapacity) {
                             item.capacity = number
                             if(_state.value.slot!!.inventory > number) {
@@ -357,6 +359,47 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
+    fun goBack(navController: NavHostController) {
+        viewModelScope.launch {
+            try {
+                val listUpdateInventory: ArrayList<ItemProductInventoryRequest> = arrayListOf()
+                logger.debug("listUpdateInventory: ${listUpdateInventory.size}")
+                for (item in _state.value.listSlotUpdateInventory) {
+                    val itemUpdateInventory = ItemProductInventoryRequest(
+                        cabinetCode = "MT01",
+                        productLayoutId = "1",
+                        slot = item.slot,
+                        remaining = item.inventory,
+                        isActive = 1,
+                        id = item.slot.toString(),
+                    )
+                    listUpdateInventory.add(itemUpdateInventory)
+                }
+                if(listUpdateInventory.isNotEmpty()) {
+                    val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<InitSetup>() {}.type,
+                        path = pathFileInitSetup
+                    )!!
+                    baseRepository.addNewUpdateInventoryToLocal(
+                        machineCode = initSetup.vendCode,
+                        androidId = initSetup.androidId,
+                        productList = listUpdateInventory,
+                    )
+                }
+                navController.popBackStack()
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "go back fail in SetupSlotViewModel/goBack(): ${e.message}",
+                )
+            }
+        }
+    }
+
     fun setFullInventory() {
         logger.debug("setFullInventory")
         viewModelScope.launch {
@@ -367,9 +410,15 @@ class SetupSlotViewModel @Inject constructor(
                         isConfirm = false
                     )
                 }
+                val listItemProductInventory = _state.value.listSlotUpdateInventory
                 for (item in _state.value.listSlot) {
                     if (item.productCode.isNotEmpty()) {
                         item.inventory = item.capacity
+                        val index = listItemProductInventory.indexOfFirst { it.slot == item.slot }
+                        if(index != -1) {
+                            listItemProductInventory.removeAt(index)
+                        }
+                        listItemProductInventory.add(item)
                     }
                 }
                 settingsRepository.writeListSlotToLocal(_state.value.listSlot)

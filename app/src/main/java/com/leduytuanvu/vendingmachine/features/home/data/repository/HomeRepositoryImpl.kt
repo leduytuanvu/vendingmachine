@@ -2,6 +2,7 @@ package com.leduytuanvu.vendingmachine.features.home.data.repository
 
 import android.content.Context
 import com.google.gson.reflect.TypeToken
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
@@ -18,8 +19,10 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCode
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemPromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.LogServerRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.PromotionRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.DataSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.CheckPaymentResultOnlineResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.DepositAndWithdrawMoneyResponse
@@ -28,6 +31,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.response.LogServe
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.SyncOrderResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateDeliveryStatusResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdateInventoryResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.UpdatePromotionResponse
 import com.leduytuanvu.vendingmachine.features.home.data.remote.HomeApi
 import com.leduytuanvu.vendingmachine.features.home.domain.repository.HomeRepository
@@ -280,5 +284,12 @@ class HomeRepositoryImpl @Inject constructor(
         }
     }
 
-
+    override suspend fun updateInventory(updateInventory: UpdateInventoryRequest): BaseListResponse<UpdateInventoryResponse> {
+        try {
+            val response = homeApi.updateMultiInventory(updateInventory)
+            return response
+        } catch (e: Exception) {
+            throw e
+        }
+    }
 }

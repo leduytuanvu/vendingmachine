@@ -19,6 +19,7 @@ data class SetupSlotViewState (
     val slot: Slot? = null,
     val initSetup: InitSetup? = null,
     val listSlot: ArrayList<Slot> = arrayListOf(),
+    val listSlotUpdateInventory: ArrayList<Slot> = arrayListOf(),
     val listProduct: ArrayList<Product> = arrayListOf(),
     val listSlotAddMore: ArrayList<Slot> = arrayListOf(),
 )
