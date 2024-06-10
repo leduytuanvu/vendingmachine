@@ -9,5 +9,5 @@ data class LogUpdatePromotion (
     val promotionId: String,
     val status: Boolean,
     val extra: String,
-    val isSent: Boolean,
+    var isSent: Boolean,
 )

@@ -113,9 +113,12 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(300000)
+            delay(60000)
             viewModel.pushLogToServer()
-            viewModel.pushDepositWithdrawToServer()
+//            viewModel.pushDepositWithdrawToServer()
+//            viewModel.pushSyncOrderToServer()
+//            viewModel.pushUpdatePromotionToServer()
+//            viewModel.pushUpdateDeliveryStatusToServer()
         }
     }
 
@@ -700,7 +703,7 @@ fun HomeContent(
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
-                                            Text("Đơn giá: ${item.price.toVietNamDong()}/lon", fontSize = 14.sp)
+                                            Text("Đơn giá: ${item.price.toVietNamDong()}", fontSize = 14.sp)
                                             Spacer(modifier = Modifier.height(10.dp))
                                             Row(
                                                 modifier = Modifier,
@@ -718,15 +721,13 @@ fun HomeContent(
                                                         .background(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
-                                                        ),
+                                                        )
+                                                        .clickable { viewModel.minusProductDebounced(item) },
                                                     contentAlignment = Alignment.Center,                                            ) {
                                                     Image(
                                                         modifier = Modifier
                                                             .height(20.dp)
-                                                            .width(20.dp)
-                                                            .clickable {
-                                                                viewModel.minusProductDebounced(item)
-                                                            },
+                                                            .width(20.dp),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_minus),
                                                         contentDescription = ""
@@ -750,16 +751,14 @@ fun HomeContent(
                                                         .background(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
-                                                        ),
+                                                        )
+                                                        .clickable { viewModel.plusProductDebounced(item) },
                                                     contentAlignment = Alignment.Center,
                                                 ) {
                                                     Image(
                                                         modifier = Modifier
                                                             .height(20.dp)
-                                                            .width(20.dp)
-                                                            .clickable {
-                                                                viewModel.plusProductDebounced(item)
-                                                            },
+                                                            .width(20.dp),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_plus),
                                                         contentDescription = ""
@@ -805,7 +804,7 @@ fun HomeContent(
                                     height = 60.dp,
                                     fontWeight = FontWeight.Bold,
                                 ) {
-                                    viewModel.applyPromotion(text)
+                                    viewModel.applyPromotionDebounced(text)
                                 }
                             }
                             Spacer(modifier = Modifier.height(34.dp))

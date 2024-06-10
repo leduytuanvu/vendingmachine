@@ -154,21 +154,13 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
     }
 }
 
-
 class BootReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var localStorageDatasource: LocalStorageDatasource
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            val initSetup: InitSetup? = localStorageDatasource.getDataFromPath(pathFileInitSetup)
-            if (initSetup != null) {
-                if(initSetup.autoStartApplication=="ON") {
-                    Log.d("BootReceiver", "Device booted, starting MainActivity...")
-                    val activityIntent = Intent(context, MainActivity::class.java)
-                    activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(activityIntent)
-                }
-            }
+            val activityIntent = Intent(context, MainActivity::class.java)
+            activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(activityIntent)
         }
     }
 }

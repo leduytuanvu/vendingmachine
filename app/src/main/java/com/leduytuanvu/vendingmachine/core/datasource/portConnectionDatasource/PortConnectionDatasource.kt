@@ -95,8 +95,9 @@ class PortConnectionDatasource {
     // Open port vending machine
     fun openPortVendingMachine(port: String) : Int {
         fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
-        portVendingString = port
-        Logger.info("====== portVendingMachine $port $fdPortVendingMachine")
+
+        Logger.debug("open port vending machine: $fdPortVendingMachine")
+
         return fdPortVendingMachine
     }
     fun getListSerialPort(): Array<String> {

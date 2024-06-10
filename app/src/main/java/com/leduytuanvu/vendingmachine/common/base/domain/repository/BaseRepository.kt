@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.common.base.domain.repository
 
 import android.content.Context
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
 import java.lang.reflect.Type
 
 interface BaseRepository {
@@ -60,6 +61,11 @@ interface BaseRepository {
         denominationType: Int,
         quantity: Int = 1,
         currentBalance: Int,
+    )
+    suspend fun addNewUpdateInventoryToLocal(
+        machineCode: String,
+        androidId: String,
+        productList: ArrayList<ItemProductInventoryRequest>,
     )
     suspend fun addNewStatusLogToLocal(
         machineCode: String,

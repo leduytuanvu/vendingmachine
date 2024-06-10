@@ -57,6 +57,7 @@ import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel.SetupSystemViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
 import kotlinx.coroutines.delay
+import java.util.Random
 
 @Composable
 internal fun SetupSystemScreen(
@@ -484,7 +485,7 @@ fun SetupSystemMainContentComposable(
                 )
             }) {
                 BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
+//                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
                 if(state.initSetup!=null) {
                     TimePickerWrapperComposable(
                         defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
@@ -508,7 +509,7 @@ fun SetupSystemMainContentComposable(
                 )
             }) {
                 BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
+//                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
                 if(state.initSetup!=null) {
                     TimePickerWrapperComposable(
                         defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
@@ -802,5 +803,50 @@ fun SetupSystemMainContentComposable(
 //        ) {
 //            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
 //        }
+
+        CustomButtonComposable(
+            title = "REFRESH",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            val randomSN = Random().nextInt(256).toByte()
+
+            // Define the LED status (0 for off, 1 for on)
+            val ledStatus = 1 // Change this to 0 for turning off the LED
+
+            // Call the turnOnLed function with the generated SN and LED status
+//            turnOnLed()
+            viewModel.turnOnLed()
+        }
+
+        CustomButtonComposable(
+            title = "ON",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.check1()
+        }
+        CustomButtonComposable(
+            title = "OFF",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.check2()
+        }
     }
 }

@@ -234,7 +234,7 @@ fun SetupSlotContent(
                         cornerRadius = 4.dp,
                         fontWeight = FontWeight.Bold,
                     ) {
-                        navController.popBackStack()
+                        viewModel.goBack(navController)
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     ButtonSetupSlotComposable("RESET", function = {

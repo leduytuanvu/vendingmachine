@@ -1,13 +1,12 @@
 package com.leduytuanvu.vendingmachine.features.settings.domain.repository
 
-import android.content.Context
-import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
-import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
-import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataPaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PriceResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ProductInventoryResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 

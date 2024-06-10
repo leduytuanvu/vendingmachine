@@ -1,14 +1,18 @@
 package com.leduytuanvu.vendingmachine.features.settings.data.remote
 
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataPaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.InformationOfMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.LayoutResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.LoadProductResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PriceResponse
+import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ProductInventoryResponse
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 

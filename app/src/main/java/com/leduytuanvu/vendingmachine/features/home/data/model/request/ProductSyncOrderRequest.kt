@@ -9,6 +9,7 @@ data class ProductSyncOrderRequest(
     @SerializedName("quantity") var quantity: Int?,
     @SerializedName("discount") var discount: Int?,
     @SerializedName("amount") var amount: String?,
+    @SerializedName("delivery_status") var deliveryStatus: String?,
     @SerializedName("slot") var slot: Int?,
     @SerializedName("cabinet_code") var cabinetCode: String?,
 )

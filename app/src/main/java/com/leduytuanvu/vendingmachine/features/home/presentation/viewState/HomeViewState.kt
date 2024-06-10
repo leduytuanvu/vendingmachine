@@ -2,6 +2,7 @@ package com.leduytuanvu.vendingmachine.features.home.presentation.viewState
 
 import androidx.compose.ui.graphics.ImageBitmap
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.features.home.data.model.response.PromotionResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
@@ -32,10 +33,12 @@ data class HomeViewState (
     val initSetup: InitSetup? = null,
     val slotAtBottom: Slot? = null,
     val listAds: ArrayList<String> = arrayListOf(),
+    val listBigAds: ArrayList<String> = arrayListOf(),
     val listSlot: ArrayList<Slot> = arrayListOf(),
     val listSlotInCard: ArrayList<Slot> = arrayListOf(),
     val listSlotInHome: ArrayList<Slot> = arrayListOf(),
     val listPaymentMethod: ArrayList<PaymentMethodResponse> = arrayListOf(),
     val promotion: PromotionResponse? = null,
     val totalAmount: Int = 0,
+    val logSyncOrder: LogSyncOrder? = null,
 )

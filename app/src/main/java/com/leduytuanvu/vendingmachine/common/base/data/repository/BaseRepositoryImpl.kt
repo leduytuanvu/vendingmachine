@@ -8,7 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import com.google.gson.Gson
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogAuthy
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdrawLocal
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdraw
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDoor
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
@@ -18,15 +18,18 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSpring
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogStatus
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogTemperature
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateInventory
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogDepositWithdrawServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
+import com.leduytuanvu.vendingmachine.core.util.pathFileLogUpdateInventoryServer
 import com.leduytuanvu.vendingmachine.core.util.toBase64
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.core.util.toId
+import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
 import org.threeten.bp.LocalDateTime
 import java.io.File
 import java.lang.reflect.Type
@@ -324,7 +327,7 @@ class BaseRepositoryImpl @Inject constructor(
         currentBalance: Int
     ) {
         try {
-            val logDepositWithdraw = LogDepositWithdrawLocal(
+            val logDepositWithdraw = LogDepositWithdraw(
                 vendCode = machineCode,
                 transactionType = transactionType,
                 denominationType = denominationType,
@@ -333,7 +336,7 @@ class BaseRepositoryImpl @Inject constructor(
                 synTime = LocalDateTime.now().toDateTimeString(),
                 isSent = false,
             )
-            var listLogDepositWithdraw = arrayListOf<LogDepositWithdrawLocal>()
+            var listLogDepositWithdraw = arrayListOf<LogDepositWithdraw>()
             if (localStorageDatasource.checkFileExists(pathFileLogDepositWithdrawServer)) {
                 listLogDepositWithdraw = localStorageDatasource.getDataFromPath(pathFileLogDepositWithdrawServer)!!
             }
@@ -341,6 +344,32 @@ class BaseRepositoryImpl @Inject constructor(
             localStorageDatasource.writeData(
                 pathFileLogDepositWithdrawServer,
                 gson.toJson(listLogDepositWithdraw),
+            )
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun addNewUpdateInventoryToLocal(
+        machineCode: String,
+        androidId: String,
+        productList: ArrayList<ItemProductInventoryRequest>
+    ) {
+        try {
+            val logUpdateInventory = LogUpdateInventory(
+                machineCode = machineCode,
+                androidId = androidId,
+                productList = productList,
+                isSent = false,
+            )
+            var listLogUpdateInventory = arrayListOf<LogUpdateInventory>()
+            if (localStorageDatasource.checkFileExists(pathFileLogUpdateInventoryServer)) {
+                listLogUpdateInventory = localStorageDatasource.getDataFromPath(pathFileLogUpdateInventoryServer)!!
+            }
+            listLogUpdateInventory.add(logUpdateInventory)
+            localStorageDatasource.writeData(
+                pathFileLogUpdateInventoryServer,
+                gson.toJson(listLogUpdateInventory),
             )
         } catch (e: Exception) {
             throw e
