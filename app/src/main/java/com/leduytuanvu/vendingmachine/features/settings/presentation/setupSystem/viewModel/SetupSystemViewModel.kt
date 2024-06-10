@@ -11,18 +11,15 @@ import androidx.work.WorkManager
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.ScheduledTaskWorker
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
-import com.leduytuanvu.vendingmachine.core.util.pathFolderVendingMachineData
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
-import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +31,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDateTime
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -77,7 +73,10 @@ class SetupSystemViewModel @Inject constructor(
                 }
                 portConnectionDatasource.startReadingVendingMachine()
                 startCollectingData()
-                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmReadTemp)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArrays.vmReadTemp,
+
+                )
                 if (baseRepository.isHaveNetwork(context)) {
                     val informationOfMachine = settingsRepository.getInformationOfMachine()
                     _state.update { it.copy(
@@ -172,7 +171,10 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _nameFun.value = "checkDropSensor"
-                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmCheckDropSensor)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArrays.vmCheckDropSensor,
+
+                )
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -193,7 +195,10 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmReadTemp)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArrays.vmReadTemp,
+
+                )
                 delay(1000)
                 sendEvent(Event.Toast("SUCCESS"))
                 _state.update { it.copy(isLoading = false) }
@@ -566,7 +571,10 @@ class SetupSystemViewModel @Inject constructor(
                     "5" -> byteArrays.vmInchingMode5
                     else -> { byteArrays.vmInchingMode0 }
                 }
-                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArray,
+
+                )
                 delay(1100)
                 if(_statusVendingMachine.value) {
                     initSetup.inchingMode = inchingMode
@@ -592,7 +600,10 @@ class SetupSystemViewModel @Inject constructor(
                         "5" -> byteArrays.vmInchingMode5
                         else -> { byteArrays.vmInchingMode0 }
                     }
-                    portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                    portConnectionDatasource.sendCommandVendingMachine(
+                        byteArray,
+
+                    )
                     sendEvent(Event.Toast("Setup inching mode failed!"))
                     _state.update { it.copy(isLoading = false) }
                 }
@@ -663,7 +674,10 @@ class SetupSystemViewModel @Inject constructor(
                     "OFF" -> byteArrays.vmTurnOffGlassHeatingMode
                     else -> { byteArrays.vmTurnOnGlassHeatingMode }
                 }
-                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArray,
+
+                )
                 delay(1100)
                 if(_statusVendingMachine.value) {
                     initSetup.glassHeatingMode = glassHeatingMode
@@ -685,7 +699,10 @@ class SetupSystemViewModel @Inject constructor(
                         "OFF" -> byteArrays.vmTurnOffGlassHeatingMode
                         else -> { byteArrays.vmTurnOnGlassHeatingMode }
                     }
-                    portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                    portConnectionDatasource.sendCommandVendingMachine(
+                        byteArray,
+
+                    )
                     sendEvent(Event.Toast("Setup glass heating mode failed!"))
                     _state.update { it.copy(isLoading = false) }
                 }
@@ -825,7 +842,10 @@ class SetupSystemViewModel @Inject constructor(
                 )!!
                 _nameFun.value = "updateTemperatureInLocal"
                 _statusVendingMachine.value = false
-                portConnectionDatasource.sendCommandVendingMachine(generateTargetTemperatureByteArray(temperature.toInt()))
+                portConnectionDatasource.sendCommandVendingMachine(
+                    generateTargetTemperatureByteArray(temperature.toInt()),
+
+                )
                 delay(1100)
                 if(_statusVendingMachine.value) {
                     initSetup.temperature = temperature
@@ -842,7 +862,10 @@ class SetupSystemViewModel @Inject constructor(
                         isLoading = false,
                     ) }
                 } else {
-                    portConnectionDatasource.sendCommandVendingMachine(generateTargetTemperatureByteArray(initSetup.temperature.toInt()))
+                    portConnectionDatasource.sendCommandVendingMachine(
+                        generateTargetTemperatureByteArray(initSetup.temperature.toInt()),
+
+                    )
                     sendEvent(Event.Toast("Setup temperature failed!"))
                     _state.update { it.copy(isLoading = false) }
                 }
@@ -969,5 +992,12 @@ class SetupSystemViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = false) }
             }
         }
+    }
+    fun onLight() {
+        portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
+    }
+
+    fun offLight() {
+        portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOffLight)
     }
 }

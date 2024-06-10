@@ -4,54 +4,67 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeRXCommunicateAvf
+import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDateTime
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
 @HiltViewModel
 class SetupSlotViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val portConnectionDatasource: PortConnectionDatasource,
     private val baseRepository: BaseRepository,
+    private val byteArrays: ByteArrays,
     private val logger: Logger,
     private val context: Context,
+
 ) : ViewModel() {
     private val _state = MutableStateFlow(SetupSlotViewState())
     val state = _state.asStateFlow()
-
+    private var vendingMachineJob: Job? = null
+    var listSlotAll: ArrayList<Slot> = arrayListOf()
     fun loadInitSetupListSlotListProduct() {
         logger.debug("loadInitSetupListSlotListProduct")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
+
+
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
+                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine)
+                if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
+                    portConnectionDatasource.startReadingVendingMachine()
+                }
+                portConnectionDatasource.startReadingVendingMachine()
+
                 val listSlot = settingsRepository.getListSlotFromLocal()
+                updateSlotEnable(listSlot)
                 val listProduct = settingsRepository.getListProductFromLocal()
+
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -118,51 +131,63 @@ class SetupSlotViewModel @Inject constructor(
     ) {
         logger.debug("showDialogChooseNumber")
         viewModelScope.launch {
-            if(isChooseMoney) {
-                _state.update { it.copy(
-                    isChooseMoney = true,
-                    isCapacity = false,
-                    isInventory = false,
-                ) }
+            if (isChooseMoney) {
+                _state.update {
+                    it.copy(
+                        isChooseMoney = true,
+                        isCapacity = false,
+                        isInventory = false,
+                    )
+                }
             }
-            if(isCapacity) {
-                _state.update { it.copy(
-                    isChooseMoney = false,
-                    isCapacity = true,
-                    isInventory = false,
-                ) }
+            if (isCapacity) {
+                _state.update {
+                    it.copy(
+                        isChooseMoney = false,
+                        isCapacity = true,
+                        isInventory = false,
+                    )
+                }
             }
-            if(isInventory) {
-                _state.update { it.copy(
-                    isChooseMoney = false,
-                    isCapacity = false,
-                    isInventory = true,
-                ) }
+            if (isInventory) {
+                _state.update {
+                    it.copy(
+                        isChooseMoney = false,
+                        isCapacity = false,
+                        isInventory = true,
+                    )
+                }
             }
-            _state.update { it.copy(
-                isChooseNumber = true,
-                slot = slot,
-            ) }
+            _state.update {
+                it.copy(
+                    isChooseNumber = true,
+                    slot = slot,
+                )
+            }
         }
     }
 
     fun showDialogConfirm(mess: String, slot: Slot?, nameFunction: String) {
         viewModelScope.launch {
-            if(nameFunction == "resetAllSlot" || nameFunction == "setFullInventory" || nameFunction == "removeSlot") {
-                _state.update { it.copy(
-                    isConfirm = true,
-                    titleDialogConfirm = mess,
-                    slot = slot,
-                    nameFunction = nameFunction,
-                ) }
-            } else {
-                if (baseRepository.isHaveNetwork(context)) {
-                    _state.update { it.copy(
+            if (nameFunction == "resetAllSlot" || nameFunction == "setFullInventory" || nameFunction == "removeSlot") {
+                _state.update {
+                    it.copy(
                         isConfirm = true,
                         titleDialogConfirm = mess,
                         slot = slot,
                         nameFunction = nameFunction,
-                    ) }
+                    )
+                }
+            } else {
+                if (baseRepository.isHaveNetwork(context)) {
+                    _state.update {
+                        it.copy(
+                            isConfirm = true,
+                            titleDialogConfirm = mess,
+                            slot = slot,
+                            nameFunction = nameFunction,
+                        )
+                    }
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
                 }
@@ -220,17 +245,17 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                for(item in _state.value.listSlot) {
-                    if(item.slot == _state.value.slot!!.slot) {
-                        if(_state.value.isInventory) {
+                for (item in _state.value.listSlot) {
+                    if (item.slot == _state.value.slot!!.slot) {
+                        if (_state.value.isInventory) {
                             item.inventory = number
-                        } else if(_state.value.isCapacity) {
+                        } else if (_state.value.isCapacity) {
                             item.capacity = number
-                            if(_state.value.slot!!.inventory > number) {
+                            if (_state.value.slot!!.inventory > number) {
                                 item.inventory = number
                             }
                         } else {
-                            item.price = number*1000
+                            item.price = number * 1000
                         }
                         baseRepository.addNewFillLogToLocal(
                             machineCode = _state.value.initSetup!!.vendCode,
@@ -252,22 +277,26 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "setup number inventory, capacity or money fail in SetupSlotViewModel/chooseNumber(): ${e.message}",
                 )
             } finally {
-                _state.update { it.copy(
-                    isInventory = false,
-                    isChooseNumber = false,
-                    isChooseMoney = false,
-                    isLoading = false
-                ) }
+                _state.update {
+                    it.copy(
+                        isInventory = false,
+                        isChooseNumber = false,
+                        isChooseMoney = false,
+                        isLoading = false
+                    )
+                }
             }
         }
     }
 
     fun hideDialogChooseNumber() {
         viewModelScope.launch {
-            _state.update { it.copy(
-                isChooseNumber = false,
-                isChooseMoney = false,
-            ) }
+            _state.update {
+                it.copy(
+                    isChooseNumber = false,
+                    isChooseMoney = false,
+                )
+            }
         }
     }
 
@@ -295,7 +324,7 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                for(item in _state.value.listSlot) {
+                for (item in _state.value.listSlot) {
                     if (item.slot == _state.value.slot!!.slot) {
                         item.inventory = 10
                         item.capacity = 10
@@ -303,8 +332,8 @@ class SetupSlotViewModel @Inject constructor(
                         item.productName = "Not have product"
                         item.price = 10000
                         var check = false
-                        for(itemAddMore in _state.value.listSlotAddMore) {
-                            if(itemAddMore.slot == _state.value.slot!!.slot) {
+                        for (itemAddMore in _state.value.listSlotAddMore) {
+                            if (itemAddMore.slot == _state.value.slot!!.slot) {
                                 check = true
                                 break
                             }
@@ -330,11 +359,13 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "remove slot to local list slot fail in SetupSlotViewModel/removeSlot(): ${e.message}",
                 )
             } finally {
-                _state.update { it.copy (
-                    nameFunction = "",
-                    isConfirm = false,
-                    isLoading = false,
-                ) }
+                _state.update {
+                    it.copy(
+                        nameFunction = "",
+                        isConfirm = false,
+                        isLoading = false,
+                    )
+                }
             }
         }
     }
@@ -349,10 +380,12 @@ class SetupSlotViewModel @Inject constructor(
                     )
                 }
             } else {
-                _state.update { it.copy(
-                    isChooseImage = true,
-                    slot = null,
-                ) }
+                _state.update {
+                    it.copy(
+                        isChooseImage = true,
+                        slot = null,
+                    )
+                }
             }
         }
     }
@@ -406,11 +439,11 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 delay(1)
                 val tmpListSlot = _state.value.listSlot
-                for(index in 0..tmpListSlot.size) {
-                    if(tmpListSlot[index].slot == slot.slot) {
+                for (index in 0..tmpListSlot.size) {
+                    if (tmpListSlot[index].slot == slot.slot) {
                         tmpListSlot[index].isCombine = "no"
                         tmpListSlot[index].slotCombine = 0
-                        tmpListSlot[index+1].status = 1
+                        tmpListSlot[index + 1].status = 1
                         break
                     }
                 }
@@ -420,10 +453,12 @@ class SetupSlotViewModel @Inject constructor(
                     content = "split slot ${slot.slot}",
                 )
                 baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
-                _state.update { it.copy (
-                    listSlot = tmpListSlot,
-                    isLoading = false,
-                ) }
+                _state.update {
+                    it.copy(
+                        listSlot = tmpListSlot,
+                        isLoading = false,
+                    )
+                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -445,11 +480,11 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 delay(1)
                 val tmpListSlot = _state.value.listSlot
-                for(index in 0..tmpListSlot.size) {
-                    if(tmpListSlot[index].slot == slot.slot) {
+                for (index in 0..tmpListSlot.size) {
+                    if (tmpListSlot[index].slot == slot.slot) {
                         tmpListSlot[index].isCombine = "yes"
                         tmpListSlot[index].slotCombine = tmpListSlot[index].slot
-                        tmpListSlot[index+1].status = 0
+                        tmpListSlot[index + 1].status = 0
                         break
                     }
                 }
@@ -459,10 +494,12 @@ class SetupSlotViewModel @Inject constructor(
                     content = "merge slot ${slot.slot}",
                 )
                 baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
-                _state.update { it.copy (
-                    listSlot = tmpListSlot,
-                    isLoading = false,
-                ) }
+                _state.update {
+                    it.copy(
+                        listSlot = tmpListSlot,
+                        isLoading = false,
+                    )
+                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -482,20 +519,20 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                for(item in _state.value.listSlot) {
-                    if(item.slot == _state.value.slot!!.slot) {
+                for (item in _state.value.listSlot) {
+                    if (item.slot == _state.value.slot!!.slot) {
                         item.inventory = 10
                         item.capacity = 10
                         item.productCode = product.productCode
                         item.productName = product.productName
                         item.price = product.price
                         var slot: Slot? = null
-                        for(itemAdd in _state.value.listSlotAddMore) {
-                            if(itemAdd.slot == _state.value.slot!!.slot) {
+                        for (itemAdd in _state.value.listSlotAddMore) {
+                            if (itemAdd.slot == _state.value.slot!!.slot) {
                                 slot = itemAdd
                             }
                         }
-                        if(slot!=null) {
+                        if (slot != null) {
                             _state.value.listSlotAddMore.remove(slot)
                         }
                         val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -522,10 +559,12 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "add slot fail in SetupSlotViewModel/addSlotToLocalListSlot(): ${e.message}",
                 )
             } finally {
-                _state.update { it.copy(
-                    isChooseImage = false,
-                    isLoading = false,
-                ) }
+                _state.update {
+                    it.copy(
+                        isChooseImage = false,
+                        isLoading = false,
+                    )
+                }
             }
         }
     }
@@ -535,9 +574,9 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                for(itemAdd in _state.value.listSlotAddMore) {
-                    for(item in _state.value.listSlot) {
-                        if(item.slot == itemAdd.slot) {
+                for (itemAdd in _state.value.listSlotAddMore) {
+                    for (item in _state.value.listSlot) {
+                        if (item.slot == itemAdd.slot) {
                             item.inventory = 10
                             item.capacity = 10
                             item.productCode = product.productCode
@@ -564,10 +603,12 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "add more slot fail in SetupSlotViewModel/addMoreProductToLocalListSlot(): ${e.message}",
                 )
             } finally {
-                _state.update { it.copy(
-                    isChooseImage = false,
-                    isLoading = false,
-                ) }
+                _state.update {
+                    it.copy(
+                        isChooseImage = false,
+                        isLoading = false,
+                    )
+                }
             }
         }
     }
@@ -576,13 +617,19 @@ class SetupSlotViewModel @Inject constructor(
         logger.debug("loadLayoutFromServer")
         viewModelScope.launch {
             try {
-                if(baseRepository.isHaveNetwork(context)) {
+                if (baseRepository.isHaveNetwork(context)) {
                     _state.update {
                         it.copy(
                             isLoading = true,
                             isConfirm = false,
                         )
                     }
+
+                    if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
+                        portConnectionDatasource.startReadingVendingMachine()
+                    }
+                    portConnectionDatasource.startReadingVendingMachine()
+
                     val listSlot = settingsRepository.getListLayoutFromServer()
                     for (item in listSlot) {
                         val product = settingsRepository.getProductByCodeFromLocal(item.productCode)
@@ -618,7 +665,7 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "get layout from fail in SetupSlotViewModel/loadLayoutFromServer(): ${e.message}",
                 )
                 _state.update {
-                    it.copy (
+                    it.copy(
                         nameFunction = "",
                         isLoading = false,
                     )
@@ -662,8 +709,8 @@ class SetupSlotViewModel @Inject constructor(
 
     fun showDialogConfirm(mess: String, nameFunction: String) {
         viewModelScope.launch {
-            if(nameFunction == "loadLayoutFromServer") {
-                if(baseRepository.isHaveNetwork(context)) {
+            if (nameFunction == "loadLayoutFromServer") {
+                if (baseRepository.isHaveNetwork(context)) {
                     _state.update {
                         it.copy(
                             titleDialogConfirm = mess,
@@ -709,6 +756,62 @@ class SetupSlotViewModel @Inject constructor(
                 it.copy(
                     isChooseImage = false,
                     slot = null,
+                )
+            }
+        }
+    }
+
+    fun closePort() {
+        vendingMachineJob?.cancel()
+        vendingMachineJob = null
+        portConnectionDatasource.closeVendingMachinePort()
+    }
+
+//    fun startCollectingData() {
+//        vendingMachineJob = viewModelScope.launch {
+//            portConnectionDatasource.dataFromVendingMachine.collect { data ->
+//                logger.debug("data: ${baseRepository.byteArrayToHexString(data)}")
+//
+//            }
+//        }
+//    }
+
+    fun processingDataFromVendingMachine() {
+//        val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
+//        if (dataHexString.contains("00,5D,00,00,5D")) {
+//            result.add(true)
+//        } else if (dataHexString.contains("00,5C,40,00,9C")) {
+//            result.add(false)
+//        }
+//        logger.debug(dataHexString)
+
+    }
+
+
+
+    private suspend fun updateSlotEnable(list: ArrayList<Slot>) {
+        viewModelScope.launch {
+            try {
+                var resultList = list
+                repeat(list.size) { index ->
+                    
+                    val resultEnquirySlot = portConnectionDatasource.enquirySlot(
+                        slot =
+                        list[index].slot,
+                    )
+                    if(resultEnquirySlot.typeRXCommunicateAvf == TypeRXCommunicateAvf.SUCCESS){
+                        resultList[index].isEnable = true
+                    }else if(resultEnquirySlot.typeRXCommunicateAvf == TypeRXCommunicateAvf.SLOT_NOT_FOUND){
+                        resultList[index].isEnable = false
+                        _state.value.initSetup?.let { baseRepository.addNewErrorLogToLocal(machineCode = it.vendCode,errorContent = "Slot ${resultList[index].slot} not working") }
+                    }
+                }
+                
+                _state.update { it -> it.copy(listSlot = resultList.filter { it.isEnable } as ArrayList<Slot>) }
+            } catch (e:Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "${e.message}"
                 )
             }
         }

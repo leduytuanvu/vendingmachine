@@ -2,6 +2,7 @@ package com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -32,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,7 +56,10 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewModel.SetupSlotViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 @Composable
@@ -67,7 +72,12 @@ internal fun SetupSlotScreen(
         viewModel.loadInitSetupListSlotListProduct()
     }
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
-
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            viewModel.closePort()
+        }
+    }
     // Launch a coroutine that checks for inactivity
     LaunchedEffect(lastInteractionTime) {
         while (true) {
@@ -268,6 +278,7 @@ fun SetupSlotContent(
                     }.nestedScroll(nestedScrollConnection),
                     columns = GridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
+
                 ) {
                     items(state.listSlot.size) { index ->
                         val slot = state.listSlot[index]
@@ -284,7 +295,7 @@ fun SetupSlotContent(
                                 }
                                     .height(546.dp)
                                     .padding(bottom = 10.dp)
-                                    .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
+                                    .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp))
                             ) {
                                 Column(modifier = Modifier.padding(12.dp).pointerInput(Unit) {
                                     detectTapGestures(
@@ -504,7 +515,8 @@ fun SetupSlotContent(
                                     }
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             Box(
                                 modifier = Modifier
                                     .height(546.dp)
@@ -519,6 +531,7 @@ fun SetupSlotContent(
             }
         )
     }
+
 }
 
 @Composable

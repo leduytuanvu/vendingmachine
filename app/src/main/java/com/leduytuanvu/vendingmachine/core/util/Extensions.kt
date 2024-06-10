@@ -102,7 +102,8 @@ fun SlotResponse?.toSlot(): Slot {
         springType = this?.springType ?: "",
         status = this?.status ?: 0,
         slotCombine = this?.slotCombine ?: 0,
-        isLock = false
+        isLock = false,
+        isEnable = true
     )
 }
 

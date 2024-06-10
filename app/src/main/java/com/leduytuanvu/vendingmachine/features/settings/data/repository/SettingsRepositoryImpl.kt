@@ -59,7 +59,8 @@ class SettingsRepositoryImpl @Inject constructor(
                             springType = "lo xo don",
                             status = 1,
                             slotCombine = 0,
-                            isLock = false
+                            isLock = false,
+                            isEnable = true
                         )
                     )
                 }

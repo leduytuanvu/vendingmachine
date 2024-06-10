@@ -73,9 +73,11 @@ import javax.inject.Inject
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateDeliveryStatus
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdatePromotion
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
 import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
+import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateTrackingAds
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 
@@ -1260,6 +1262,10 @@ class HomeViewModel @Inject constructor (
                 )!!
                 // Get list path ads
                 var listAds = homeRepository.getListVideoAdsFromLocal()
+                if(!baseRepository.isFileExists(pathFileUpdateTrackingAds)){
+                    baseRepository.createFolder(pathFileUpdateTrackingAds)
+//                    baseRepository.writeDataToLocal(pathFileUpdateTrackingAds,)
+                }
                 if (listAds.isEmpty()) {
                     homeRepository.writeVideoAdsFromAssetToLocal(
                         context,

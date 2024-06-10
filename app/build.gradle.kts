@@ -37,7 +37,7 @@ android {
         create("release") {
             keyAlias = "key0"
             keyPassword = "1234567890"
-            storeFile = file("C:\\Users\\leduytuanvu\\Develop\\Kotlin\\vendingmachine\\keystore\\keystore.jks")
+//            storeFile = file("C:\\Users\\leduytuanvu\\Develop\\Kotlin\\vendingmachine\\keystore\\keystore.jks")
             storePassword = "1234567890"
         }
     }
@@ -159,4 +159,6 @@ dependencies {
     implementation("com.google.zxing:core:3.4.1")
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
+
+
 }
