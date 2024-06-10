@@ -768,7 +768,30 @@ fun SetupSystemMainContentComposable(
             onClick()
             viewModel.getTemp()
         }
-
+        CustomButtonComposable(
+            title = "ON LIGHT",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.onLight()
+        }
+        CustomButtonComposable(
+            title = "OFF LIGHT",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.offLight()
+        }
 //        CustomButtonComposable(
 //            title = "RESET FACTORY",
 //            cornerRadius = 4.dp,

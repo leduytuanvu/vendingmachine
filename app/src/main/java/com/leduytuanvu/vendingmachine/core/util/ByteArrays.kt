@@ -16,7 +16,19 @@ class ByteArrays {
     val vmInchingMode5 = byteArrayOf(0x00, 0xFF.toByte(), 0xE6.toByte(), 0x19.toByte(), 0x05.toByte(), 0xFA.toByte())
     val vmTurnOnGlassHeatingMode = byteArrayOf(0x00, 0xFF.toByte(), 0xD4.toByte(), 0x2B.toByte(), 0x01.toByte(), 0xFE.toByte())
     val vmTurnOffGlassHeatingMode = byteArrayOf(0x00, 0xFF.toByte(), 0xD4.toByte(), 0x2B.toByte(), 0x00, 0xFF.toByte())
-
+    fun vmTurnOffGlassHeatingMode(value: Int): ByteArray {
+        val byteArraySlot: Byte = (value + 120).toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                0x00,
+                0xFF.toByte(),
+                byteArraySlot,
+                (0x86 - (value - 1)).toByte(),
+                0x55,
+                0xAA.toByte(),
+            )
+        return byteArray
+    }
     val vmDrop1 = byteArrayOf(0x00, 0xFF.toByte(), 0x01, 0xFE.toByte(), 0xAA.toByte(), 0x55)
     val vmDrop11 = byteArrayOf(0x01, 0xFE.toByte(), 0x02, 0xFD.toByte(), 0x55, 0xAA.toByte())
 

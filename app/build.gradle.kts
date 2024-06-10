@@ -39,7 +39,7 @@ android {
         create("release") {
             keyAlias = "key0"
             keyPassword = "1234567890"
-            storeFile = file("C:\\Users\\leduytuanvu\\Develop\\Kotlin\\vendingmachine\\keystore\\keystore.jks")
+//            storeFile = file("C:\\Users\\leduytuanvu\\Develop\\Kotlin\\vendingmachine\\keystore\\keystore.jks")
             storePassword = "1234567890"
         }
     }
@@ -163,4 +163,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+
 }

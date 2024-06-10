@@ -15,32 +15,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 //import androidx.room.Room
 //import com.leduytuanvu.vendingmachine.core.room.VendingMachineDatabase
@@ -52,8 +40,6 @@ import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -141,12 +127,18 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
         return when (taskName) {
             "TurnOnLightTask" -> {
                 Logger.debug("task scheduled turn on light")
-                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmTurnOnLight)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArrays.vmTurnOnLight,
+
+                )
                 Result.success()
             }
             "TurnOffLightTask" -> {
                 Logger.debug("task scheduled turn off light")
-                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmTurnOffLight)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    byteArrays.vmTurnOffLight,
+
+                )
                 Result.success()
             }
             "ResetApp" -> {

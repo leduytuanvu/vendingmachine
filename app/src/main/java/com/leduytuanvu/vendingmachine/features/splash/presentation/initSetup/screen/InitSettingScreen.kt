@@ -68,7 +68,9 @@ fun InitSetupContent(
     )
     Scaffold(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
             content = {
                 TitleTextComposable(title = "INIT SETUP FOR VENDING MACHINE")
                 TitleAndEditTextComposable(title = "Enter vending machine code") {

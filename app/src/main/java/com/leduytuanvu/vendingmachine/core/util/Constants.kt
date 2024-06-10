@@ -40,6 +40,8 @@ const val pathFileSyncOrder = "/sdcard/VendingMachineData/Log/SyncOrder.json"
 const val pathFileUpdatePromotion = "/sdcard/VendingMachineData/Log/UpdatePromotion.json"
 @SuppressLint("SdCardPath")
 const val pathFileUpdateDeliveryStatus = "/sdcard/VendingMachineData/Log/UpdateDeliveryStatus.json"
+@SuppressLint("SdCardPath")
+const val pathFileUpdateTrackingAds = "/sdcard/VendingMachineData/Log/UpdateTrackingAds.json"
 
 val itemsPort = listOf(
     AnnotatedString("ttyS1"),

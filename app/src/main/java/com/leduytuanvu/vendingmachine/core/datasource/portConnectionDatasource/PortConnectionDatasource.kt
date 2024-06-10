@@ -1,14 +1,68 @@
 package com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource
 
 import android.annotation.SuppressLint
+import android.os.CountDownTimer
+import android.util.Log
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.IOException
+data class DataRxCommunicateTTS4(
+    var typeRXCommunicateAvf: TypeRXCommunicateAvf = TypeRXCommunicateAvf.UNKNOWN,
+    var data: String = ""
+)
+enum class TypeTXCommunicateAvf {
+    PRODUCT_DISPENSE,
+    SENSOR_DETECT_DROP_PRODUCT,
+    SET_ONE_SLOT_AS_SINGLE_SLOT,
+    SET_ONE_SLOT_AS_DOUBLE_SLOT,
+    SET_ALL_SLOT_AS_SINGLE_SLOT,
+    ENQUIRY_SLOT,
+    TEMPERATURE_CONTROL,
+    SET_MODE_REFRIGERATING,
+    SET_MODE_HEATING,
+    TEMPERATURE_READ,
+    TIME_OUT_DROP_SENSOR,
+    TEST_TIME_OUT,
+    SET_COMPRESSOR_DEFROST_TIME,
+    SET_COMPRESSOR_WORKING_TIME,
+    SET_DOWN_TIME,
+    INITIAL_GLASS_HEAT,
+    DISABLE_GLASS_HEAT,
+    LIGHT_ON,
+    LIGHT_OFF,
+    READ_DOOR,
+    SET_MORE_DROP,
+    UNKNOWN,
+}
+enum class TypeRXCommunicateAvf {
+    SUCCESS,
+    FAIL,
+    DROP_PRODUCT_SUCCESS,
+    ROTATE_FAIL,
+    ROTATE_FAIL_DROP_SENSOR_FAIL,
+    ROTATE_SUCCESS_NO_PRODUCT_VIBRATE,
+    ROTATE_SUCCESS_PRODUCT_VIBRATE,
+    PMOS_FAIL,
+
+    DROP_SENSOR_NOT_FOUND,
+    DROP_SENSOR_ERROR,
+    SLOT_NOT_FOUND,
+    TEMPERATURE_READ,
+    TEMPERATURE_READ_T1,
+    TEMPERATURE_READ_T2,
+    DOOR_OPEN,
+    TIME_OUT,
+
+    UNKNOWN,
+}
 
 class PortConnectionDatasource {
     // CoroutineScope (Dispatchers.IO + SupervisorJob())
@@ -32,17 +86,28 @@ class PortConnectionDatasource {
     private var fdPortVendingMachine: Int = -1
     // Status of cash box
     private var fdPortCashBox: Int = -1
-
+    private var typeTXCommunicateAvf = TypeTXCommunicateAvf.UNKNOWN
+    private var typeRXCommunicateAvf = TypeRXCommunicateAvf.UNKNOWN
+    private var timerCommunicateTTYS4: CountDownTimer? = null
+    private val listeners = mutableListOf<TypeRXCommunicateAvfListener>()
+    private var callbackDeferredTTS4: CompletableDeferred<DataRxCommunicateTTS4>? = null
+    private var portVendingString =""
     // Open port vending machine
     fun openPortVendingMachine(port: String) : Int {
         fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+
         Logger.debug("open port vending machine: $fdPortVendingMachine")
+
         return fdPortVendingMachine
     }
+    fun getListSerialPort(): Array<String> {
 
+        return portConnectionHelperDataSource.getAllSerialPorts();
+    }
     // Open port cash box
     fun openPortCashBox(port: String) : Int {
         fdPortCashBox = portConnectionHelperDataSource.openPortCashBox("/dev/", port, 9600)
+        Logger.info("====== $fdPortCashBox")
         return fdPortCashBox
     }
 
@@ -90,6 +155,24 @@ class PortConnectionDatasource {
                         Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
+                            val receivedText = byteArrayToHexString(data)
+                            when (receivedText) {
+                                "00,5D,00,00,5D" ->
+                                    typeRXCommunicateAvf = TypeRXCommunicateAvf.SUCCESS
+                                "00,5C,00,00,5C" -> {
+                                    if(typeTXCommunicateAvf == TypeTXCommunicateAvf.ENQUIRY_SLOT){
+                                        typeRXCommunicateAvf = TypeRXCommunicateAvf.SLOT_NOT_FOUND
+                                    }
+                                }
+                            }
+                            cancelTimerCommunicateTTYS4()
+                            callbackDeferredTTS4?.complete(
+                                DataRxCommunicateTTS4(
+                                    typeRXCommunicateAvf,
+                                    receivedText
+                                )
+                            )
+                            callbackDeferredTTS4 = null
                         }
                     }
                 } catch (e: IOException) {
@@ -121,9 +204,79 @@ class PortConnectionDatasource {
     }
 
     // Send command vending machine
-    fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
-        Logger.info("data vending machine send: ${byteArrayToHexString(byteArray)}")
+    fun sendCommandVendingMachine(
+        byteArray: ByteArray,
+
+    ) : Int {
+        Logger.info("data vending machine send: $portVendingString $fdPortVendingMachine ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
+    }
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun startTimerCommunicateTTYS4() {
+        timerCommunicateTTYS4 = object : CountDownTimer(20000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+
+            }
+
+            override fun onFinish() {
+                GlobalScope.launch(Dispatchers.Main) {
+
+
+                    notifyTypeRXCommunicateAvfChanged(TypeRXCommunicateAvf.TIME_OUT)
+                    Log.d("RX Avf ttyS4", "TypeRXCommunicateAvf.TIME_OUT")
+                    callbackDeferredTTS4?.complete(
+                        DataRxCommunicateTTS4(
+                            TypeRXCommunicateAvf.TIME_OUT,
+                            ""
+                        )
+                    )
+                }
+                timerCommunicateTTYS4 = null
+                // Perform actions when the timer completes
+            }
+        }.start()
+    }
+    private fun notifyTypeRXCommunicateAvfChanged(typeRXCommunicateAvf: TypeRXCommunicateAvf) {
+        listeners.forEach { listener ->
+            listener.onTypeRXCommunicateAvfChanged(typeRXCommunicateAvf)
+        }
+    }
+
+    private fun notifyTypeTXCommunicateAvfChanged(typeTXCommunicateAvf: TypeTXCommunicateAvf) {
+        listeners.forEach { listener ->
+            listener.onTypeTXCommunicateAvfChanged(typeTXCommunicateAvf)
+
+        }
+    }
+    @OptIn(DelicateCoroutinesApi::class)
+    fun sendCommandVendingMachineAsync(
+        byteArray: ByteArray, typeTXCommunicateAvf: TypeTXCommunicateAvf,
+        callbackDeferredTTS4: CompletableDeferred<DataRxCommunicateTTS4>
+    ) {
+//        Log.d("logcatportsettings", "send data vending machine: $byteArray")
+
+        if (fdPortVendingMachine != -1 && timerCommunicateTTYS4 == null) {
+            typeRXCommunicateAvf = TypeRXCommunicateAvf.UNKNOWN
+            this.typeTXCommunicateAvf = typeTXCommunicateAvf
+            Log.d(
+                "Communicate TX Avf machine",
+                "${this.typeTXCommunicateAvf}"
+            )
+            this.callbackDeferredTTS4 = callbackDeferredTTS4
+            startTimerCommunicateTTYS4()
+            sendCommandVendingMachine(byteArray)
+
+            GlobalScope.launch(Dispatchers.Main) {
+                notifyTypeTXCommunicateAvfChanged(typeTXCommunicateAvf)
+            }
+
+        } else if (timerCommunicateTTYS4 != null) {
+
+            Log.d("logcatportsettings", "$typeTXCommunicateAvf")
+        } else {
+
+            Log.d("logcatportsettings", "/dev/ttS4 not open")
+        }
     }
     // Send command cash box
     fun sendCommandCashBox(byteArray: ByteArray) : Int {
@@ -135,4 +288,33 @@ class PortConnectionDatasource {
     private fun byteArrayToHexString(byteArray: ByteArray): String {
         return byteArray.joinToString(",") { "%02X".format(it) }
     }
+
+    public suspend fun enquirySlot(
+        numberBoard: Int = 0,
+        slot: Int,
+    ): DataRxCommunicateTTS4 {
+        val callback = CompletableDeferred<DataRxCommunicateTTS4>()
+        val byteArraySlot: Byte = (slot + 120).toByte()
+        val byteArrayNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteArrayNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                byteArraySlot,
+                (0x86 - (slot - 1)).toByte(),
+                0x55,
+                0xAA.toByte(),
+            )
+
+        sendCommandVendingMachineAsync(byteArray, TypeTXCommunicateAvf.ENQUIRY_SLOT, callback)
+        return callbackDeferredTTS4?.await() ?: DataRxCommunicateTTS4(TypeRXCommunicateAvf.UNKNOWN)
+    }
+    private fun cancelTimerCommunicateTTYS4() {
+        timerCommunicateTTYS4?.cancel()
+        timerCommunicateTTYS4 = null
+    }
+}
+interface TypeRXCommunicateAvfListener {
+    fun onTypeRXCommunicateAvfChanged(typeRXCommunicateAvf: TypeRXCommunicateAvf)
+    fun onTypeTXCommunicateAvfChanged(typeTXCommunicateAvf: TypeTXCommunicateAvf)
 }

@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.home.presentation.composables
 
+import android.app.usage.StorageStats
 import android.content.Context
 import android.widget.VideoView
 import androidx.compose.foundation.border
@@ -97,6 +98,7 @@ fun AdsHomeComposable(
     context: Context,
     listAds: ArrayList<String>,
     onClickHideAds: () -> Unit,
+
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
 
@@ -113,10 +115,12 @@ fun AdsHomeComposable(
                         currentVideoIndex = (currentVideoIndex + 1) % listAds.size
                         setVideoPath(listAds[currentVideoIndex])
                         start()
+
                     }
                     if (listAds.isNotEmpty()) {
                         setVideoPath(listAds[currentVideoIndex])
                         start()
+
                     }
                 }
             },

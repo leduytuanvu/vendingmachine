@@ -15,6 +15,8 @@ import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.ScheduledTaskWorker
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
@@ -34,11 +36,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Arrays
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -49,6 +53,8 @@ class InitSetupViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val settingsRepository: SettingsRepository,
     private val logger: Logger,
+    private val byteArrays: ByteArrays,
+    private val portConnectionDatasource: PortConnectionDatasource,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _state = MutableStateFlow(InitSetupViewState())
@@ -88,6 +94,7 @@ class InitSetupViewModel @Inject constructor(
         logger.info("writeInitSetupToLocal")
         viewModelScope.launch {
             try {
+
                 if (baseRepository.isHaveNetwork(context)) {
                     _state.update { it.copy(isLoading = true) }
                     if (inputVendingMachineCode.trim().isEmpty()) {
@@ -155,6 +162,7 @@ class InitSetupViewModel @Inject constructor(
                             baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                             val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
                             logger.debug("5")
+
                             if(responseGetListAccount.code == 200) {
                                 logger.debug("6")
                                 val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
@@ -226,7 +234,8 @@ class InitSetupViewModel @Inject constructor(
                                                     springType = "lo xo don",
                                                     status = 1,
                                                     slotCombine = 0,
-                                                    isLock = false
+                                                    isLock = false,
+                                                    isEnable = true
                                                 )
                                             )
                                         }
@@ -333,4 +342,18 @@ class InitSetupViewModel @Inject constructor(
             dailyWorkRequest
         )
     }
+    private var check = false
+    fun getListSerialPort()  {
+
+        logger.debug("=== list ${portConnectionDatasource.getListSerialPort().contentToString()}")
+    }
+    fun checkCommand(){
+        if (check){
+            portConnectionDatasource.sendCommandVendingMachine(byteArray = byteArrays.vmTurnOffLight)
+        }else{
+            portConnectionDatasource.sendCommandVendingMachine(byteArray = byteArrays.vmTurnOnLight)
+        }
+        check = !check
+    }
+
 }

@@ -11,7 +11,8 @@ data class Slot(
     var springType: String,
     var status: Int,
     var slotCombine: Int,
-    var isLock: Boolean
+    var isLock: Boolean,
+    var isEnable: Boolean
 ) {
     constructor(
         productCode: String,
@@ -29,6 +30,7 @@ data class Slot(
         springType = "lo xo don",
         status = 1,
         slotCombine = 0,
-        isLock = false
+        isLock = false,
+        isEnable = true
     )
 }

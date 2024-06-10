@@ -1,6 +1,5 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.setupPayment.viewModel
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.core.graphics.drawable.toBitmap
@@ -17,6 +16,7 @@ import com.leduytuanvu.vendingmachine.ScheduledTaskWorker
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
@@ -461,7 +461,10 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("Turn on light")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    ByteArrays().vmTurnOnLight,
+
+                )
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
@@ -484,7 +487,10 @@ class SetupPaymentViewModel @Inject constructor(
             0xAA.toByte(),
             0x55,
         )
-        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+        portConnectionDatasource.sendCommandVendingMachine(
+            byteArray,
+
+        )
     }
 
     fun setDrop(type: Int) {
@@ -510,7 +516,10 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("Turn off light")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOffLight)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    ByteArrays().vmTurnOffLight,
+
+                )
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
@@ -522,7 +531,10 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("Turn off light")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmDrop1)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    ByteArrays().vmDrop1,
+
+                )
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
@@ -535,7 +547,10 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("Turn off light")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmDrop11)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    ByteArrays().vmDrop11,
+
+                )
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
@@ -562,7 +577,10 @@ class SetupPaymentViewModel @Inject constructor(
         logger.debug("check")
         viewModelScope.launch {
             try {
-                portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmCheckDropSensor)
+                portConnectionDatasource.sendCommandVendingMachine(
+                    ByteArrays().vmCheckDropSensor,
+
+                )
             } catch (e: Exception) {
                 sendEvent(Event.Toast("${e.message}"))
             } finally {
