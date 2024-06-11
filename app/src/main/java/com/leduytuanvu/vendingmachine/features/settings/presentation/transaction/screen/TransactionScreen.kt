@@ -46,6 +46,9 @@ internal fun TransactionScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.loadInittransaction()
+    }
     LaunchedEffect(key1 = viewModel) {
         viewModel.getAllLogServerLocal()
     }
