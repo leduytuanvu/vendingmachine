@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.util.Event
@@ -15,6 +16,7 @@ import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
+import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTime
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
@@ -53,6 +55,31 @@ class SettingsViewModel @Inject constructor (
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
+                _state.update { it.copy(isLoading = false, initSetup = initSetup) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun loadInittransaction() {
+        logger.debug("loadInittransaction")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                val listSyncOrder: ArrayList<LogSyncOrder> = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                    path = pathFileSyncOrder
+                )!!
+                val countTransactionByCash = 0
+                val amountTransactionByCash = 0
+//                for(item in listSyncOrder) {
+//                    item.
+//                }
                 _state.update { it.copy(isLoading = false, initSetup = initSetup) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }

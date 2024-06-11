@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
@@ -53,8 +54,6 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-
-
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
@@ -64,11 +63,9 @@ class SetupSlotViewModel @Inject constructor(
                     portConnectionDatasource.startReadingVendingMachine()
                 }
                 portConnectionDatasource.startReadingVendingMachine()
-
                 val listSlot = settingsRepository.getListSlotFromLocal()
                 updateSlotEnable(listSlot)
                 val listProduct = settingsRepository.getListProductFromLocal()
-
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -853,7 +850,6 @@ class SetupSlotViewModel @Inject constructor(
             try {
                 var resultList = list
                 repeat(list.size) { index ->
-                    
                     val resultEnquirySlot = portConnectionDatasource.enquirySlot(
                         slot =
                         list[index].slot,
@@ -865,7 +861,6 @@ class SetupSlotViewModel @Inject constructor(
                         _state.value.initSetup?.let { baseRepository.addNewErrorLogToLocal(machineCode = it.vendCode,errorContent = "Slot ${resultList[index].slot} not working") }
                     }
                 }
-                
                 _state.update { it -> it.copy(listSlot = resultList.filter { it.isEnable } as ArrayList<Slot>) }
             } catch (e:Exception) {
                 baseRepository.addNewErrorLogToLocal(

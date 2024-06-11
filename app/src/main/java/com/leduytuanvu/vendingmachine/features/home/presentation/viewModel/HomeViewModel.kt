@@ -511,10 +511,9 @@ class HomeViewModel @Inject constructor (
                 var cashDropped = 0
                 outerLoop@ for (item in listSlotInCart) {
                     quantityNeedDrop += item.inventory
-                    logger.debug("Slot drop: $item")
                     for (index in 1..item.inventory) {
+                        var statusDropProductTmp = false
                         val slot = homeRepository.getSlotDrop(item.productCode)
-                        logger.debug("Slot found: $slot")
                         if (slot != null) {
                             _statusDropProduct.value = DropSensorResult.ANOTHER
                             if(_state.value.initSetup!!.dropSensor=="OFF") {
@@ -522,24 +521,14 @@ class HomeViewModel @Inject constructor (
                             } else {
                                 productDispense(0, slot.slot)
                             }
-
-                            var result = withTimeoutOrNull(10000L) {
+                            var result = withTimeoutOrNull(16000L) {
                                 statusDropProduct.first { it != DropSensorResult.ANOTHER }
                             }
-
                             if (result == null) {
                                 logger.debug("Timeout waiting for dispense result")
-                                val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                if (indexSlotTmp!=-1) {
-                                    listSlotDropFail[indexSlotTmp].inventory++
-                                } else {
-                                    slot.inventory = 1
-                                    listSlotDropFail.add(slot)
-                                }
                                 homeRepository.lockSlot(slot.slot)
                                 continue
                             }
-
                             if(_state.value.initSetup!!.dropSensor=="OFF"
                                 && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
                                         || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
@@ -548,9 +537,9 @@ class HomeViewModel @Inject constructor (
                                 ) {
                                 result = DropSensorResult.SUCCESS
                             }
-
                             when (result) {
                                 DropSensorResult.SUCCESS -> {
+                                    statusDropProductTmp = true
                                     listSlotDropSuccess.add(slot)
                                     baseRepository.addNewSpringLogToLocal(
                                         machineCode = _state.value.initSetup!!.vendCode,
@@ -591,19 +580,8 @@ class HomeViewModel @Inject constructor (
                                             numberOfRevolutions = 1,
                                         )
                                     }
-
                                     homeRepository.lockSlot(slot.slot)
                                     val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
-                                    if(listAnotherSlot.isEmpty()) {
-                                        logger.debug("+++++ELSE: $result")
-                                        val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                        if (indexSlotTmp!=-1) {
-                                            listSlotDropFail[indexSlotTmp].inventory++
-                                        } else {
-                                            slot.inventory = 1
-                                            listSlotDropFail.add(slot)
-                                        }
-                                    }
                                     for (itemAnother in listAnotherSlot) {
                                         val slotAnother = homeRepository.getSlotDrop(item.productCode)
                                         logger.debug("slotAnother found: $slotAnother")
@@ -614,24 +592,14 @@ class HomeViewModel @Inject constructor (
                                             } else {
                                                 productDispense(0, slotAnother.slot)
                                             }
-
-                                            var anotherResult = withTimeoutOrNull(20000L) {
+                                            var anotherResult = withTimeoutOrNull(16000L) {
                                                 statusDropProduct.first { it != DropSensorResult.ANOTHER }
                                             }
-
                                             if (anotherResult == null) {
                                                 logger.debug("Timeout waiting for another dispense result")
-                                                val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
-                                                if (indexAnotherSlotTmp!=-1) {
-                                                    listSlotDropFail[indexAnotherSlotTmp].inventory++
-                                                } else {
-                                                    slot.inventory = 1
-                                                    listSlotDropFail.add(slotAnother)
-                                                }
                                                 homeRepository.lockSlot(slotAnother.slot)
                                                 continue
                                             }
-
                                             if(_state.value.initSetup!!.dropSensor=="OFF"
                                                 && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
                                                         || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
@@ -640,9 +608,9 @@ class HomeViewModel @Inject constructor (
                                             ) {
                                                 anotherResult = DropSensorResult.SUCCESS
                                             }
-
                                             when (anotherResult) {
                                                 DropSensorResult.SUCCESS -> {
+                                                    statusDropProductTmp = true
                                                     listSlotDropSuccess.add(slotAnother)
                                                     baseRepository.addNewSensorLogToLocal(
                                                         machineCode = _state.value.initSetup!!.vendCode,
@@ -685,26 +653,26 @@ class HomeViewModel @Inject constructor (
                                                             numberOfRevolutions = 1,
                                                         )
                                                     }
-                                                    logger.debug("+++++ELSE: $result")
-                                                    val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
-                                                    if (indexAnotherSlotTmp!=-1) {
-                                                        listSlotDropFail[indexAnotherSlotTmp].inventory++
-                                                    } else {
-                                                        slot.inventory = 1
-                                                        listSlotDropFail.add(slotAnother)
-                                                    }
                                                     homeRepository.lockSlot(slotAnother.slot)
                                                 }
                                             }
                                         } else {
                                             listSlotNotFound.add(item)
-                                            logger.debug("Not found ${item.productCode} in slot at local!")
                                         }
                                     }
-                                    logger.debug("FAIL: $result")
                                 }
                             }
-                        } else {
+                            if(!statusDropProductTmp) {
+                                val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                if (indexSlotTmp!=-1) {
+                                    listSlotDropFail[indexSlotTmp].inventory++
+                                } else {
+                                    slot.inventory = 1
+                                    listSlotDropFail.add(slot)
+                                }
+                            }
+                        }
+                        else {
                             listSlotNotFound.add(item)
                             logger.debug("Not found ${item.productCode} in slot at local!")
                         }
@@ -725,7 +693,6 @@ class HomeViewModel @Inject constructor (
                         }
                     }
                 }
-
                 if(quantityDropped!=0) {
                     // Update promotion
                     if(_state.value.promotion!=null) {
@@ -775,7 +742,6 @@ class HomeViewModel @Inject constructor (
                         )
                     }
                 }
-
                 if(_state.value.nameMethodPayment == "cash") {
                     if(listSlotDropFail.isNotEmpty()) {
                         for(item in listSlotDropFail) {
@@ -830,47 +796,46 @@ class HomeViewModel @Inject constructor (
                     if(listUpdateDeliveryStatus.isNullOrEmpty()) {
                         listUpdateDeliveryStatus = arrayListOf()
                     }
-                    for(item in listSlotDropFail) {
-                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            orderCode = _state.value.orderCode,
-                            deliveryStatus = "failed",
-                            productCode = item.productCode,
-                            isSent = false,
-                        )
-                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                    if(listSlotDropFail.isNotEmpty()) {
+                        for(item in listSlotDropFail) {
+                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                orderCode = _state.value.orderCode,
+                                deliveryStatus = "failed",
+                                productCode = item.productCode,
+                                isSent = false,
+                            )
+                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                        }
                     }
-                    for(item in listSlotDropSuccess) {
-                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            orderCode = _state.value.orderCode,
-                            deliveryStatus = "success",
-                            productCode = item.productCode,
-                            isSent = false,
-                        )
-                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                    if(listSlotDropSuccess.isNotEmpty()) {
+                        for(item in listSlotDropSuccess) {
+                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                orderCode = _state.value.orderCode,
+                                deliveryStatus = "success",
+                                productCode = item.productCode,
+                                isSent = false,
+                            )
+                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                        }
                     }
                     baseRepository.writeDataToLocal(
                         listUpdateDeliveryStatus,
                         pathFileUpdateDeliveryStatus
                     )
                 }
-
                 if (quantityNotDropped != 0) {
                     if(listSlotNotFound.isNotEmpty()) {
                         logger.debug("Danh sách slot không tìm thấy")
-                    }
-                    if(listSlotDropFail.isNotEmpty()) {
-                        logger.debug("Danh sách slot rớt lỗi")
                     }
                     var titleWarning = ""
                     if (sensorHasAnObstruction) {
                         titleWarning = "Cảm biến rơi hiện đang bị che. "
                     }
                     var cashReturnOnline = 0
-
                     val initSetup = _state.value.initSetup
                     val promotion = _state.value.promotion
                     if(_state.value.nameMethodPayment=="cash") {
@@ -883,10 +848,9 @@ class HomeViewModel @Inject constructor (
                                     for(item in listSlotDropFail) {
                                         cashNotDroppedTmp += item.inventory * item.price
                                     }
-                                    logger.debug("cash not dropped 1: ${cashNotDroppedTmp}")
-                                    cashNotDroppedTmp /= promotion.rewardValue!!
-                                    logger.debug("cash not dropped 2: ${cashNotDroppedTmp}")
-                                    val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
+                                    val tmpCashPromotionNotDrop = cashNotDroppedTmp - (cashNotDroppedTmp/promotion.rewardValue!!)
+                                    logger.debug("cash not dropped 2: ${tmpCashPromotionNotDrop}")
+                                    val currentCashTmp = currentCash - _state.value.totalAmount + tmpCashPromotionNotDrop
                                     logger.debug("cash not dropped 3: ${currentCashTmp}")
                                     initSetup.currentCash = currentCashTmp
                                     logger.debug("cashNotDroppedTmp: ${cashNotDroppedTmp}, currentCashTmp: ${currentCashTmp}")
@@ -906,7 +870,6 @@ class HomeViewModel @Inject constructor (
                                 initSetup.currentCash = currentCash - _state.value.promotion!!.paymentAmount!! + totalAmountNotDropTmp
                                 logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
                             }
-
                         }
                         else {
                             var cashNotDroppedTmp = 0
@@ -924,7 +887,7 @@ class HomeViewModel @Inject constructor (
                                 for(item in listSlotDropFail) {
                                     cashReturnOnline += item.inventory * item.price
                                 }
-                                cashReturnOnline /= promotion.rewardValue!!
+                                cashReturnOnline -= (cashReturnOnline / promotion.rewardValue!!)
                             } else {
                                 var totalAmountTmp = 0
                                 for(item in listSlotDropFail) {
@@ -977,7 +940,6 @@ class HomeViewModel @Inject constructor (
                         }
                         baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     }
-
                     _state.update {
                         it.copy (
                             isShowWaitForDropProduct = false,
