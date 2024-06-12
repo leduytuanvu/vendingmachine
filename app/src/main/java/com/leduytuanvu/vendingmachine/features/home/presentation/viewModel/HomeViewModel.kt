@@ -92,6 +92,7 @@ import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSy
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DataSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.SyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
+import kotlinx.coroutines.CompletableDeferred
 
 enum class DropSensorResult(val data: String) {
     ANOTHER("ANOTHER"),
@@ -358,7 +359,7 @@ class HomeViewModel @Inject constructor (
     private suspend fun processDataFromVendingMachine(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            logger.debug("============================== data from vending machine: $dataHexString")
+//            logger.debug("============================== data from vending machine: $dataHexString")
             if(dataHexString.isNotEmpty()) {
                 if(_state.value.isVendingMachineBusy) {
                     val result = when (dataHexString) {
@@ -487,11 +488,26 @@ class HomeViewModel @Inject constructor (
 //        return BatteryStatus(batteryPct, isCharging)
 //    }
 
+    fun checkDropSensor(numberBoard: Int = 0) {
+        val byteArrayNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteArrayNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                0x64,
+                0x9B.toByte(),
+                0xAA.toByte(),
+                0x55,
+            )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
+
 
     fun dropProduct() {
         logger.info("dropProduct")
         viewModelScope.launch {
             try {
+                _state.update { it.copy(isVendingMachineBusy = true) }
                 if(countdownTimer!=null) {
                     countdownTimer!!.cancel()
                     countdownTimer = null
@@ -509,183 +525,136 @@ class HomeViewModel @Inject constructor (
                 var quantityNeedDrop = 0
                 var quantityDropped = 0
                 var cashDropped = 0
-                outerLoop@ for (item in listSlotInCart) {
-                    quantityNeedDrop += item.inventory
-                    logger.debug("Slot drop: $item")
-                    for (index in 1..item.inventory) {
-                        val slot = homeRepository.getSlotDrop(item.productCode)
-                        logger.debug("Slot found: $slot")
-                        if (slot != null) {
-                            _statusDropProduct.value = DropSensorResult.ANOTHER
-                            if(_state.value.initSetup!!.dropSensor=="OFF") {
-                                productDispenseNotSensor(0, slot.slot)
-                            } else {
-                                productDispense(0, slot.slot)
-                            }
-
-                            var result = withTimeoutOrNull(10000L) {
-                                statusDropProduct.first { it != DropSensorResult.ANOTHER }
-                            }
-
-                            if (result == null) {
-                                logger.debug("Timeout waiting for dispense result")
-                                val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                if (indexSlotTmp!=-1) {
-                                    listSlotDropFail[indexSlotTmp].inventory++
+                _statusDropProduct.value = DropSensorResult.ANOTHER
+                checkDropSensor(0)
+                var resultCheckDropSensor = withTimeoutOrNull(2000L) {
+                    statusDropProduct.first { it != DropSensorResult.ANOTHER }
+                }
+                if(_state.value.initSetup!!.dropSensor=="OFF") {
+                    resultCheckDropSensor = DropSensorResult.ANOTHER
+                }
+                if(resultCheckDropSensor == DropSensorResult.NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM) {
+                    _state.update {
+                        it.copy(
+                            isShowWaitForDropProduct = false,
+                            listSlotInCard = arrayListOf(),
+                            isWarning = true,
+                            titleDialogWarning = "Cảm biến rơi hiện có vấn đề. Xin vui lòng thử lại sau!",
+                        )
+                    }
+                } else {
+                    outerLoop@ for (item in listSlotInCart) {
+                        quantityNeedDrop += item.inventory
+                        logger.debug("Slot drop: $item")
+                        for (index in 1..item.inventory) {
+                            val slot = homeRepository.getSlotDrop(item.productCode)
+                            logger.debug("Slot found: $slot")
+                            if (slot != null) {
+                                _statusDropProduct.value = DropSensorResult.ANOTHER
+                                if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                    productDispenseNotSensor(0, slot.slot)
                                 } else {
-                                    slot.inventory = 1
-                                    listSlotDropFail.add(slot)
+                                    productDispense(0, slot.slot)
                                 }
-                                homeRepository.lockSlot(slot.slot)
-                                continue
-                            }
 
-                            if(_state.value.initSetup!!.dropSensor=="OFF"
-                                && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                        || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
-                                        || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
-                                        || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
-                                ) {
-                                result = DropSensorResult.SUCCESS
-                            }
+                                var result = withTimeoutOrNull(16000L) {
+                                    statusDropProduct.first { it != DropSensorResult.ANOTHER }
+                                }
 
-                            when (result) {
-                                DropSensorResult.SUCCESS -> {
-                                    listSlotDropSuccess.add(slot)
-                                    baseRepository.addNewSpringLogToLocal(
-                                        machineCode = _state.value.initSetup!!.vendCode,
-                                        slot = slot.slot,
-                                        numberOfRevolutions = 1,
-                                    )
-                                    baseRepository.addNewSensorLogToLocal(
-                                        machineCode = _state.value.initSetup!!.vendCode,
-                                        cabinetCode = "MT01",
-                                        productCode = slot.productCode,
-                                        status = "true",
-                                        slot = slot.slot.toString(),
-                                    )
-                                    homeRepository.minusInventory(slot.slot)
-                                    item.inventory--
-                                    cashDropped += item.price
-                                    quantityDropped++
+                                if (result == null) {
+                                    logger.debug("Timeout waiting for dispense result")
+                                    val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                    if (indexSlotTmp!=-1) {
+                                        listSlotDropFail[indexSlotTmp].inventory++
+                                    } else {
+                                        slot.inventory = 1
+                                        listSlotDropFail.add(slot)
+                                    }
+                                    homeRepository.lockSlot(slot.slot)
+                                    continue
                                 }
-                                DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                    logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
-                                    sensorHasAnObstruction = true
-                                    break@outerLoop
+
+                                if(_state.value.initSetup!!.dropSensor=="OFF"
+                                    && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                            || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                            || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                            || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                    ) {
+                                    result = DropSensorResult.SUCCESS
                                 }
-                                else -> {
-                                    baseRepository.addNewSensorLogToLocal(
-                                        machineCode = _state.value.initSetup!!.vendCode,
-                                        cabinetCode = "MT01",
-                                        productCode = slot.productCode,
-                                        status = "false",
-                                        slot = slot.slot.toString(),
-                                    )
-                                    if(result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                        || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
-                                        || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL) {
+
+                                when (result) {
+                                    DropSensorResult.SUCCESS -> {
+                                        listSlotDropSuccess.add(slot)
                                         baseRepository.addNewSpringLogToLocal(
                                             machineCode = _state.value.initSetup!!.vendCode,
                                             slot = slot.slot,
                                             numberOfRevolutions = 1,
                                         )
+                                        baseRepository.addNewSensorLogToLocal(
+                                            machineCode = _state.value.initSetup!!.vendCode,
+                                            cabinetCode = "MT01",
+                                            productCode = slot.productCode,
+                                            status = "true",
+                                            slot = slot.slot.toString(),
+                                        )
+                                        homeRepository.minusInventory(slot.slot)
+                                        item.inventory--
+                                        cashDropped += item.price
+                                        quantityDropped++
                                     }
-
-                                    homeRepository.lockSlot(slot.slot)
-                                    val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
-                                    if(listAnotherSlot.isEmpty()) {
-                                        logger.debug("+++++ELSE: $result")
-                                        val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                        if (indexSlotTmp!=-1) {
-                                            listSlotDropFail[indexSlotTmp].inventory++
-                                        } else {
-                                            slot.inventory = 1
-                                            listSlotDropFail.add(slot)
+                                    DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                        logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
+                                        sensorHasAnObstruction = true
+                                        break@outerLoop
+                                    }
+                                    else -> {
+                                        baseRepository.addNewSensorLogToLocal(
+                                            machineCode = _state.value.initSetup!!.vendCode,
+                                            cabinetCode = "MT01",
+                                            productCode = slot.productCode,
+                                            status = "false",
+                                            slot = slot.slot.toString(),
+                                        )
+                                        if(result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                            || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
+                                            || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL) {
+                                            baseRepository.addNewSpringLogToLocal(
+                                                machineCode = _state.value.initSetup!!.vendCode,
+                                                slot = slot.slot,
+                                                numberOfRevolutions = 1,
+                                            )
                                         }
-                                    }
-                                    for (itemAnother in listAnotherSlot) {
-                                        val slotAnother = homeRepository.getSlotDrop(item.productCode)
-                                        logger.debug("slotAnother found: $slotAnother")
-                                        if (slotAnother != null) {
-                                            _statusDropProduct.value = DropSensorResult.ANOTHER
-                                            if(_state.value.initSetup!!.dropSensor=="OFF") {
-                                                productDispenseNotSensor(0, slotAnother.slot)
+
+                                        homeRepository.lockSlot(slot.slot)
+                                        val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
+                                        if(listAnotherSlot.isEmpty()) {
+                                            logger.debug("+++++ELSE: $result")
+                                            val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                            if (indexSlotTmp!=-1) {
+                                                listSlotDropFail[indexSlotTmp].inventory++
                                             } else {
-                                                productDispense(0, slotAnother.slot)
+                                                slot.inventory = 1
+                                                listSlotDropFail.add(slot)
                                             }
-
-                                            var anotherResult = withTimeoutOrNull(20000L) {
-                                                statusDropProduct.first { it != DropSensorResult.ANOTHER }
-                                            }
-
-                                            if (anotherResult == null) {
-                                                logger.debug("Timeout waiting for another dispense result")
-                                                val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
-                                                if (indexAnotherSlotTmp!=-1) {
-                                                    listSlotDropFail[indexAnotherSlotTmp].inventory++
+                                        }
+                                        for (itemAnother in listAnotherSlot) {
+                                            val slotAnother = homeRepository.getSlotDrop(item.productCode)
+                                            logger.debug("slotAnother found: $slotAnother")
+                                            if (slotAnother != null) {
+                                                _statusDropProduct.value = DropSensorResult.ANOTHER
+                                                if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                                    productDispenseNotSensor(0, slotAnother.slot)
                                                 } else {
-                                                    slot.inventory = 1
-                                                    listSlotDropFail.add(slotAnother)
+                                                    productDispense(0, slotAnother.slot)
                                                 }
-                                                homeRepository.lockSlot(slotAnother.slot)
-                                                continue
-                                            }
 
-                                            if(_state.value.initSetup!!.dropSensor=="OFF"
-                                                && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                                        || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
-                                                        || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
-                                                        || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
-                                            ) {
-                                                anotherResult = DropSensorResult.SUCCESS
-                                            }
+                                                var anotherResult = withTimeoutOrNull(16000L) {
+                                                    statusDropProduct.first { it != DropSensorResult.ANOTHER }
+                                                }
 
-                                            when (anotherResult) {
-                                                DropSensorResult.SUCCESS -> {
-                                                    listSlotDropSuccess.add(slotAnother)
-                                                    baseRepository.addNewSensorLogToLocal(
-                                                        machineCode = _state.value.initSetup!!.vendCode,
-                                                        cabinetCode = "MT01",
-                                                        productCode = slotAnother.productCode,
-                                                        status = "true",
-                                                        slot = slotAnother.slot.toString(),
-                                                    )
-                                                    baseRepository.addNewSpringLogToLocal(
-                                                        machineCode = _state.value.initSetup!!.vendCode,
-                                                        slot = slotAnother.slot,
-                                                        numberOfRevolutions = 1,
-                                                    )
-                                                    logger.debug("SUCCESS: $anotherResult")
-                                                    homeRepository.minusInventory(slotAnother.slot)
-                                                    item.inventory--
-                                                    cashDropped += item.price
-                                                    quantityDropped++
-                                                    break
-                                                }
-                                                DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                                    logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
-                                                    sensorHasAnObstruction = true
-                                                    break@outerLoop
-                                                }
-                                                else -> {
-                                                    baseRepository.addNewSensorLogToLocal(
-                                                        machineCode = _state.value.initSetup!!.vendCode,
-                                                        cabinetCode = "MT01",
-                                                        productCode = slotAnother.productCode,
-                                                        status = "false",
-                                                        slot = slotAnother.slot.toString(),
-                                                    )
-                                                    if(anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                                        || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
-                                                        || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL) {
-                                                        baseRepository.addNewSpringLogToLocal(
-                                                            machineCode = _state.value.initSetup!!.vendCode,
-                                                            slot = slotAnother.slot,
-                                                            numberOfRevolutions = 1,
-                                                        )
-                                                    }
-                                                    logger.debug("+++++ELSE: $result")
+                                                if (anotherResult == null) {
+                                                    logger.debug("Timeout waiting for another dispense result")
                                                     val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
                                                     if (indexAnotherSlotTmp!=-1) {
                                                         listSlotDropFail[indexAnotherSlotTmp].inventory++
@@ -694,299 +663,365 @@ class HomeViewModel @Inject constructor (
                                                         listSlotDropFail.add(slotAnother)
                                                     }
                                                     homeRepository.lockSlot(slotAnother.slot)
+                                                    continue
                                                 }
+
+                                                if(_state.value.initSetup!!.dropSensor=="OFF"
+                                                    && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                                            || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                                            || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                                            || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                                ) {
+                                                    anotherResult = DropSensorResult.SUCCESS
+                                                }
+
+                                                when (anotherResult) {
+                                                    DropSensorResult.SUCCESS -> {
+                                                        listSlotDropSuccess.add(slotAnother)
+                                                        baseRepository.addNewSensorLogToLocal(
+                                                            machineCode = _state.value.initSetup!!.vendCode,
+                                                            cabinetCode = "MT01",
+                                                            productCode = slotAnother.productCode,
+                                                            status = "true",
+                                                            slot = slotAnother.slot.toString(),
+                                                        )
+                                                        baseRepository.addNewSpringLogToLocal(
+                                                            machineCode = _state.value.initSetup!!.vendCode,
+                                                            slot = slotAnother.slot,
+                                                            numberOfRevolutions = 1,
+                                                        )
+                                                        logger.debug("SUCCESS: $anotherResult")
+                                                        homeRepository.minusInventory(slotAnother.slot)
+                                                        item.inventory--
+                                                        cashDropped += item.price
+                                                        quantityDropped++
+                                                        break
+                                                    }
+                                                    DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                                        logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
+                                                        sensorHasAnObstruction = true
+                                                        break@outerLoop
+                                                    }
+                                                    else -> {
+                                                        baseRepository.addNewSensorLogToLocal(
+                                                            machineCode = _state.value.initSetup!!.vendCode,
+                                                            cabinetCode = "MT01",
+                                                            productCode = slotAnother.productCode,
+                                                            status = "false",
+                                                            slot = slotAnother.slot.toString(),
+                                                        )
+                                                        if(anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                                            || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
+                                                            || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL) {
+                                                            baseRepository.addNewSpringLogToLocal(
+                                                                machineCode = _state.value.initSetup!!.vendCode,
+                                                                slot = slotAnother.slot,
+                                                                numberOfRevolutions = 1,
+                                                            )
+                                                        }
+                                                        logger.debug("+++++ELSE: $result")
+                                                        val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
+                                                        if (indexAnotherSlotTmp!=-1) {
+                                                            listSlotDropFail[indexAnotherSlotTmp].inventory++
+                                                        } else {
+                                                            slot.inventory = 1
+                                                            listSlotDropFail.add(slotAnother)
+                                                        }
+                                                        homeRepository.lockSlot(slotAnother.slot)
+                                                    }
+                                                }
+                                            } else {
+                                                listSlotNotFound.add(item)
+                                                logger.debug("Not found ${item.productCode} in slot at local!")
                                             }
-                                        } else {
-                                            listSlotNotFound.add(item)
-                                            logger.debug("Not found ${item.productCode} in slot at local!")
                                         }
+                                        logger.debug("FAIL: $result")
                                     }
-                                    logger.debug("FAIL: $result")
                                 }
+                            } else {
+                                listSlotNotFound.add(item)
+                                logger.debug("Not found ${item.productCode} in slot at local!")
                             }
-                        } else {
-                            listSlotNotFound.add(item)
-                            logger.debug("Not found ${item.productCode} in slot at local!")
                         }
                     }
-                }
-                val quantityNotDropped = quantityNeedDrop - quantityDropped
-                val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<Slot>>() {}.type,
-                    path = pathFileSlot
-                )!!
-                for (item in listSlot) {
-                    if (item.inventory > 0 && item.productCode.isNotEmpty() && !item.isLock && item.productName.isNotEmpty()) {
-                        val index = listSlotShowInHome.indexOfFirst { it.productCode == item.productCode }
-                        if (index == -1) {
-                            listSlotShowInHome.add(item)
-                        } else {
-                            listSlotShowInHome[index].inventory += item.inventory
+                    val quantityNotDropped = quantityNeedDrop - quantityDropped
+                    val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<Slot>>() {}.type,
+                        path = pathFileSlot
+                    )!!
+                    for (item in listSlot) {
+                        if (item.inventory > 0 && item.productCode.isNotEmpty() && !item.isLock && item.productName.isNotEmpty()) {
+                            val index = listSlotShowInHome.indexOfFirst { it.productCode == item.productCode }
+                            if (index == -1) {
+                                listSlotShowInHome.add(item)
+                            } else {
+                                listSlotShowInHome[index].inventory += item.inventory
+                            }
                         }
                     }
-                }
 
-                if(quantityDropped!=0) {
-                    // Update promotion
-                    if(_state.value.promotion!=null) {
-                        val listCartExtra: ArrayList<CartExtra> = arrayListOf()
-                        for(item in listSlotInCart) {
-                            val cartExtra = CartExtra(
-                                productCode = item.productCode,
-                                productName = item.productName,
-                                price = item.price,
-                                quantity = item.inventory,
-                                discount = _state.value.promotion!!.totalDiscount ?: 0,
-                                amount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
+                    if(quantityDropped!=0) {
+                        // Update promotion
+                        if(_state.value.promotion!=null) {
+                            val listCartExtra: ArrayList<CartExtra> = arrayListOf()
+                            for(item in listSlotInCart) {
+                                val cartExtra = CartExtra(
+                                    productCode = item.productCode,
+                                    productName = item.productName,
+                                    price = item.price,
+                                    quantity = item.inventory,
+                                    discount = _state.value.promotion!!.totalDiscount ?: 0,
+                                    amount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
+                                )
+                                listCartExtra.add(cartExtra)
+                            }
+                            val extra = Extra(
+                                carts = listCartExtra,
+                                totalAmount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
+                                totalDiscount = _state.value.promotion!!.totalDiscount ?: 0,
+                                paymentAmount = _state.value.promotion!!.paymentAmount ?: _state.value.totalAmount,
+                                rewardValue = _state.value.promotion!!.rewardValue ?: -1,
+                                rewardMaxValue = _state.value.promotion!!.rewardMaxValue ?: "",
+                                machineCode = _state.value.initSetup!!.vendCode,
                             )
-                            listCartExtra.add(cartExtra)
-                        }
-                        val extra = Extra(
-                            carts = listCartExtra,
-                            totalAmount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
-                            totalDiscount = _state.value.promotion!!.totalDiscount ?: 0,
-                            paymentAmount = _state.value.promotion!!.paymentAmount ?: _state.value.totalAmount,
-                            rewardValue = _state.value.promotion!!.rewardValue ?: -1,
-                            rewardMaxValue = _state.value.promotion!!.rewardMaxValue ?: "",
-                            machineCode = _state.value.initSetup!!.vendCode,
-                        )
-                        var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
-                            path = pathFileUpdatePromotion
-                        )
-                        val logUpdatePromotion = LogUpdatePromotion(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            campaignId = if(_state.value.promotion!=null)  _state.value.promotion!!.campaignId ?: "" else "",
-                            voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else "",
-                            orderCode = _state.value.orderCode,
-                            promotionId = if(_state.value.promotion!=null) _state.value.promotion!!.promotionId ?: "" else "",
-                            status = true,
-                            extra = extra.toBase64(),
-                            isSent = false,
-                        )
-                        if(listUpdatePromotion.isNullOrEmpty()) {
-                            listUpdatePromotion = arrayListOf()
-                        }
-                        listUpdatePromotion.add(logUpdatePromotion)
-                        baseRepository.writeDataToLocal(
-                            listUpdatePromotion,
-                            pathFileUpdatePromotion
-                        )
-                    }
-                }
-
-                if(_state.value.nameMethodPayment == "cash") {
-                    if(listSlotDropFail.isNotEmpty()) {
-                        for(item in listSlotDropFail) {
-                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
-                            if(index!=-1) {
-                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
-                                _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                            var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                                type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                                path = pathFileUpdatePromotion
+                            )
+                            val logUpdatePromotion = LogUpdatePromotion(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                campaignId = if(_state.value.promotion!=null)  _state.value.promotion!!.campaignId ?: "" else "",
+                                voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else "",
+                                orderCode = _state.value.orderCode,
+                                promotionId = if(_state.value.promotion!=null) _state.value.promotion!!.promotionId ?: "" else "",
+                                status = true,
+                                extra = extra.toBase64(),
+                                isSent = false,
+                            )
+                            if(listUpdatePromotion.isNullOrEmpty()) {
+                                listUpdatePromotion = arrayListOf()
                             }
+                            listUpdatePromotion.add(logUpdatePromotion)
+                            baseRepository.writeDataToLocal(
+                                listUpdatePromotion,
+                                pathFileUpdatePromotion
+                            )
                         }
                     }
-                    if(listSlotDropSuccess.isNotEmpty()) {
-                        for(item in listSlotDropSuccess) {
-                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
-                            if(index!=-1) {
-                                if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatus == "") {
-                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
+
+                    if(_state.value.nameMethodPayment == "cash") {
+                        if(listSlotDropFail.isNotEmpty()) {
+                            for(item in listSlotDropFail) {
+                                val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                                if(index!=-1) {
+                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
                                     _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-                                } else {
-                                    val tmp = ProductSyncOrderRequest(
-                                        productCode = item.productCode,
-                                        productName = item.productName,
-                                        price = item.price.toString(),
-                                        quantity = item.inventory,
-                                        discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                                        amount = (item.inventory*item.price).toString(),
-                                        deliveryStatus = "success",
-                                        slot = item.slot,
-                                        cabinetCode = "MT01",
-                                    )
-                                    _state.value.logSyncOrder!!.productDetails.add(tmp)
                                 }
                             }
                         }
-                    }
-                    // Sync order
-                    var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                        path = pathFileSyncOrder,
-                    )
-                    if(listSyncOrder.isNullOrEmpty()) {
-                        listSyncOrder = arrayListOf()
-                    }
-                    listSyncOrder.add(_state.value.logSyncOrder!!)
-                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-                }
-                else {
-                    // Update delivery status
-                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-                        path = pathFileUpdateDeliveryStatus
-                    )
-                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
-                        listUpdateDeliveryStatus = arrayListOf()
-                    }
-                    for(item in listSlotDropFail) {
-                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            orderCode = _state.value.orderCode,
-                            deliveryStatus = "failed",
-                            productCode = item.productCode,
-                            isSent = false,
-                        )
-                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-                    }
-                    for(item in listSlotDropSuccess) {
-                        val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
-                            machineCode = _state.value.initSetup!!.vendCode,
-                            androidId = _state.value.initSetup!!.androidId,
-                            orderCode = _state.value.orderCode,
-                            deliveryStatus = "success",
-                            productCode = item.productCode,
-                            isSent = false,
-                        )
-                        listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
-                    }
-                    baseRepository.writeDataToLocal(
-                        listUpdateDeliveryStatus,
-                        pathFileUpdateDeliveryStatus
-                    )
-                }
-
-                if (quantityNotDropped != 0) {
-                    if(listSlotNotFound.isNotEmpty()) {
-                        logger.debug("Danh sách slot không tìm thấy")
-                    }
-                    if(listSlotDropFail.isNotEmpty()) {
-                        logger.debug("Danh sách slot rớt lỗi")
-                    }
-                    var titleWarning = ""
-                    if (sensorHasAnObstruction) {
-                        titleWarning = "Cảm biến rơi hiện đang bị che. "
-                    }
-                    var cashReturnOnline = 0
-
-                    val initSetup = _state.value.initSetup
-                    val promotion = _state.value.promotion
-                    if(_state.value.nameMethodPayment=="cash") {
-                        val currentCash = initSetup!!.currentCash
-                        if(promotion!= null) {
-                            logger.debug("--------${promotion.rewardType}")
-                            if(promotion.rewardType=="percent") {
-                                if(listSlotDropSuccess.size != 0) {
-                                    var cashNotDroppedTmp = 0
-                                    for(item in listSlotDropFail) {
-                                        cashNotDroppedTmp += item.inventory * item.price
+                        if(listSlotDropSuccess.isNotEmpty()) {
+                            for(item in listSlotDropSuccess) {
+                                val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                                if(index!=-1) {
+                                    if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatus == "") {
+                                        _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
+                                        _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                                    } else {
+                                        val tmp = ProductSyncOrderRequest(
+                                            productCode = item.productCode,
+                                            productName = item.productName,
+                                            price = item.price.toString(),
+                                            quantity = item.inventory,
+                                            discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
+                                            amount = (item.inventory*item.price).toString(),
+                                            deliveryStatus = "success",
+                                            slot = item.slot,
+                                            cabinetCode = "MT01",
+                                        )
+                                        _state.value.logSyncOrder!!.productDetails.add(tmp)
                                     }
-                                    logger.debug("cash not dropped 1: ${cashNotDroppedTmp}")
-                                    cashNotDroppedTmp /= promotion.rewardValue!!
-                                    logger.debug("cash not dropped 2: ${cashNotDroppedTmp}")
-                                    val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
-                                    logger.debug("cash not dropped 3: ${currentCashTmp}")
-                                    initSetup.currentCash = currentCashTmp
-                                    logger.debug("cashNotDroppedTmp: ${cashNotDroppedTmp}, currentCashTmp: ${currentCashTmp}")
+                                }
+                            }
+                        }
+                        // Sync order
+                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                            path = pathFileSyncOrder,
+                        )
+                        if(listSyncOrder.isNullOrEmpty()) {
+                            listSyncOrder = arrayListOf()
+                        }
+                        listSyncOrder.add(_state.value.logSyncOrder!!)
+                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                    }
+                    else {
+                        // Update delivery status
+                        var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                            path = pathFileUpdateDeliveryStatus
+                        )
+                        if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+                            listUpdateDeliveryStatus = arrayListOf()
+                        }
+                        for(item in listSlotDropFail) {
+                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                orderCode = _state.value.orderCode,
+                                deliveryStatus = "failed",
+                                productCode = item.productCode,
+                                isSent = false,
+                            )
+                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                        }
+                        for(item in listSlotDropSuccess) {
+                            val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                androidId = _state.value.initSetup!!.androidId,
+                                orderCode = _state.value.orderCode,
+                                deliveryStatus = "success",
+                                productCode = item.productCode,
+                                isSent = false,
+                            )
+                            listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
+                        }
+                        baseRepository.writeDataToLocal(
+                            listUpdateDeliveryStatus,
+                            pathFileUpdateDeliveryStatus
+                        )
+                    }
+
+                    if (quantityNotDropped != 0) {
+                        if(listSlotNotFound.isNotEmpty()) {
+                            logger.debug("Danh sách slot không tìm thấy")
+                        }
+                        if(listSlotDropFail.isNotEmpty()) {
+                            logger.debug("Danh sách slot rớt lỗi")
+                        }
+                        var titleWarning = ""
+                        if (sensorHasAnObstruction) {
+                            titleWarning = "Cảm biến rơi hiện đang bị che. "
+                        }
+                        var cashReturnOnline = 0
+
+                        val initSetup = _state.value.initSetup
+                        val promotion = _state.value.promotion
+                        if(_state.value.nameMethodPayment=="cash") {
+                            val currentCash = initSetup!!.currentCash
+                            if(promotion!= null) {
+                                logger.debug("--------${promotion.rewardType}")
+                                if(promotion.rewardType=="percent") {
+                                    if(listSlotDropSuccess.size != 0) {
+                                        var cashNotDroppedTmp = 0
+                                        for(item in listSlotDropFail) {
+                                            cashNotDroppedTmp += item.inventory * item.price
+                                        }
+                                        logger.debug("cash not dropped 1: ${cashNotDroppedTmp}")
+                                        cashNotDroppedTmp /= promotion.rewardValue!!
+                                        logger.debug("cash not dropped 2: ${cashNotDroppedTmp}")
+                                        val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
+                                        logger.debug("cash not dropped 3: ${currentCashTmp}")
+                                        initSetup.currentCash = currentCashTmp
+                                        logger.debug("cashNotDroppedTmp: ${cashNotDroppedTmp}, currentCashTmp: ${currentCashTmp}")
+                                        logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
+                                    }
+                                } else {
+                                    var totalAmountTmp = 0
+                                    for(item in listSlotDropFail) {
+                                        totalAmountTmp += (item.inventory * item.price)
+                                    }
+                                    val totalDiscountTmp = _state.value.promotion!!.totalDiscount
+                                    var totalAmountNotDropTmp = 0
+                                    for(item in listSlotDropFail) {
+                                        totalAmountNotDropTmp += ((totalDiscountTmp!!*(item.price/totalDiscountTmp))*item.inventory)
+                                    }
+                                    logger.debug("totalAmountTmp: ${totalAmountTmp}, totalDiscountTmp: ${totalDiscountTmp}, totalAmountNotDropTmp: ${totalAmountNotDropTmp}")
+                                    initSetup.currentCash = currentCash - _state.value.promotion!!.paymentAmount!! + totalAmountNotDropTmp
                                     logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
                                 }
-                            } else {
-                                var totalAmountTmp = 0
-                                for(item in listSlotDropFail) {
-                                    totalAmountTmp += (item.inventory * item.price)
-                                }
-                                val totalDiscountTmp = _state.value.promotion!!.totalDiscount
-                                var totalAmountNotDropTmp = 0
-                                for(item in listSlotDropFail) {
-                                    totalAmountNotDropTmp += ((totalDiscountTmp!!*(item.price/totalDiscountTmp))*item.inventory)
-                                }
-                                logger.debug("totalAmountTmp: ${totalAmountTmp}, totalDiscountTmp: ${totalDiscountTmp}, totalAmountNotDropTmp: ${totalAmountNotDropTmp}")
-                                initSetup.currentCash = currentCash - _state.value.promotion!!.paymentAmount!! + totalAmountNotDropTmp
-                                logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, _state.value.promotion: ${_state.value.promotion!!}")
-                            }
 
-                        }
-                        else {
-                            var cashNotDroppedTmp = 0
-                            for(item in listSlotDropFail) {
-                                cashNotDroppedTmp += item.inventory * item.price
                             }
-                            val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
-                            initSetup.currentCash = currentCashTmp
-                            logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, cashNotDroppedTmp: ${cashNotDroppedTmp}")
-                        }
-                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                    } else {
-                        if(promotion!= null) {
-                            if(promotion.rewardType=="percent") {
+                            else {
+                                var cashNotDroppedTmp = 0
                                 for(item in listSlotDropFail) {
-                                    cashReturnOnline += item.inventory * item.price
+                                    cashNotDroppedTmp += item.inventory * item.price
                                 }
-                                cashReturnOnline /= promotion.rewardValue!!
-                            } else {
-                                var totalAmountTmp = 0
-                                for(item in listSlotDropFail) {
-                                    totalAmountTmp += (item.inventory * item.price)
-                                }
-                                val totalDiscountTmp = _state.value.promotion!!.totalDiscount
-                                for(item in listSlotDropFail) {
-                                    cashReturnOnline += ((totalDiscountTmp!!*(item.price/totalDiscountTmp))*item.inventory)
-                                }
+                                val currentCashTmp = currentCash - _state.value.totalAmount + cashNotDroppedTmp
+                                initSetup.currentCash = currentCashTmp
+                                logger.debug("_state.value.totalAmount: ${_state.value.totalAmount}, cashNotDroppedTmp: ${cashNotDroppedTmp}")
                             }
+                            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                         } else {
-                            var cashNotDroppedTmp = 0
-                            for(item in listSlotDropFail) {
-                                cashNotDroppedTmp += item.inventory * item.price
+                            if(promotion!= null) {
+                                if(promotion.rewardType=="percent") {
+                                    for(item in listSlotDropFail) {
+                                        cashReturnOnline += item.inventory * item.price
+                                    }
+                                    cashReturnOnline /= promotion.rewardValue!!
+                                } else {
+                                    var totalAmountTmp = 0
+                                    for(item in listSlotDropFail) {
+                                        totalAmountTmp += (item.inventory * item.price)
+                                    }
+                                    val totalDiscountTmp = _state.value.promotion!!.totalDiscount
+                                    for(item in listSlotDropFail) {
+                                        cashReturnOnline += ((totalDiscountTmp!!*(item.price/totalDiscountTmp))*item.inventory)
+                                    }
+                                }
+                            } else {
+                                var cashNotDroppedTmp = 0
+                                for(item in listSlotDropFail) {
+                                    cashNotDroppedTmp += item.inventory * item.price
+                                }
+                                cashReturnOnline = _state.value.totalAmount - cashNotDroppedTmp
                             }
-                            cashReturnOnline = _state.value.totalAmount - cashNotDroppedTmp
+                            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                         }
-                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                    }
 
-                    if(_state.value.nameMethodPayment=="cash") {
-                        titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng mua sản phẩm khác!"
-                    } else {
-                        titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng liên hệ 1900.99.99.80 để nhận lại ${cashReturnOnline.toVietNamDong()}!"
-                    }
-
-                    _state.update {
-                        it.copy(
-                            isShowWaitForDropProduct = false,
-                            listSlotInCard = arrayListOf(),
-                            listSlotInHome = listSlotShowInHome,
-                            initSetup = initSetup,
-                            isWarning = true,
-                            titleDialogWarning = titleWarning,
-                            listSlot = listSlot,
-                        )
-                    }
-                }
-                else {
-                    val initSetup = _state.value.initSetup
-                    val promotion = _state.value.promotion
-                    if(_state.value.nameMethodPayment=="cash") {
-                        val currentCash = initSetup!!.currentCash
-                        if(promotion!= null) {
-                            val currentCashTmp = currentCash - promotion.paymentAmount!!
-                            initSetup.currentCash = currentCashTmp
+                        if(_state.value.nameMethodPayment=="cash") {
+                            titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Vui lòng chọn và mua lại sản phẩm khác hoặc Bấm nút \"Hoàn Tiền\". Chi tiết liên hệ 1900.99.99.80"
                         } else {
-                            val currentCashTmp = currentCash - _state.value.totalAmount
-                            initSetup.currentCash = currentCashTmp
+                            titleWarning+="Có ${quantityNotDropped} sản phẩm rớt không thành công! Trong vòng 7 ngày làm việc sẽ tự động hoàn tiền lại tài khoản của quý khách . Chi tiết liên hệ 1900.99.99.80"
                         }
-                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                    }
 
-                    _state.update {
-                        it.copy (
-                            isShowWaitForDropProduct = false,
-                            listSlotInCard = arrayListOf(),
-                            listSlotInHome = listSlotShowInHome,
-                            initSetup = initSetup,
-                            listSlot = listSlot,
-                            promotion = null,
-                        )
+                        _state.update {
+                            it.copy(
+                                isShowWaitForDropProduct = false,
+                                listSlotInCard = arrayListOf(),
+                                listSlotInHome = listSlotShowInHome,
+                                initSetup = initSetup,
+                                isWarning = true,
+                                titleDialogWarning = titleWarning,
+                                listSlot = listSlot,
+                            )
+                        }
+                    }
+                    else {
+                        val initSetup = _state.value.initSetup
+                        val promotion = _state.value.promotion
+                        if(_state.value.nameMethodPayment=="cash") {
+                            val currentCash = initSetup!!.currentCash
+                            if(promotion!= null) {
+                                val currentCashTmp = currentCash - promotion.paymentAmount!!
+                                initSetup.currentCash = currentCashTmp
+                            } else {
+                                val currentCashTmp = currentCash - _state.value.totalAmount
+                                initSetup.currentCash = currentCashTmp
+                            }
+                            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                        }
+
+                        _state.update {
+                            it.copy (
+                                isShowWaitForDropProduct = false,
+                                listSlotInCard = arrayListOf(),
+                                listSlotInHome = listSlotShowInHome,
+                                initSetup = initSetup,
+                                listSlot = listSlot,
+                                promotion = null,
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -1026,7 +1061,7 @@ class HomeViewModel @Inject constructor (
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            Logger.info("-------> data from cash box: $dataHexString")
+//            Logger.info("-------> data from cash box: $dataHexString")
             if(dataHexString.contains("01,01,03,00,00,")) {
                 _numberRottenBoxBalance.value = -1
                 // Define the byte to balance map
@@ -1688,28 +1723,7 @@ class HomeViewModel @Inject constructor (
                     listAds = homeRepository.getListVideoAdsFromLocal()
                 }
                 // Get list path ads
-                var listBigAds = homeRepository.getListVideoBigAdsFromLocal()
-                if (listBigAds.isEmpty()) {
-                    homeRepository.writeVideoAdsFromAssetToLocal(
-                        context,
-                        R.raw.ads1,
-                        "ads1.mp4",
-                        pathFolderBigAds,
-                    )
-                    homeRepository.writeVideoAdsFromAssetToLocal(
-                        context,
-                        R.raw.ads2,
-                        "ads2.mp4",
-                        pathFolderBigAds,
-                    )
-                    homeRepository.writeVideoAdsFromAssetToLocal(
-                        context,
-                        R.raw.ads3,
-                        "ads3.mp4",
-                        pathFolderBigAds,
-                    )
-                    listBigAds = homeRepository.getListVideoBigAdsFromLocal()
-                }
+                val listBigAds = homeRepository.getListVideoBigAdsFromLocal()
                 // Get list slot in local
                 val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<Slot>>() {}.type,
@@ -2378,7 +2392,7 @@ class HomeViewModel @Inject constructor (
                 try {
                     _state.update { it.copy(
                         countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()),
-                        isVendingMachineBusy = true,
+//                        isVendingMachineBusy = true,
                     ) }
                     val orderCode = LocalDateTime.now().toId()
                     logger.debug("android id: ${_state.value.initSetup!!.androidId}, orderCode: ${orderCode}")

@@ -81,6 +81,7 @@ import com.leduytuanvu.vendingmachine.features.home.presentation.composables.Inf
 import com.leduytuanvu.vendingmachine.features.home.presentation.composables.PutMoneyComposable
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
+import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel.CMD_QUERY_VMC_STATUS
 import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -100,7 +101,6 @@ internal fun HomeScreen(
             viewModel.pollStatus()
         }
     }
-
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -163,10 +163,12 @@ fun HomeContent(
                     delay(1000L)
                     checkTouch++
 //                    Logger.debug("check touch = $checkTouch, ${state.initSetup.timeoutJumpToBigAdsScreen.toLong()}")
-                    if(checkTouch>state.initSetup.timeoutJumpToBigAdsScreen.toLong()) {
+                    if(state.initSetup.fullScreenAds == "ON") {
+                        if(checkTouch>state.initSetup.timeoutJumpToBigAdsScreen.toLong() && state.listBigAds.isNotEmpty()) {
 //                        Logger.debug("vo check touch")
-                        viewModel.showBigAds()
-                        break
+                            viewModel.showBigAds()
+                            break
+                        }
                     }
                 }
             }
@@ -520,20 +522,39 @@ fun HomeContent(
                                         Text(state.initSetup.currentCash.toVietNamDong(), fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(modifier = Modifier.width(10.dp))
-                                    Image(
+                                    Box(
                                         modifier = Modifier
-                                            .height(44.dp)
-                                            .width(44.dp)
-                                            .clickable {
-                                                checkTouch = 0
-                                                if (state.initSetup.withdrawalAllowed == "ON") {
-                                                    viewModel.withdrawalMoney()
-                                                }
-                                            },
-                                        alignment = Alignment.Center,
-                                        painter = painterResource(id = R.drawable.image_withdraw),
-                                        contentDescription = ""
+                                            .fillMaxHeight()
+                                            .width(1.dp)
+                                            .background(Color.White)
                                     )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(
+                                        modifier = Modifier.padding(end = 10.dp).clickable {
+                                            checkTouch = 0
+                                            if (state.initSetup.withdrawalAllowed == "ON") {
+                                                viewModel.withdrawalMoney()
+                                            }
+                                        },
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Image(
+                                            modifier = Modifier
+                                                .padding(bottom = 2.dp, top = 2.dp)
+                                                .height(28.dp)
+                                                .width(28.dp),
+                                            alignment = Alignment.Center,
+                                            painter = painterResource(id = R.drawable.image_withdraw),
+                                            contentDescription = ""
+                                        )
+                                        Text(
+                                            "Hoàn Tiền",
+                                            fontSize = 15.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
                                 }
                             }
                             Spacer(modifier = Modifier.weight(1f))
@@ -626,7 +647,9 @@ fun HomeContent(
                 }
             }
             if(state.isShowCart && state.listSlotInCard.isNotEmpty()) {
-                Box(modifier = Modifier.fillMaxSize().clickable { }) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { }) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -722,7 +745,11 @@ fun HomeContent(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
                                                         )
-                                                        .clickable { viewModel.minusProductDebounced(item) },
+                                                        .clickable {
+                                                            viewModel.minusProductDebounced(
+                                                                item
+                                                            )
+                                                        },
                                                     contentAlignment = Alignment.Center,                                            ) {
                                                     Image(
                                                         modifier = Modifier
@@ -752,7 +779,11 @@ fun HomeContent(
                                                             Color.White,
                                                             shape = RoundedCornerShape(6.dp)
                                                         )
-                                                        .clickable { viewModel.plusProductDebounced(item) },
+                                                        .clickable {
+                                                            viewModel.plusProductDebounced(
+                                                                item
+                                                            )
+                                                        },
                                                     contentAlignment = Alignment.Center,
                                                 ) {
                                                     Image(
@@ -804,7 +835,7 @@ fun HomeContent(
                                     height = 60.dp,
                                     fontWeight = FontWeight.Bold,
                                 ) {
-                                    viewModel.applyPromotionDebounced(text)
+//                                    viewModel.applyPromotionDebounced(text)
                                 }
                             }
                             Spacer(modifier = Modifier.height(34.dp))
@@ -850,7 +881,9 @@ fun HomeContent(
                             if(state.listPaymentMethod.isEmpty()) {
                                 Text(
                                     "Hiện không có phương thức thanh toán nào khả dụng! Xin vui lòng thử lại sau!",
-                                    modifier = Modifier.padding(top = 113.dp, bottom = 103.dp).fillMaxWidth(),
+                                    modifier = Modifier
+                                        .padding(top = 113.dp, bottom = 103.dp)
+                                        .fillMaxWidth(),
                                     color = Color.Red,
                                     textAlign = TextAlign.Center,
                                 )
@@ -1038,7 +1071,9 @@ fun HomeContent(
                         color = Color.White,
                     ) {
                         Column(
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 17.dp, vertical = 17.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 17.dp, vertical = 17.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Image(
@@ -1112,7 +1147,7 @@ fun HomeContent(
                                 fontSize = 21.sp,
                             )
                             Text(
-                                "Nước có ga vui lòng mở sau 15 giây",
+                                "Nước có ga vui lòng mở sau 2 phút",
                                 modifier = Modifier.padding(bottom = 36.dp),
                                 fontSize = 21.sp,
                             )

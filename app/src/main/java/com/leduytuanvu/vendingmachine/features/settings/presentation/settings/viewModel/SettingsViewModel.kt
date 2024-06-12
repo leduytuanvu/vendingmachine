@@ -75,6 +75,13 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
+    fun makeAppCrash() {
+        viewModelScope.launch {
+            throw RuntimeException("Deliberate crash for testing purposes")
+        }
+    }
+
+
     fun showDialogConfirm(mess: String) {
         viewModelScope.launch {
             _state.update {

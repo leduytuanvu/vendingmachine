@@ -253,6 +253,7 @@ fun SetupSystemMainContentComposable(
     var selectedItemInchingMode by remember { mutableStateOf(AnnotatedString("0")) }
     var selectedItemTimeJumpToAdsScreen by remember { mutableStateOf(AnnotatedString("60s")) }
     var selectedItemGlassHeatingMode by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemBigAds by remember { mutableStateOf(AnnotatedString("ON")) }
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     val appVersionName = packageInfo.versionName
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -285,6 +286,7 @@ fun SetupSystemMainContentComposable(
         selectedItemInchingMode = AnnotatedString(state.initSetup?.inchingMode ?: "0")
         selectedItemTimeJumpToAdsScreen = AnnotatedString(if(state.initSetup?.timeoutJumpToBigAdsScreen!=null) "${state.initSetup.timeoutJumpToBigAdsScreen}s" else "60s")
         selectedItemGlassHeatingMode = AnnotatedString(state.initSetup?.glassHeatingMode ?: "ON")
+        selectedItemBigAds = AnnotatedString(state.initSetup?.fullScreenAds ?: "ON")
         partsTurnOnLight = if (state.initSetup?.timeTurnOnLight != null) state.initSetup.timeTurnOnLight.split(":") else listOf("0", "0")
         hourTurnOnLight = partsTurnOnLight[0].toIntOrNull() ?: 0
         minuteTurnOnLight = partsTurnOnLight.getOrNull(1)?.toIntOrNull() ?: 0
@@ -599,6 +601,27 @@ fun SetupSystemMainContentComposable(
         ) {
             onClick()
             viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
+        }
+
+        BodyTextComposable(title = "Big Ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = selectedItemBigAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
+            selectedItemBigAds = it
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.updateBigAdsInLocal(selectedItemBigAds.toString())
         }
 
         BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)

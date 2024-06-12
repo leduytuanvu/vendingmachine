@@ -4,12 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.DataRxCommunicateTTS4
 
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeRXCommunicateAvf
+import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 
 import com.leduytuanvu.vendingmachine.core.util.Event
@@ -25,9 +28,11 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,13 +53,14 @@ class SetupSlotViewModel @Inject constructor(
     val state = _state.asStateFlow()
     private var vendingMachineJob: Job? = null
     var listSlotAll: ArrayList<Slot> = arrayListOf()
+
+    private val _statusSlot = MutableStateFlow(false)
+    val statusSlot: StateFlow<Boolean> = _statusSlot.asStateFlow()
     fun loadInitSetupListSlotListProduct() {
         logger.debug("loadInitSetupListSlotListProduct")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-
-
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
@@ -64,11 +70,38 @@ class SetupSlotViewModel @Inject constructor(
                     portConnectionDatasource.startReadingVendingMachine()
                 }
                 portConnectionDatasource.startReadingVendingMachine()
-
+                startCollectingData()
                 val listSlot = settingsRepository.getListSlotFromLocal()
-                updateSlotEnable(listSlot)
+//                for(item in listSlot) {
+//                    _statusSlot.value = false
+//                    var timeDelay = 50L
+//                    while (true) {
+//                        enquirySlot(slot = item.slot)
+//                        delay(timeDelay)
+//                        if(_statusSlot.value) {
+//                            item.isEnable = true
+//                            logger.info("slot ${item.slot} ok")
+//                            break
+//                        } else {
+//                            if(timeDelay<1050L) {
+//                                timeDelay+=50L
+//                            } else {
+//                                item.isEnable = false
+//                                logger.info("slot ${item.slot} not ok")
+//                                break
+//                            }
+//                        }
+//                    }
+////                    delay(1001)
+////                    if(statusSlot.value) {
+////                        item.isEnable = true
+////                        logger.info("slot ${item.slot} ok")
+////                    } else {
+////                        item.isEnable = false
+////                        logger.info("slot ${item.slot} not ok")
+////                    }
+//                }
                 val listProduct = settingsRepository.getListProductFromLocal()
-
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -826,26 +859,42 @@ class SetupSlotViewModel @Inject constructor(
         portConnectionDatasource.closeVendingMachinePort()
     }
 
-//    fun startCollectingData() {
-//        vendingMachineJob = viewModelScope.launch {
-//            portConnectionDatasource.dataFromVendingMachine.collect { data ->
-//                logger.debug("data: ${baseRepository.byteArrayToHexString(data)}")
-//
-//            }
-//        }
-//    }
-
-    fun processingDataFromVendingMachine() {
-//        val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
-//        if (dataHexString.contains("00,5D,00,00,5D")) {
-//            result.add(true)
-//        } else if (dataHexString.contains("00,5C,40,00,9C")) {
-//            result.add(false)
-//        }
-//        logger.debug(dataHexString)
-
+    fun startCollectingData() {
+        vendingMachineJob = viewModelScope.launch {
+            portConnectionDatasource.dataFromVendingMachine.collect { data ->
+                logger.debug("data: ${baseRepository.byteArrayToHexString(data)}")
+                processingDataFromVendingMachine(data)
+            }
+        }
     }
 
+    fun processingDataFromVendingMachine(dataByteArray: ByteArray) {
+        val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
+        if (dataHexString.contains("00,5D,00,00,5D")) {
+            _statusSlot.value = true
+//            resultadd(true)
+        } else if (dataHexString.contains("00,5C,40,00,9C")) {
+//            result.add(false)
+        }
+    }
+
+    fun enquirySlot(
+        numberBoard: Int = 0,
+        slot: Int,
+    ) {
+        val byteArraySlot: Byte = (slot + 120).toByte()
+        val byteArrayNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteArrayNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                byteArraySlot,
+                (0x86 - (slot - 1)).toByte(),
+                0x55,
+                0xAA.toByte(),
+            )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
 
 
     private suspend fun updateSlotEnable(list: ArrayList<Slot>) {

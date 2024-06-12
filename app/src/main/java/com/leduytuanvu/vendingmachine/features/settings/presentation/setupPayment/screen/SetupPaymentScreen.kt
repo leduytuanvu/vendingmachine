@@ -488,17 +488,17 @@ fun SetupPaymentContent(
 //                    viewModel.productDispenseNotSensor(0,2)
 //                }
 
-                CustomButtonComposable(
-                    title = "DISPENDED",
-                    wrap = true,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 10.dp,
-                ) {
-                    viewModel.dispensed()
-                }
+//                CustomButtonComposable(
+//                    title = "DISPENDED",
+//                    wrap = true,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 10.dp,
+//                ) {
+//                    viewModel.dispensed()
+//                }
 
 //                CustomButtonComposable(
 //                    title = "on",
