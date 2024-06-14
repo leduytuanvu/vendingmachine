@@ -835,7 +835,7 @@ fun HomeContent(
                                     height = 60.dp,
                                     fontWeight = FontWeight.Bold,
                                 ) {
-//                                    viewModel.applyPromotionDebounced(text)
+                                    viewModel.applyPromotionDebounced(text)
                                 }
                             }
                             Spacer(modifier = Modifier.height(34.dp))
