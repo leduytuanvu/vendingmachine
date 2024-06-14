@@ -682,6 +682,43 @@ class SetupSystemViewModel @Inject constructor(
         }
     }
 
+    fun updateBigAdsInLocal(bigAds: String) {
+        logger.debug("updateBigAdsInLocal")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                initSetup.fullScreenAds = bigAds
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "update big ads: ${initSetup.fullScreenAds}",
+                    operationType = "setup system",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "update big ads fail in SetupSystemViewModel/updateTimeJumpToAdsScreenInLocal(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     fun updateGlassHeatingModeInLocal(glassHeatingMode: String) {
         logger.debug("updateGlassHeatingModeInLocal")
         viewModelScope.launch {

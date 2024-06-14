@@ -109,12 +109,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun restartApp() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = intent
-            finish()
-            startActivity(intent)
-            android.os.Process.killProcess(android.os.Process.myPid())
-        }, 1000)
+        val localStorageDatasource = LocalStorageDatasource()
+        val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
+        if(initSetup!=null) {
+            if(initSetup.autoStartApplication == "ON") {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val intent = intent
+                    finish()
+                    startActivity(intent)
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                }, 1000)
+            }
+        }
     }
 }
 
@@ -157,11 +163,18 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            val activityIntent = Intent(context, MainActivity::class.java)
-            activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(activityIntent)
+        val localStorageDatasource = LocalStorageDatasource()
+        val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
+        if(initSetup!=null) {
+            if(initSetup.autoStartApplication == "ON") {
+                if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+                    val activityIntent = Intent(context, MainActivity::class.java)
+                    activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(activityIntent)
+                }
+            }
         }
+
     }
 }
 

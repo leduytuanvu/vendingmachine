@@ -6,7 +6,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
+import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
+import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Logger
+import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 //import com.leduytuanvu.vendingmachine.core.room.Graph
 import dagger.hilt.android.HiltAndroidApp
 
@@ -34,7 +38,13 @@ class MyApplication : Application(), Application.ActivityLifecycleCallbacks {
 
     override fun onActivityStopped(activity: Activity) {
         if (!appInForeground) {
-            restartApp()
+            val localStorageDatasource = LocalStorageDatasource()
+            val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
+            if(initSetup!=null) {
+                if(initSetup.autoStartApplication == "ON") {
+                    restartApp()
+                }
+            }
         }
     }
 
