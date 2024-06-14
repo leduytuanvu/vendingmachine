@@ -94,7 +94,6 @@ class InitSetupViewModel @Inject constructor(
         logger.info("writeInitSetupToLocal")
         viewModelScope.launch {
             try {
-
                 if (baseRepository.isHaveNetwork(context)) {
                     _state.update { it.copy(isLoading = true) }
                     if (inputVendingMachineCode.trim().isEmpty()) {

@@ -95,8 +95,8 @@ fun LoginContent(
     navController: NavHostController,
     onClick: () -> Unit,
 ) {
-    var inputUsername by remember { mutableStateOf("admin") }
-    var inputPassword by remember { mutableStateOf("AVF@1234") }
+    var inputUsername by remember { mutableStateOf("") }
+    var inputPassword by remember { mutableStateOf("") }
 
     val context: Context = LocalContext.current
 
