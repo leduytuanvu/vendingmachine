@@ -902,7 +902,6 @@ class SetupSlotViewModel @Inject constructor(
             try {
                 var resultList = list
                 repeat(list.size) { index ->
-                    
                     val resultEnquirySlot = portConnectionDatasource.enquirySlot(
                         slot =
                         list[index].slot,
@@ -914,7 +913,6 @@ class SetupSlotViewModel @Inject constructor(
                         _state.value.initSetup?.let { baseRepository.addNewErrorLogToLocal(machineCode = it.vendCode,errorContent = "Slot ${resultList[index].slot} not working") }
                     }
                 }
-                
                 _state.update { it -> it.copy(listSlot = resultList.filter { it.isEnable } as ArrayList<Slot>) }
             } catch (e:Exception) {
                 baseRepository.addNewErrorLogToLocal(
