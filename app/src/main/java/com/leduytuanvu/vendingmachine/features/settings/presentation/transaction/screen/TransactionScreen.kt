@@ -5,11 +5,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,13 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,7 +30,6 @@ import androidx.navigation.NavHostController
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.leduytuanvu.vendingmachine.core.util.Screens
-import com.leduytuanvu.vendingmachine.core.util.toJson
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewModel.SettingsViewModel
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import kotlinx.coroutines.delay
@@ -47,7 +41,7 @@ internal fun TransactionScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
-        viewModel.loadInittransaction()
+        viewModel.loadInitTransaction()
     }
     LaunchedEffect(key1 = viewModel) {
         viewModel.getAllLogServerLocal()
@@ -158,8 +152,8 @@ fun TransactionContent(
 
                 Text("Thời gian kết phiên trước: ")
                 Text("Thời gian tính phiên hiện tại: ")
-                Text("Tổng giao dịch bằng tiền mặt: ")
-                Text("Số lượng giao dịch tiền mặt: ")
+                Text("Tổng giao dịch bằng tiền mặt: ${state.amountTransactionByCash}")
+                Text("Số lượng giao dịch tiền mặt: ${state.countTransactionByCash}")
                 Text("Tổng giao dịch tiền thanh toán online: ")
                 Text("Số lượng giao dịch thanh toán online: ")
                 Text("Số tờ tiền trong hộp thối: ")

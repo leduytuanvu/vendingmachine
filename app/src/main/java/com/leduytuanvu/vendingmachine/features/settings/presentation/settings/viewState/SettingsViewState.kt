@@ -28,4 +28,6 @@ data class SettingsViewState (
     val informationOfMachine: DataInformationMachineResponse? = null,
     val initSetup: InitSetup? = null,
     val listLogServerLocal: ArrayList<LogsLocal> = arrayListOf(),
+    val countTransactionByCash: Int = 0,
+    val amountTransactionByCash: Int = 0,
 )

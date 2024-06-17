@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
@@ -19,19 +18,16 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.core.util.toDateTime
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
 import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.settings.viewState.SettingsViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDateTime
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -62,8 +58,8 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
-    fun loadInittransaction() {
-        logger.debug("loadInittransaction")
+    fun loadInitTransaction() {
+        logger.debug("loadInitTransaction")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -75,12 +71,28 @@ class SettingsViewModel @Inject constructor (
                     type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
                     path = pathFileSyncOrder
                 )!!
-                val countTransactionByCash = 0
-                val amountTransactionByCash = 0
-//                for(item in listSyncOrder) {
-//                    item.
-//                }
-                _state.update { it.copy(isLoading = false, initSetup = initSetup) }
+                var countTransactionByCash = 0
+                var amountTransactionByCash = 0
+                if(listSyncOrder.isNotEmpty()) {
+                    if(initSetup.timeClosingSession.isEmpty()) {
+                        for(item in listSyncOrder) {
+                            countTransactionByCash+=1
+                            for(itemTmp in item.productDetails) {
+                                if(itemTmp.deliveryStatus == "success") {
+                                    amountTransactionByCash+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
+                                }
+                            }
+                        }
+                    } else {
+
+                    }
+                }
+                _state.update { it.copy(
+                    isLoading = false,
+                    initSetup = initSetup,
+                    countTransactionByCash = countTransactionByCash,
+                    amountTransactionByCash = amountTransactionByCash,
+                ) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }
             }
