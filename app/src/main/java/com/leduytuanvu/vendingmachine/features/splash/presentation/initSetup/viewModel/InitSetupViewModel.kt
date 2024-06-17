@@ -155,6 +155,8 @@ class InitSetupViewModel @Inject constructor(
                                 timeoutPaymentByCash = "60",
                                 timeoutPaymentByQrCode = "60",
                                 timeResetOnEveryDay = "00:00",
+                                timeStartSession = "",
+                                timeClosingSession = "",
                                 role = ""
                             )
                             logger.debug("4")
@@ -165,11 +167,9 @@ class InitSetupViewModel @Inject constructor(
                             if(responseGetListAccount.code == 200) {
                                 logger.debug("6")
                                 val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
-//                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
-                                if(index != -1) {
+                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
                                     logger.debug("7")
-//                                    initSetup.role = responseGetListAccount.data[index].role!!
-                                    initSetup.role = "admin"
+                                    initSetup.role = responseGetListAccount.data[index].role!!
                                     baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                                     val activateTheMachineRequest = ActivateTheMachineRequest(
                                         machineCode = inputVendingMachineCode,
@@ -177,7 +177,7 @@ class InitSetupViewModel @Inject constructor(
                                     )
                                     val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
                                     logger.debug("8")
-                                    if(responseActivateTheMachine.code==200 || responseActivateTheMachine.code == 400) {
+                                    if(responseActivateTheMachine.code==200 || responseActivateTheMachine.code==400) {
                                         logger.debug("9")
                                         val listPaymentMethod = settingsRepository.getListPaymentMethodFromServer()
                                         if (!baseRepository.isFolderExists(pathFolderImagePayment)) {
