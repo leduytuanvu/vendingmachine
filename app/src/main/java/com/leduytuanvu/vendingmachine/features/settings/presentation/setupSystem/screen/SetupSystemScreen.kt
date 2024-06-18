@@ -314,6 +314,12 @@ fun SetupSystemMainContentComposable(
             paddingBottom = 50.dp,
         )
 
+        BodyTextComposable(
+            title = "Android id: ${if(state.initSetup!=null) state.initSetup.androidId ?: "" else ""}",
+            fontWeight = FontWeight.Bold,
+            paddingBottom = 50.dp,
+        )
+
         BodyTextComposable(title = "Serial sim id: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
         CustomButtonComposable(
             title = "REFRESH",

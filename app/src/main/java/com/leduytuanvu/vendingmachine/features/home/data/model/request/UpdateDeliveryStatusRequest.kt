@@ -8,4 +8,6 @@ data class UpdateDeliveryStatusRequest(
     @SerializedName("machine_code") var machineCode: String?,
     @SerializedName("android_id") var androidId: String?,
     @SerializedName("product_code") var productCode: String?,
+    @SerializedName("delivery_status_note") var deliveryStatusNote: String?,
+    @SerializedName("slot") var slot: Int?,
 )
