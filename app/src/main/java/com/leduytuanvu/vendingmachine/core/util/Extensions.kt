@@ -103,7 +103,8 @@ fun SlotResponse?.toSlot(): Slot {
         status = this?.status ?: 0,
         slotCombine = this?.slotCombine ?: 0,
         isLock = false,
-        isEnable = true
+        isEnable = true,
+        messDrop = "",
     )
 }
 

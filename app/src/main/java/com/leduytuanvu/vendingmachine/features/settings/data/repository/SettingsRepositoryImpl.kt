@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
@@ -17,6 +18,7 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileProductDetail
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.toSlot
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
+import com.leduytuanvu.vendingmachine.features.settings.data.model.request.EndOfSessionRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
@@ -59,7 +61,9 @@ class SettingsRepositoryImpl @Inject constructor(
                             status = 1,
                             slotCombine = 0,
                             isLock = false,
-                            isEnable = true
+                            isEnable = true,
+                            messDrop = "",
+
                         )
                     )
                 }
@@ -212,6 +216,15 @@ class SettingsRepositoryImpl @Inject constructor(
         try {
             val listFileNameInFolder = localStorageDatasource.getListFileNamesInFolder(folderPath)
             return listFileNameInFolder
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun endOfSession(endOfSessionRequest: EndOfSessionRequest): BaseResponse<String> {
+        try {
+            val response = settingsApi.endOfSession(endOfSessionRequest)
+            return response
         } catch (e: Exception) {
             throw e
         }

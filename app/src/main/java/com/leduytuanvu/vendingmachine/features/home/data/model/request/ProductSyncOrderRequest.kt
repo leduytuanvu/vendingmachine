@@ -12,4 +12,5 @@ data class ProductSyncOrderRequest(
     @SerializedName("delivery_status") var deliveryStatus: String?,
     @SerializedName("slot") var slot: Int?,
     @SerializedName("cabinet_code") var cabinetCode: String?,
+    @SerializedName("delivery_status_note") var deliveryStatusNote: String?,
 )

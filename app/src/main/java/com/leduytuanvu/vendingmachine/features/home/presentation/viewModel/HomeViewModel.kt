@@ -549,6 +549,7 @@ class HomeViewModel @Inject constructor (
                     outerLoop@ for (item in listSlotInCart) {
                         logger.debug("Slot drop: $item")
                         for (index in 1..item.inventory) {
+                            var messDropFailed = ""
                             var checkDropProductFailAll = true
                             val slot = homeRepository.getSlotDrop(item.productCode)
                             logger.debug("Slot found: $slot")
@@ -573,6 +574,7 @@ class HomeViewModel @Inject constructor (
 //                                        slot.inventory = 1
 //                                        listSlotDropFail.add(slot)
 //                                    }
+                                    messDropFailed = "Timeout waiting for dispense result"
                                     homeRepository.lockSlot(slot.slot)
                                     continue
                                 }
@@ -614,11 +616,13 @@ class HomeViewModel @Inject constructor (
                                         checkDropProductFailAll = false
                                     }
                                     DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                        messDropFailed = "SENSOR_HAS_AN_OBSTACLE"
                                         logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
                                         sensorHasAnObstruction = true
                                         break@outerLoop
                                     }
                                     else -> {
+                                        messDropFailed = result.data
                                         baseRepository.addNewSensorLogToLocal(
                                             machineCode = _state.value.initSetup!!.vendCode,
                                             cabinetCode = "MT01",
@@ -764,8 +768,10 @@ class HomeViewModel @Inject constructor (
                                 val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == tmpSlot.slot }
                                 if (indexSlotTmp!=-1) {
                                     listSlotDropFail[indexSlotTmp].inventory++
+                                    listSlotDropFail[indexSlotTmp].messDrop = messDropFailed
                                 } else {
                                     tmpSlot.inventory = 1
+                                    listSlotDropFail[indexSlotTmp].messDrop = messDropFailed
                                     listSlotDropFail.add(tmpSlot)
                                 }
                             }
@@ -838,55 +844,58 @@ class HomeViewModel @Inject constructor (
                         }
                     }
 
-                    if(_state.value.nameMethodPayment == "cash") {
-                        if(listSlotDropFail.isNotEmpty()) {
-                            logger.info("list slot drop fail: "+listSlotDropFail.toString())
-                            for(item in listSlotDropFail) {
-                                val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
-                                if(index!=-1) {
-                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
-                                    _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-                                }
+                    if(listSlotDropFail.isNotEmpty()) {
+                        logger.info("list slot drop fail: "+listSlotDropFail.toString())
+                        for(item in listSlotDropFail) {
+                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                            if(index!=-1) {
+                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
+                                _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatusNote = item.messDrop
+                                _state.value.logSyncOrder!!.productDetails[index].amount = "${_state.value.logSyncOrder!!.productDetails[index].quantity!!*_state.value.logSyncOrder!!.productDetails[index].price!!.toInt()}"
                             }
                         }
-                        if(listSlotDropSuccess.isNotEmpty()) {
-                            logger.info("list slot drop success: "+listSlotDropSuccess.toString())
-                            for(item in listSlotDropSuccess) {
-                                val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
-                                if(index!=-1) {
-                                    if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatus == "") {
-                                        _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
-                                        _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-                                    } else {
-                                        val tmp = ProductSyncOrderRequest(
-                                            productCode = item.productCode,
-                                            productName = item.productName,
-                                            price = item.price.toString(),
-                                            quantity = item.inventory,
-                                            discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                                            amount = (item.inventory*item.price).toString(),
-                                            deliveryStatus = "success",
-                                            slot = item.slot,
-                                            cabinetCode = "MT01",
-                                        )
-                                        _state.value.logSyncOrder!!.productDetails.add(tmp)
-                                    }
-                                }
-                            }
-                        }
-                        logger.info("dghfghgfhhfjhj: ${ _state.value.logSyncOrder!!.productDetails}")
-                        // Sync order
-                        var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                            path = pathFileSyncOrder,
-                        )
-                        if(listSyncOrder.isNullOrEmpty()) {
-                            listSyncOrder = arrayListOf()
-                        }
-                        listSyncOrder.add(_state.value.logSyncOrder!!)
-                        baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
                     }
-                    else {
+                    if(listSlotDropSuccess.isNotEmpty()) {
+                        logger.info("list slot drop success: "+listSlotDropSuccess.toString())
+                        for(item in listSlotDropSuccess) {
+                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
+                            if(index!=-1) {
+                                if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatus == "") {
+                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
+                                    _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
+                                    _state.value.logSyncOrder!!.productDetails[index].amount = "${_state.value.logSyncOrder!!.productDetails[index].quantity!!*_state.value.logSyncOrder!!.productDetails[index].price!!.toInt()}"
+                                } else {
+                                    val tmp = ProductSyncOrderRequest(
+                                        productCode = item.productCode,
+                                        productName = item.productName,
+                                        price = item.price.toString(),
+                                        quantity = item.inventory,
+                                        discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
+                                        amount = (item.inventory*item.price).toString(),
+                                        deliveryStatus = "success",
+                                        slot = item.slot,
+                                        cabinetCode = "MT01",
+                                        deliveryStatusNote = "",
+                                    )
+                                    _state.value.logSyncOrder!!.productDetails.add(tmp)
+                                }
+                            }
+                        }
+                    }
+                    logger.info("dghfghgfhhfjhj: ${ _state.value.logSyncOrder!!.productDetails}")
+                    // Sync order
+                    var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrder,
+                    )
+                    if(listSyncOrder.isNullOrEmpty()) {
+                        listSyncOrder = arrayListOf()
+                    }
+                    listSyncOrder.add(_state.value.logSyncOrder!!)
+                    baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+
+                    if(_state.value.nameMethodPayment != "cash") {
                         // Update delivery status
                         var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
                             type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
@@ -902,6 +911,8 @@ class HomeViewModel @Inject constructor (
                                 orderCode = _state.value.orderCode,
                                 deliveryStatus = "failed",
                                 productCode = item.productCode,
+                                deliveryStatusNote = item.messDrop,
+                                slot = item.slot,
                                 isSent = false,
                             )
                             listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
@@ -913,6 +924,8 @@ class HomeViewModel @Inject constructor (
                                 orderCode = _state.value.orderCode,
                                 deliveryStatus = "success",
                                 productCode = item.productCode,
+                                deliveryStatusNote = "",
+                                slot = item.slot,
                                 isSent = false,
                             )
                             listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
@@ -1445,6 +1458,8 @@ class HomeViewModel @Inject constructor (
                                     androidId = item.androidId,
                                     deliveryStatus = item.deliveryStatus,
                                     productCode = item.productCode,
+                                    deliveryStatusNote = item.deliveryStatusNote,
+                                    slot = item.slot,
                                 )
                                 try {
                                     val response = homeRepository.updateDeliveryStatus(updateDeliveryStatus)
@@ -1622,6 +1637,8 @@ class HomeViewModel @Inject constructor (
                                 androidId = item.androidId,
                                 deliveryStatus = item.deliveryStatus,
                                 productCode = item.productCode,
+                                deliveryStatusNote = item.deliveryStatusNote,
+                                slot = item.slot,
                             )
                             try {
                                 val response = homeRepository.updateDeliveryStatus(updateDeliveryStatus)
@@ -2540,47 +2557,48 @@ class HomeViewModel @Inject constructor (
                     val listProductInCart = _state.value.listSlotInCard
                     val currentTime = LocalDateTime.now().toDateTimeString()
 
+                    val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
+                    for (item in listProductInCart) {
+                        val slot = homeRepository.getSlotDrop(item.productCode)
+                        val productDetailRequest = ProductSyncOrderRequest(
+                            productCode = item.productCode,
+                            productName = item.productName,
+                            price = item.price.toString(),
+                            quantity = item.inventory,
+                            discount = 0,
+                            amount = (item.inventory*item.price).toString(),
+                            slot = slot!!.slot,
+                            deliveryStatus = "",
+                            cabinetCode = "MT01",
+                            deliveryStatusNote = "",
+                        )
+                        productDetails.add(productDetailRequest)
+                    }
+                    val logSyncOrder = LogSyncOrder(
+                        machineCode = _state.value.initSetup!!.vendCode,
+                        orderCode = orderCode,
+                        androidId = _state.value.initSetup!!.androidId,
+                        orderTime = currentTime,
+                        totalAmount = totalAmount,
+                        totalDiscount = totalDiscount,
+                        paymentAmount = paymentAmount,
+                        paymentMethodId = paymentMethodId,
+                        paymentTime = currentTime,
+                        timeSynchronizedToServer = currentTime,
+                        timeReleaseProducts = currentTime,
+                        rewardType = rewardType,
+                        rewardValue = rewardValue.toString(),
+                        rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
+                        paymentStatus = "success",
+                        deliveryStatus = "success",
+                        voucherCode = voucherCode,
+                        productDetails = productDetails,
+                        isSent = false,
+                    )
+
                     val listProductDetailRequest: ArrayList<ProductDetailRequest> = arrayListOf()
                     when(_state.value.nameMethodPayment) {
                         "cash" -> {
-                            val productDetails: ArrayList<ProductSyncOrderRequest> = arrayListOf()
-                            for (item in listProductInCart) {
-                                val slot = homeRepository.getSlotDrop(item.productCode)
-                                val productDetailRequest = ProductSyncOrderRequest(
-                                    productCode = item.productCode,
-                                    productName = item.productName,
-                                    price = item.price.toString(),
-                                    quantity = item.inventory,
-                                    discount = 0,
-                                    amount = (item.inventory*item.price).toString(),
-                                    slot = slot!!.slot,
-                                    deliveryStatus = "",
-                                    cabinetCode = "MT01",
-                                )
-                                productDetails.add(productDetailRequest)
-                            }
-                            val logSyncOrder = LogSyncOrder(
-                                machineCode = _state.value.initSetup!!.vendCode,
-                                orderCode = orderCode,
-                                androidId = _state.value.initSetup!!.androidId,
-                                orderTime = currentTime,
-                                totalAmount = totalAmount,
-                                totalDiscount = totalDiscount,
-                                paymentAmount = paymentAmount,
-                                paymentMethodId = paymentMethodId,
-                                paymentTime = currentTime,
-                                timeSynchronizedToServer = currentTime,
-                                timeReleaseProducts = currentTime,
-                                rewardType = rewardType,
-                                rewardValue = rewardValue.toString(),
-                                rewardMaxValue = rewardMaxValue.toString().toInt() ?: 0,
-                                paymentStatus = "success",
-                                deliveryStatus = "success",
-                                voucherCode = voucherCode,
-                                productDetails = productDetails,
-                                isSent = false,
-                            )
-
                             logger.debug("method payment: cash")
                             val initSetup: InitSetup = baseRepository.getDataFromLocal(
                                 type = object : TypeToken<InitSetup>() {}.type,
@@ -2632,12 +2650,12 @@ class HomeViewModel @Inject constructor (
                                 androidId = _state.value.initSetup!!.androidId,
                                 orderCode = orderCode,
                                 orderTime = orderTime,
-//                                totalAmount = totalAmount,
-//                                totalDiscount = totalDiscount,
-//                                paymentAmount = paymentAmount,
-                                totalAmount = 1000,
+                                totalAmount = totalAmount,
                                 totalDiscount = totalDiscount,
-                                paymentAmount = 1000,
+                                paymentAmount = paymentAmount,
+//                                totalAmount = 1000,
+//                                totalDiscount = totalDiscount,
+//                                paymentAmount = 1000,
                                 paymentMethodId = paymentMethodId,
                                 storeId = storeId,
                                 productDetails = listProductDetailRequest,
@@ -2654,6 +2672,7 @@ class HomeViewModel @Inject constructor (
                                     orderCode = orderCode,
                                     imageBitmap = imageBitmap,
                                     isShowQrCode = true,
+                                    logSyncOrder = logSyncOrder,
                                 ) }
                                 startCountdownPaymentByOnline(orderCode = orderCode, storeId = storeId)
                             } else {

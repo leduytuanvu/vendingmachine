@@ -1,7 +1,10 @@
 package com.leduytuanvu.vendingmachine.features.settings.data.remote
 
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
+import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
+import com.leduytuanvu.vendingmachine.features.settings.data.model.request.EndOfSessionRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataPaymentMethodResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.InformationOfMachineResponse
@@ -43,4 +46,8 @@ interface SettingsApi {
     @Headers("Content-Type: application/json", "Accept-Language: en-US")
     @GET("/product-service/product_to_machine/image_by_machine/{vend_code}")
     suspend fun getListImageOfProduct(@Path("vend_code") vendCode: String): BaseListResponse<ImageResponse>
+
+    @Headers("Content-Type: application/json", "Accept-Language: en-US")
+    @POST("/machine-service/vm/end_of_session")
+    suspend fun endOfSession(@Body endOfSessionRequest: EndOfSessionRequest): BaseResponse<String>
 }

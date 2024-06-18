@@ -12,7 +12,8 @@ data class Slot(
     var status: Int,
     var slotCombine: Int,
     var isLock: Boolean,
-    var isEnable: Boolean
+    var isEnable: Boolean,
+    var messDrop: String,
 ) {
     constructor(
         productCode: String,
@@ -31,6 +32,7 @@ data class Slot(
         status = 1,
         slotCombine = 0,
         isLock = false,
-        isEnable = true
+        isEnable = true,
+        messDrop = "",
     )
 }

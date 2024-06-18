@@ -24,7 +24,6 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.pathFilePaymentMethod
 import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.pathFolderImagePayment
-import com.leduytuanvu.vendingmachine.core.util.pathFolderImageProduct
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
@@ -36,13 +35,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Arrays
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -234,7 +231,8 @@ class InitSetupViewModel @Inject constructor(
                                                     status = 1,
                                                     slotCombine = 0,
                                                     isLock = false,
-                                                    isEnable = true
+                                                    isEnable = true,
+                                                    messDrop = "",
                                                 )
                                             )
                                         }

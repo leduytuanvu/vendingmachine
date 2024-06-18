@@ -73,13 +73,24 @@ class SettingsViewModel @Inject constructor (
                 )!!
                 var countTransactionByCash = 0
                 var amountTransactionByCash = 0
+                var countTransactionByOnline = 0
+                var amountTransactionByOnline = 0
                 if(listSyncOrder.isNotEmpty()) {
                     if(initSetup.timeClosingSession.isEmpty()) {
                         for(item in listSyncOrder) {
-                            countTransactionByCash+=1
-                            for(itemTmp in item.productDetails) {
-                                if(itemTmp.deliveryStatus == "success") {
-                                    amountTransactionByCash+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
+                            if(item.paymentMethodId=="cash") {
+                                countTransactionByCash+=1
+                                for(itemTmp in item.productDetails) {
+                                    if(itemTmp.deliveryStatus == "success") {
+                                        amountTransactionByCash+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
+                                    }
+                                }
+                            } else {
+                                countTransactionByOnline+=1
+                                for(itemTmp in item.productDetails) {
+                                    if(itemTmp.deliveryStatus == "success") {
+                                        amountTransactionByOnline+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
+                                    }
                                 }
                             }
                         }
@@ -92,6 +103,8 @@ class SettingsViewModel @Inject constructor (
                     initSetup = initSetup,
                     countTransactionByCash = countTransactionByCash,
                     amountTransactionByCash = amountTransactionByCash,
+                    countTransactionByOnline = countTransactionByOnline,
+                    amountTransactionByOnline = amountTransactionByOnline,
                 ) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }

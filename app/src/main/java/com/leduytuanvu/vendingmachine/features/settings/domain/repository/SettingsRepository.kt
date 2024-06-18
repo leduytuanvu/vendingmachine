@@ -1,7 +1,9 @@
 package com.leduytuanvu.vendingmachine.features.settings.domain.repository
 
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
+import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
+import com.leduytuanvu.vendingmachine.features.settings.data.model.request.EndOfSessionRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.DataInformationMachineResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.ImageResponse
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
@@ -23,4 +25,5 @@ interface SettingsRepository {
     suspend fun getInformationOfMachine() : DataInformationMachineResponse
     suspend fun getSerialSimId() : String
     suspend fun getListFileNameInFolder(folderPath: String) : ArrayList<String>
+    suspend fun endOfSession(endOfSessionRequest: EndOfSessionRequest) : BaseResponse<String>
 }
