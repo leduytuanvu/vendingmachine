@@ -13,16 +13,17 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDoor
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogError
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogFill
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSensor
-import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSpring
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogStatus
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogTemperature
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateInventory
+import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.EventBus
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogDepositWithdrawServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogUpdateInventoryServer
@@ -30,6 +31,8 @@ import com.leduytuanvu.vendingmachine.core.util.toBase64
 import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
 import com.leduytuanvu.vendingmachine.core.util.toId
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDateTime
 import java.io.File
 import java.lang.reflect.Type
@@ -154,7 +157,7 @@ class BaseRepositoryImpl @Inject constructor(
                 username = username,
                 eventTime = LocalDateTime.now().toDateTimeString(),
             )
-            var listLogServerLocal = arrayListOf<LogsLocal>()
+            var listLogServerLocal: ArrayList<LogsLocal>? = arrayListOf()
             val logServerLocal = LogsLocal (
                 eventId = LocalDateTime.now().toId(),
                 eventType = "authy",
@@ -164,7 +167,10 @@ class BaseRepositoryImpl @Inject constructor(
                 isSent = false,
             )
             if (localStorageDatasource.checkFileExists(pathFileLogServer)) {
-                listLogServerLocal = localStorageDatasource.getDataFromPath(pathFileLogServer)!!
+                listLogServerLocal = localStorageDatasource.getDataFromPath(pathFileLogServer)
+            }
+            if(listLogServerLocal==null) {
+                listLogServerLocal = arrayListOf()
             }
             listLogServerLocal.add(logServerLocal)
             localStorageDatasource.writeData(

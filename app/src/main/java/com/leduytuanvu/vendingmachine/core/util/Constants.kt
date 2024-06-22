@@ -44,11 +44,15 @@ const val pathFileUpdateDeliveryStatus = "/sdcard/VendingMachineData/Log/UpdateD
 const val pathFileUpdateTrackingAds = "/sdcard/VendingMachineData/Log/UpdateTrackingAds.json"
 
 val itemsPort = listOf(
+    AnnotatedString("ttyS0"),
     AnnotatedString("ttyS1"),
     AnnotatedString("ttyS2"),
     AnnotatedString("ttyS3"),
     AnnotatedString("ttyS4"),
     AnnotatedString("ttyS5"),
+    AnnotatedString("ttyS6"),
+    AnnotatedString("ttyS7"),
+    AnnotatedString("ttyS8"),
 )
 
 val itemsTypeVendingMachine = listOf(

@@ -47,6 +47,67 @@ Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_Por
     return 0;
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_openPortVendingMachineXY(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {
+    // Convert jstring to const char*
+    const char *nativePath = env->GetStringUTFChars(path, JNI_FALSE);
+    const char *nativePortName = env->GetStringUTFChars(portName, JNI_FALSE);
+    if (nativePath == nullptr || nativePortName == nullptr) return -1; // OutOfMemoryError already thrown
+
+    // Construct full path
+    char fullPath[256];
+    snprintf(fullPath, sizeof(fullPath), "%s%s", nativePath, nativePortName);
+
+    // Open the serial port
+    int serialPortVendingMachine = open(fullPath, O_RDWR | O_NOCTTY | O_SYNC);
+    env->ReleaseStringUTFChars(path, nativePath);
+    env->ReleaseStringUTFChars(portName, nativePortName);
+    if (serialPortVendingMachine == -1) return -1;
+
+    speed_t speed;
+    switch (baudRate) {
+        case 9600: speed = B9600; break;
+        case 57600: speed = B57600; break;
+            // Handle other baud rates as necessary
+        default: speed = B9600; // Default to B9600 if no match
+    }
+
+    // Configure serial port settings
+    struct termios tty{};
+    if (tcgetattr(serialPortVendingMachine, &tty) != 0) {
+        close(serialPortVendingMachine);
+        return -1;
+    }
+
+    // Set input and output baud rates
+    cfsetispeed(&tty, speed);
+    cfsetospeed(&tty, speed);
+
+    // Configure parity checking
+    tty.c_cflag &= ~PARENB;  // Clear parity enable (disable parity)
+    tty.c_cflag &= ~CSTOPB;  // Use one stop bit
+    tty.c_cflag &= ~CSIZE;   // Clear current char size mask
+    tty.c_cflag |= CS8;      // 8 bits per byte
+
+    // Configure other flags
+    tty.c_cflag |= CREAD | CLOCAL;   // Turn on the receiver and set local mode
+    tty.c_lflag &= ~(ECHO | ECHOE | ECHONL | ICANON | ISIG); // Make raw
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY | IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); // Make raw
+    tty.c_oflag &= ~(OPOST | ONLCR); // Make raw
+
+    tty.c_cc[VTIME] = 0; // No timeout
+    tty.c_cc[VMIN] = 0;  // No minimum characters
+
+    // Apply the settings
+    if (tcsetattr(serialPortVendingMachine, TCSANOW, &tty) != 0) {
+        close(serialPortVendingMachine);
+        return -1;
+    }
+
+    return serialPortVendingMachine;
+}
+
+
 extern "C" JNIEXPORT jint
 Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_writeDataPortVendingMachine(JNIEnv *env, jobject, jbyteArray data) {
 if (serialPortVendingMachine == -1) return -1;

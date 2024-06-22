@@ -24,8 +24,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -33,9 +38,18 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,9 +57,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.leduytuanvu.vendingmachine.R
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.EditTextComposable
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseNumberComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
+import com.leduytuanvu.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
 import com.leduytuanvu.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.util.Logger
@@ -143,6 +161,15 @@ fun SetupSlotContent(
     nestedScrollConnection: NestedScrollConnection,
 ) {
     val localStorageDatasource = LocalStorageDatasource()
+    var inputNumberSetupSlot by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+//    var text by remember { mutableStateOf(TextFieldValue(state.initSetup!!.numberSlot.toString())) }
+    val keyboardControllerNumberSlot = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(state.initSetup) {
+        inputNumberSetupSlot = state.initSetup?.numberSlot.toString() ?: ""
+    }
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
         isWarning = state.isWarning,
@@ -197,27 +224,32 @@ fun SetupSlotContent(
         },
     )
     Scaffold(
-        modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-            detectTapGestures(
-                onTap = {
-                    onClick()
-                }
-            )
-        },
-    ) {
-        Column(
-            modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp).pointerInput(Unit) {
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
                         onClick()
                     }
                 )
             },
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            onClick()
+                        }
+                    )
+                },
             content = {
                 Row(
                     modifier = Modifier
                         .wrapContentHeight()
-                        .padding(bottom = 10.dp).pointerInput(Unit) {
+                        .padding(bottom = 10.dp)
+                        .pointerInput(Unit) {
                             detectTapGestures(
                                 onTap = {
                                     onClick()
@@ -268,17 +300,171 @@ fun SetupSlotContent(
                         )
                     })
                 }
-                LazyVerticalGrid(
-                    modifier = Modifier.pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
+
+                if(state.initSetup!=null) {
+//                    Spacer(modifier = Modifier.height(8.dp))
+//                    BodyTextComposable(title = "Number slot", fontSize = 18.sp)
+//                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(modifier = Modifier,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        Text("Number slot", fontSize = 18.sp)
+                        TextField(
+                            value = inputNumberSetupSlot,
+                            onValueChange = { newText ->
                                 onClick()
-                            }
+                                inputNumberSetupSlot = newText
+                            },
+                            modifier = Modifier
+                                .focusRequester(focusRequester).weight(1f).padding(start = 10.dp),
+                            textStyle = TextStyle(fontSize = 20.sp),
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            visualTransformation = VisualTransformation.None,
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardControllerNumberSlot?.hide()
+                                    focusManager.clearFocus()
+                                }
+                            )
                         )
-                    }.nestedScroll(nestedScrollConnection),
+                        CustomButtonComposable(
+                            title = "SAVE",
+                            titleAlignment = TextAlign.Center,
+                            cornerRadius = 4.dp,
+                            height = 56.dp,
+                            wrap = true,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            paddingStart = 10.dp,
+                            paddingBottom = 10.dp,
+                            paddingTop = 11.dp,
+                        ) {
+                            onClick()
+                            keyboardControllerNumberSlot?.hide()
+                            focusManager.clearFocus()
+                            if(inputNumberSetupSlot != state.initSetup!!.numberSlot.toString()) {
+                                viewModel.showDialogUpdateNumberSlot(inputNumberSetupSlot)
+                            }
+//                          viewModel.updateNumberSlotInLocal(inputNumberSetupSlot)
+                        }
+                    }
+//                    Spacer(modifier = Modifier.height(2.dp))
+//                    TitleAndEditTextComposable(
+//                        title = "Number slot",
+//                        paddingBottom = 12.dp,
+//                        keyboardTypeNumber = true,
+//                        initText = state.initSetup.numberSlot.toString()
+//                    ) {
+//                        onClick()
+//                        inputNumberSetupSlot = it
+//                    }
+                } else {
+//                    TitleAndEditTextComposable(
+//                        title = "Number slot",
+//                        paddingBottom = 12.dp,
+//                        keyboardTypeNumber = true,
+//                        initText = ""
+//                    ) {
+//                        onClick()
+//                        inputNumberSetupSlot = it
+//                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    BodyTextComposable(title = "Number slot")
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row {
+                        TextField(
+                            value = "",
+                            onValueChange = { newText ->
+                                onClick()
+                                inputNumberSetupSlot = newText
+                            },
+                            modifier = Modifier
+                                .width(200.dp)
+                                .focusRequester(focusRequester),
+                            textStyle = TextStyle(fontSize = 20.sp),
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            visualTransformation = VisualTransformation.None,
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardControllerNumberSlot?.hide()
+                                    focusManager.clearFocus()
+                                }
+                            )
+                        )
+                        CustomButtonComposable(
+                            title = "SAVE",
+                            titleAlignment = TextAlign.Center,
+                            cornerRadius = 4.dp,
+                            height = 60.dp,
+                            wrap = true,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            paddingBottom = 10.dp,
+                        ) {
+
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+//                Row() {
+//                    BodyTextComposable(title = "Number slot", fontWeight = FontWeight.Bold)
+//                    Spacer(modifier = Modifier.height(12.dp))
+//                    if(state.initSetup!=null) {
+//                        TitleAndEditTextComposable(
+//                            title = "",
+//                            paddingBottom = 12.dp,
+//                            initText = state.initSetup.numberSlot.toString()
+//                        ) {
+//                            onClick()
+//                            inputNumberSetupSlot = it
+//                        }
+//                    } else {
+//                        TitleAndEditTextComposable(
+//                            title = "",
+//                            paddingBottom = 12.dp,
+//                            initText = ""
+//                        ) {
+//                            onClick()
+//                            inputNumberSetupSlot = it
+//                        }
+//                    }
+//
+//
+//                    CustomButtonComposable(
+//                        title = "SAVE",
+//                        wrap = true,
+//                        cornerRadius = 4.dp,
+//                        height = 60.dp,
+//                        fontWeight = FontWeight.Bold,
+//                        fontSize = 20.sp,
+//                        paddingBottom = 50.dp,
+//                    ) {
+//                        onClick()
+//                        keyboardController?.hide()
+////                    viewModel.updateVendCodeInLocal(inputVendingMachineCode)
+//                    }
+//                }
+
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    onClick()
+                                }
+                            )
+                        }
+                        .nestedScroll(nestedScrollConnection),
                     columns = GridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-
                 ) {
                     items(state.listSlot.size) { index ->
                         val slot = state.listSlot[index]
@@ -287,31 +473,41 @@ fun SetupSlotContent(
                         if(slot.isEnable) {
                             if(slot.status==1) {
                                 Box(
-                                    modifier = Modifier.pointerInput(Unit) {
-                                        detectTapGestures(
-                                            onTap = {
-                                                onClick()
-                                            }
-                                        )
-                                    }
-                                        .height(546.dp)
-                                        .padding(bottom = 10.dp)
-                                        .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp))
-                                ) {
-                                    Column(modifier = Modifier.padding(12.dp).pointerInput(Unit) {
-                                        detectTapGestures(
-                                            onTap = {
-                                                onClick()
-                                            }
-                                        )
-                                    }) {
-                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
+                                    modifier = Modifier
+                                        .pointerInput(Unit) {
                                             detectTapGestures(
                                                 onTap = {
                                                     onClick()
                                                 }
                                             )
-                                        }, horizontalArrangement = Arrangement.Start) {
+                                        }
+                                        .height(614.dp)
+//                                        .height(546.dp)
+                                        .padding(bottom = 10.dp)
+                                        .border(
+                                            width = 0.4.dp,
+                                            color = Color.Black,
+                                            shape = RoundedCornerShape(10.dp)
+                                        )
+                                ) {
+                                    Column(modifier = Modifier
+                                        .padding(12.dp)
+                                        .pointerInput(Unit) {
+                                            detectTapGestures(
+                                                onTap = {
+                                                    onClick()
+                                                }
+                                            )
+                                        }) {
+                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier
+                                            .fillMaxWidth()
+                                            .pointerInput(Unit) {
+                                                detectTapGestures(
+                                                    onTap = {
+                                                        onClick()
+                                                    }
+                                                )
+                                            }, horizontalArrangement = Arrangement.Start) {
                                             Text(
                                                 text = if(slot.isCombine == "yes") "${slot.slot}+${slot.slot+1}" else "${slot.slot}",
                                                 fontSize = 24.sp,
@@ -360,10 +556,14 @@ fun SetupSlotContent(
                                                         .height(34.dp)
                                                         .clickable {
                                                             onClick()
-                                                            if(isChecked) {
-                                                                viewModel.removeSlotToStateListAddMore(slot)
+                                                            if (isChecked) {
+                                                                viewModel.removeSlotToStateListAddMore(
+                                                                    slot
+                                                                )
                                                             } else {
-                                                                viewModel.addSlotToStateListAddMore(slot)
+                                                                viewModel.addSlotToStateListAddMore(
+                                                                    slot
+                                                                )
                                                             }
                                                             isChecked = !isChecked
                                                         },
@@ -477,7 +677,8 @@ fun SetupSlotContent(
                                                     fontWeight = FontWeight.Bold,
                                                 )
                                             }
-                                        } else {
+                                        }
+                                        else {
                                             if(isLock) {
                                                 CustomButtonComposable(
                                                     title = "UNLOCK SLOT",
@@ -493,27 +694,101 @@ fun SetupSlotContent(
                                                     fontWeight = FontWeight.Bold,
                                                 )
                                             } else {
-                                                if (slot.slot == 10 || slot.slot == 20 || slot.slot == 30 || slot.slot == 40 || slot.slot == 50 || slot.slot == 60) {
-
+                                                if (slot.slot == 10
+                                                    || slot.slot == 20
+                                                    || slot.slot == 30
+                                                    || slot.slot == 40
+                                                    || slot.slot == 50
+                                                    || slot.slot == 60
+                                                    || slot.slot == 70
+                                                    || slot.slot == 80
+                                                    || slot.slot == 90
+                                                    || slot.slot == 100
+                                                    || slot.slot == 110
+                                                    || slot.slot == 120
+                                                    || slot.slot == 130
+                                                    || slot.slot == 140
+                                                    || slot.slot == 150
+                                                    || slot.slot == 160
+                                                    || slot.slot == 170
+                                                    || slot.slot == 180
+                                                    || slot.slot == 190
+                                                    || slot.slot == 200
+                                                    || slot.slot == 210
+                                                    || slot.slot == 220
+                                                    || slot.slot == 230
+                                                    || slot.slot == 240
+                                                    || slot.slot == 250
+                                                    || slot.slot == 260
+                                                    || slot.slot == 270
+                                                    || slot.slot == 280
+                                                    || slot.slot == 290
+                                                    || slot.slot == 300
+                                                    ) {
+                                                    CustomButtonComposable(
+                                                        title = "ROTATE",
+                                                        titleAlignment = TextAlign.Center,
+                                                        cornerRadius = 4.dp,
+                                                        height = 60.dp,
+                                                        function = {
+                                                            onClick()
+                                                            viewModel.productDispense(0, slot.slot)
+                                                        },
+                                                        backgroundColor = Color.Blue,
+                                                        fontSize = 20.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
                                                 } else {
-                                                    val slotNext = state.listSlot[index+1]
-                                                    if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
-                                                        CustomButtonComposable(
-                                                            title = "MERGE SLOT",
-                                                            titleAlignment = TextAlign.Center,
-                                                            cornerRadius = 4.dp,
-                                                            height = 60.dp,
-                                                            function = {
-                                                                onClick()
-                                                                viewModel.mergeSlot(slot)
-                                                            },
-                                                            fontSize = 20.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                        )
+                                                    Logger.info("index: $slot.slot, list slot: ${state.listSlot.size}")
+                                                    if(slot.slot<state.listSlot.size) {
+                                                        val slotNext = state.listSlot[index+1]
+                                                        if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
+                                                            CustomButtonComposable(
+                                                                title = "MERGE SLOT",
+                                                                titleAlignment = TextAlign.Center,
+                                                                cornerRadius = 4.dp,
+                                                                height = 60.dp,
+                                                                function = {
+                                                                    onClick()
+                                                                    viewModel.mergeSlot(slot)
+                                                                },
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                            )
+                                                            CustomButtonComposable(
+                                                                title = "ROTATE",
+                                                                titleAlignment = TextAlign.Center,
+                                                                cornerRadius = 4.dp,
+                                                                height = 60.dp,
+                                                                paddingTop = 10.dp,
+                                                                function = {
+                                                                    onClick()
+                                                                    viewModel.productDispense(0, slot.slot)
+                                                                },
+                                                                backgroundColor = Color.Blue,
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                            )
+                                                        } else {
+                                                            CustomButtonComposable(
+                                                                title = "ROTATE",
+                                                                titleAlignment = TextAlign.Center,
+                                                                cornerRadius = 4.dp,
+                                                                height = 60.dp,
+                                                                function = {
+                                                                    onClick()
+                                                                    viewModel.productDispense(0, slot.slot)
+                                                                },
+                                                                backgroundColor = Color.Blue,
+                                                                fontSize = 20.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
+
                                     }
                                 }
                             }
@@ -522,17 +797,26 @@ fun SetupSlotContent(
                                     modifier = Modifier
                                         .height(546.dp)
                                         .padding(bottom = 10.dp)
-                                        .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
+                                        .border(
+                                            width = 0.4.dp,
+                                            color = Color.Black,
+                                            shape = RoundedCornerShape(10.dp)
+                                        ),
                                 ) {
 
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             Box(
                                 modifier = Modifier
                                     .height(546.dp)
                                     .padding(bottom = 10.dp)
-                                    .border(width = 0.4.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)),
+                                    .border(
+                                        width = 0.4.dp,
+                                        color = Color.Black,
+                                        shape = RoundedCornerShape(10.dp)
+                                    ),
                                 contentAlignment = Alignment.Center // Center the content
                             ) {
                                 Text("Slot have problems!")

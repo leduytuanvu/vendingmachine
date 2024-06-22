@@ -246,6 +246,8 @@ fun SetupSystemMainContentComposable(
     var inputLowestTempWarning by remember { mutableStateOf("") }
     var inputTemperature by remember { mutableStateOf("") }
     var selectedItemFullScreenAds by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemAutoTurnOnTurnOffLight by remember { mutableStateOf(AnnotatedString("ON")) }
+    var selectedItemAutoResetAppEveryday by remember { mutableStateOf(AnnotatedString("ON")) }
     var selectedItemWithdrawalAllowed by remember { mutableStateOf(AnnotatedString("ON")) }
     var selectedItemAutoStartApplication by remember { mutableStateOf(AnnotatedString("ON")) }
     var selectedItemLayoutHomeScreen by remember { mutableStateOf(AnnotatedString("3")) }
@@ -270,6 +272,15 @@ fun SetupSystemMainContentComposable(
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp - 40.dp
     val seralSimId = state.serialSimId.ifEmpty { "No sim found" }
+    val selectedTimeReset = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
+    val onTimeSelectedReset: (Int, Int) -> Unit = { hour, minute ->
+        selectedTimeReset.value = Pair(hour, minute)
+    }
+    var partsReset by remember {
+        mutableStateOf(if (state.initSetup != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0"))
+    }
+    var hourReset by remember { mutableIntStateOf(partsReset[0].toIntOrNull() ?: 0) }
+    var minuteReset by remember { mutableIntStateOf(partsReset.getOrNull(1)?.toIntOrNull() ?: 0) }
 
     LaunchedEffect(state.initSetup) {
         inputVendingMachineCode = state.initSetup?.vendCode ?: ""
@@ -279,6 +290,8 @@ fun SetupSystemMainContentComposable(
         inputLowestTempWarning = state.initSetup?.lowestTempWarning ?: ""
         inputTemperature = state.initSetup?.temperature ?: ""
         selectedItemFullScreenAds = AnnotatedString(state.initSetup?.fullScreenAds ?: "ON")
+        selectedItemAutoResetAppEveryday = AnnotatedString(state.initSetup?.autoResetAppEveryday ?: "ON")
+        selectedItemAutoTurnOnTurnOffLight = AnnotatedString(state.initSetup?.autoTurnOnTurnOffLight ?: "ON")
         selectedItemWithdrawalAllowed = AnnotatedString(state.initSetup?.withdrawalAllowed ?: "ON")
         selectedItemAutoStartApplication = AnnotatedString(state.initSetup?.autoStartApplication ?: "ON")
         selectedItemLayoutHomeScreen = AnnotatedString(state.initSetup?.layoutHomeScreen ?: "3")
@@ -293,6 +306,10 @@ fun SetupSystemMainContentComposable(
         partsTurnOffLight = if (state.initSetup?.timeTurnOffLight != null) state.initSetup.timeTurnOffLight.split(":") else listOf("0", "0")
         hourTurnOffLight = partsTurnOffLight[0].toIntOrNull() ?: 0
         minuteTurnOffLight = partsTurnOffLight.getOrNull(1)?.toIntOrNull() ?: 0
+        partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
+        hourReset = partsReset[0].toIntOrNull() ?: 0
+        minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
+        Logger.info("hour reset: $hourReset, minute reset: $minuteReset")
     }
 
     Column(
@@ -336,6 +353,7 @@ fun SetupSystemMainContentComposable(
 
         BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold, paddingBottom = 12.dp)
         BodyTextComposable(title = "Id: ${state.informationOfMachine?.id ?: ""}", paddingBottom = 10.dp)
+        BodyTextComposable(title = "Android id: ${state.informationOfMachine?.androidId ?: ""}", paddingBottom = 10.dp)
         BodyTextComposable(title = "Code: ${state.informationOfMachine?.code ?: ""}", paddingBottom = 10.dp)
         BodyTextComposable(title = "Company name: ${state.informationOfMachine?.companyName ?: ""}", paddingBottom = 10.dp)
         BodyTextComposable(title = "Hotline: ${state.informationOfMachine?.hotline ?: ""}", paddingBottom = 10.dp)
@@ -476,6 +494,27 @@ fun SetupSystemMainContentComposable(
             viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
         }
 
+        BodyTextComposable(title = "Auto turn on light and turn off light", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = selectedItemAutoTurnOnTurnOffLight, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
+            selectedItemAutoTurnOnTurnOffLight = it
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.updateAutoTurnOnTurnOffLightInLocal(selectedItemAutoTurnOnTurnOffLight.toString())
+        }
+
         Row(modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 18.dp).pointerInput(Unit) {
@@ -547,6 +586,60 @@ fun SetupSystemMainContentComposable(
             viewModel.updateTimeTurnOnTurnOffLightInLocal(
                 timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
                 timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
+            )
+        }
+
+        BodyTextComposable(title = "Auto reset app every day", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+        TitleAndDropdownComposable(title = "", items = listOf(
+            AnnotatedString("ON"),
+            AnnotatedString("OFF"),
+        ), selectedItem = selectedItemAutoResetAppEveryday, paddingTop = 2.dp, paddingBottom = 12.dp) {
+            onClick()
+            selectedItemAutoResetAppEveryday = it
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            wrap = true,
+            cornerRadius = 4.dp,
+            height = 60.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 50.dp,
+        ) {
+            onClick()
+            viewModel.updateAutoResetAppEveryDayInLocal(selectedItemAutoResetAppEveryday.toString())
+        }
+
+        BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
+        if(state.initSetup!=null){
+            Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
+            TimePickerWrapperComposable(
+                defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
+                defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
+                onTimeSelected = onTimeSelectedReset
+            )
+        } else {
+            Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
+            TimePickerWrapperComposable(
+                defaultHour = 0,
+                defaultMinute = 0,
+                onTimeSelected = onTimeSelectedReset
+            )
+        }
+        CustomButtonComposable(
+            title = "SAVE",
+            cornerRadius = 4.dp,
+            titleAlignment = TextAlign.Center,
+            height = 60.dp,
+            paddingTop = 18.dp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            paddingBottom = 30.dp,
+        ) {
+            onClick()
+            viewModel.saveSetTimeResetOnEveryDay(
+                hour = selectedTimeReset.value.first,
+                minute = selectedTimeReset.value.second,
             )
         }
 
@@ -797,85 +890,85 @@ fun SetupSystemMainContentComposable(
             onClick()
             viewModel.getTemp()
         }
-        CustomButtonComposable(
-            title = "ON LIGHT",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.onLight()
-        }
-        CustomButtonComposable(
-            title = "OFF LIGHT",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.offLight()
-        }
 //        CustomButtonComposable(
-//            title = "RESET FACTORY",
+//            title = "ON LIGHT",
+//            wrap = true,
 //            cornerRadius = 4.dp,
 //            height = 60.dp,
 //            fontWeight = FontWeight.Bold,
-//            titleAlignment = TextAlign.Center,
 //            fontSize = 20.sp,
-//            paddingBottom = 20.dp,
+//            paddingBottom = 50.dp,
 //        ) {
-//            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
+//            onClick()
+//            viewModel.onLight()
+//        }
+//        CustomButtonComposable(
+//            title = "OFF LIGHT",
+//            wrap = true,
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp,
+//            paddingBottom = 50.dp,
+//        ) {
+//            onClick()
+//            viewModel.offLight()
+//        }
+////        CustomButtonComposable(
+////            title = "RESET FACTORY",
+////            cornerRadius = 4.dp,
+////            height = 60.dp,
+////            fontWeight = FontWeight.Bold,
+////            titleAlignment = TextAlign.Center,
+////            fontSize = 20.sp,
+////            paddingBottom = 20.dp,
+////        ) {
+////            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
+////        }
+//
+//        CustomButtonComposable(
+//            title = "REFRESH",
+//            wrap = true,
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp,
+//            paddingBottom = 50.dp,
+//        ) {
+//            onClick()
+//            val randomSN = Random().nextInt(256).toByte()
+//
+//            // Define the LED status (0 for off, 1 for on)
+//            val ledStatus = 1 // Change this to 0 for turning off the LED
+//
+//            // Call the turnOnLed function with the generated SN and LED status
+////            turnOnLed()
+//            viewModel.turnOnLed()
 //        }
 
-        CustomButtonComposable(
-            title = "REFRESH",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            val randomSN = Random().nextInt(256).toByte()
-
-            // Define the LED status (0 for off, 1 for on)
-            val ledStatus = 1 // Change this to 0 for turning off the LED
-
-            // Call the turnOnLed function with the generated SN and LED status
-//            turnOnLed()
-            viewModel.turnOnLed()
-        }
-
-        CustomButtonComposable(
-            title = "ON",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.check1()
-        }
-        CustomButtonComposable(
-            title = "OFF",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.check2()
-        }
+//        CustomButtonComposable(
+//            title = "ON",
+//            wrap = true,
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp,
+//            paddingBottom = 50.dp,
+//        ) {
+//            onClick()
+//            viewModel.check1()
+//        }
+//        CustomButtonComposable(
+//            title = "OFF",
+//            wrap = true,
+//            cornerRadius = 4.dp,
+//            height = 60.dp,
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 20.sp,
+//            paddingBottom = 50.dp,
+//        ) {
+//            onClick()
+//            viewModel.check2()
+//        }
     }
 }

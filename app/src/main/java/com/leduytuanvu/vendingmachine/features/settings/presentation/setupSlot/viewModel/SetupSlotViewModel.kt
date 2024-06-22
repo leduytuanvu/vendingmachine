@@ -8,11 +8,9 @@ import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.DataRxCommunicateTTS4
 
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeRXCommunicateAvf
-import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
 import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 
 import com.leduytuanvu.vendingmachine.core.util.Event
@@ -22,13 +20,13 @@ import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
 
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
+import com.leduytuanvu.vendingmachine.features.home.presentation.viewModel.DropSensorResult
 
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Product
 import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,52 +54,32 @@ class SetupSlotViewModel @Inject constructor(
 
     private val _statusSlot = MutableStateFlow(false)
     val statusSlot: StateFlow<Boolean> = _statusSlot.asStateFlow()
+
+    private val _checkFirst = MutableStateFlow(false)
+    val checkFirst: StateFlow<Boolean> = _checkFirst.asStateFlow()
+
     fun loadInitSetupListSlotListProduct() {
         logger.debug("loadInitSetupListSlotListProduct")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
+                logger.debug("1")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
-                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine)
+                logger.debug("2")
+                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
                 }
-                portConnectionDatasource.startReadingVendingMachine()
+//                logger.debug("3")
+//                portConnectionDatasource.startReadingVendingMachine()
                 startCollectingData()
+                logger.debug("4")
                 val listSlot = settingsRepository.getListSlotFromLocal()
-//                for(item in listSlot) {
-//                    _statusSlot.value = false
-//                    var timeDelay = 50L
-//                    while (true) {
-//                        enquirySlot(slot = item.slot)
-//                        delay(timeDelay)
-//                        if(_statusSlot.value) {
-//                            item.isEnable = true
-//                            logger.info("slot ${item.slot} ok")
-//                            break
-//                        } else {
-//                            if(timeDelay<1050L) {
-//                                timeDelay+=50L
-//                            } else {
-//                                item.isEnable = false
-//                                logger.info("slot ${item.slot} not ok")
-//                                break
-//                            }
-//                        }
-//                    }
-////                    delay(1001)
-////                    if(statusSlot.value) {
-////                        item.isEnable = true
-////                        logger.info("slot ${item.slot} ok")
-////                    } else {
-////                        item.isEnable = false
-////                        logger.info("slot ${item.slot} not ok")
-////                    }
-//                }
                 val listProduct = settingsRepository.getListProductFromLocal()
+                logger.debug("5")
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -127,6 +105,86 @@ class SetupSlotViewModel @Inject constructor(
     fun showToast(mess: String) {
         viewModelScope.launch {
             sendEvent(Event.Toast(mess))
+        }
+    }
+
+    fun showDialogUpdateNumberSlot(numberSlot: String) {
+        viewModelScope.launch {
+            try {
+                if(numberSlot.toInt()>300 || numberSlot.toInt() < 0) {
+                    sendEvent(Event.Toast("Number slot must from 0 to 300"))
+                } else {
+                    _state.update { it.copy(
+                        numberSlot = numberSlot,
+                        isConfirm = true,
+                        nameFunction = "updateNumberSlot",
+                        titleDialogConfirm = "It will reset all slots. Are you sure you want to update number slots?",
+                    ) }
+                }
+            } catch (e: Exception) {
+                sendEvent(Event.Toast("Number slot must be a number!"))
+            }
+        }
+    }
+
+    fun updateNumberSlotInLocal() {
+        logger.debug("updateNumberSlotInLocal")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(
+                    isLoading = true,
+                    isConfirm = false,
+                ) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                initSetup.numberSlot = _state.value.numberSlot.toInt()
+                val listSlot: ArrayList<Slot> = arrayListOf()
+                for(i in 1..initSetup.numberSlot) {
+                    listSlot.add(
+                        Slot(
+                            slot = i,
+                            productCode = "",
+                            productName = "",
+                            inventory = 10,
+                            capacity = 10,
+                            price = 10000,
+                            isCombine = "no",
+                            springType = "lo xo don",
+                            status = 1,
+                            slotCombine = 0,
+                            isLock = false,
+                            isEnable = true,
+                            messDrop = "",
+                        )
+                    )
+                }
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "update number slot to ${initSetup.vendCode}",
+                    operationType = "setup number slot",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                baseRepository.writeDataToLocal(data = listSlot, path = pathFileSlot)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    listSlot = listSlot,
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "update number slot fail in SetupSystemViewModel/updateNumberSlotInLocal(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
         }
     }
 
@@ -286,7 +344,6 @@ class SetupSlotViewModel @Inject constructor(
                     if (item.slot == _state.value.slot!!.slot) {
                         if (_state.value.isInventory) {
                             item.inventory = number
-
                             val listSlotUpdateInventory = _state.value.listSlotUpdateInventory
                             val index = listSlotUpdateInventory.indexOfFirst { it.slot == item.slot }
                             if(index != -1) {
@@ -294,13 +351,19 @@ class SetupSlotViewModel @Inject constructor(
                             }
                             listSlotUpdateInventory.add(item)
                         } else if(_state.value.isCapacity) {
-
                             item.capacity = number
                             if (_state.value.slot!!.inventory > number) {
                                 item.inventory = number
                             }
                         } else {
-                            item.price = number * 1000
+//                            item.price = number * 1000
+                            for (itemTmp in _state.value.listSlot) {
+                                if(item.productCode == itemTmp.productCode) {
+                                    logger.info("product slot == ${itemTmp.slot}")
+                                    itemTmp.price = number * 1000
+                                }
+                            }
+
                         }
                         baseRepository.addNewFillLogToLocal(
                             machineCode = _state.value.initSetup!!.vendCode,
@@ -716,34 +779,53 @@ class SetupSlotViewModel @Inject constructor(
                             isConfirm = false,
                         )
                     }
-
                     if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                         portConnectionDatasource.startReadingVendingMachine()
                     }
                     portConnectionDatasource.startReadingVendingMachine()
-
-                    val listSlot = settingsRepository.getListLayoutFromServer()
-                    for (item in listSlot) {
-                        val product = settingsRepository.getProductByCodeFromLocal(item.productCode)
-                        if (product != null) {
-                            item.price = product.price
-                            item.productName = product.productName
+                    val listSlotFromServer = settingsRepository.getListLayoutFromServer()
+                    val listSlotFromLocal = settingsRepository.getListSlotFromLocal()
+                    logger.info("Size list slot from server: ${listSlotFromServer.size}, size list slot in local: ${listSlotFromLocal.size}")
+                    logger.info(listSlotFromServer.toString())
+                    var maxSlotFromServer = 0
+                    for (item in listSlotFromServer) {
+                        if (item.slot > maxSlotFromServer) {
+                            maxSlotFromServer = item.slot
                         }
                     }
-                    settingsRepository.writeListSlotToLocal(listSlot)
-                    baseRepository.addNewFillLogToLocal(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        fillType = "load layout from server",
-                        content = listSlot.toString(),
-                    )
+                    if(listSlotFromServer.size>listSlotFromLocal.size || maxSlotFromServer>listSlotFromLocal.size) {
+                        sendEvent(Event.Toast("Size list slot from server is ${listSlotFromServer.size} and max slot from server is ${maxSlotFromServer}, please choose number slot is ${listSlotFromServer.size} and number slot is ${maxSlotFromServer}"))
+                    } else {
+                        for (itemSlotServer in listSlotFromServer) {
+                            for (itemSlotLocal in listSlotFromLocal) {
+                                if(itemSlotServer.slot == itemSlotLocal.slot) {
+                                    logger.info("slot get from server = ${itemSlotServer.slot}")
+                                    val product = settingsRepository.getProductByCodeFromLocal(itemSlotServer.productCode)
+                                    logger.info("Product: ${product}")
+                                    if (product != null) {
+                                        itemSlotLocal.price = product.price
+                                        itemSlotLocal.productName = product.productName
+                                        itemSlotLocal.productCode = product.productCode
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                        settingsRepository.writeListSlotToLocal(listSlotFromLocal)
+                        baseRepository.addNewFillLogToLocal(
+                            machineCode = _state.value.initSetup!!.vendCode,
+                            fillType = "load layout from server",
+                            content = listSlotFromLocal.toString(),
+                        )
+                        sendEvent(Event.Toast("SUCCESS"))
+                    }
                     _state.update {
                         it.copy(
-                            listSlot = listSlot,
+                            listSlot = listSlotFromLocal,
                             nameFunction = "",
                             isLoading = false,
                         )
                     }
-                    sendEvent(Event.Toast("SUCCESS"))
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
                 }
@@ -773,6 +855,7 @@ class SetupSlotViewModel @Inject constructor(
                 "setFullInventory" -> setFullInventory()
                 "loadLayoutFromServer" -> loadLayoutFromServer()
                 "removeSlot" -> removeSlot()
+                "updateNumberSlot" -> updateNumberSlotInLocal()
             }
         }
     }
@@ -869,13 +952,27 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun processingDataFromVendingMachine(dataByteArray: ByteArray) {
-        val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
-        if (dataHexString.contains("00,5D,00,00,5D")) {
-            _statusSlot.value = true
-//            resultadd(true)
-        } else if (dataHexString.contains("00,5C,40,00,9C")) {
-//            result.add(false)
+        if(_checkFirst.value) {
+            val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
+            when (dataHexString) {
+                "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
+                "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
+                "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
+                "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
+                "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
+                "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
+                "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
+                "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00,5C,50,00,AC"))
+                else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+            }
         }
+//        if (dataHexString.contains("00,5D,00,00,5D")) {
+//            _statusSlot.value = true
+////            resultadd(true)
+//
+//        } else if (dataHexString.contains("00,5C,40,00,9C")) {
+//            sendEvent(Event.Toast("NOT_FOUND_THIS_SLOT"))
+//        }
     }
 
     fun enquirySlot(
@@ -893,6 +990,41 @@ class SetupSlotViewModel @Inject constructor(
                 0x55,
                 0xAA.toByte(),
             )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
+
+    fun productDispenseNotSensor(
+        numberBoard: Int = 0,
+        slot: Int,
+    ) {
+        val byteArraySlot: Byte = slot.toByte()
+        val byteArrayNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray = byteArrayOf(
+            byteArrayNumberBoard,
+            (0xFF - numberBoard).toByte(),
+            byteArraySlot,
+            (0xFF - slot).toByte(),
+            0x55,
+            0xAA.toByte(),
+        )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
+
+    fun productDispense(
+        numberBoard: Int = 0,
+        slot: Int,
+    ) {
+        _checkFirst.value = true
+        val byteArraySlot: Byte = slot.toByte()
+        val byteArrayNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray = byteArrayOf(
+            byteArrayNumberBoard,
+            (0xFF - numberBoard).toByte(),
+            byteArraySlot,
+            (0xFF - slot).toByte(),
+            0xAA.toByte(),
+            0x55,
+        )
         portConnectionDatasource.sendCommandVendingMachine(byteArray)
     }
 

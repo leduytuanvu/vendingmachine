@@ -71,7 +71,7 @@ class SetupPaymentViewModel @Inject constructor(
                 if(!portConnectionDatasource.checkPortCashBoxStillStarting()) {
                     portConnectionDatasource.startReadingCashBox()
                 }
-                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine)
+                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
                 }

@@ -14,8 +14,10 @@ data class InitSetup (
     var withdrawalAllowed: String,
     var autoStartApplication: String,
     var layoutHomeScreen: String,
+    var autoTurnOnTurnOffLight: String,
     var timeTurnOnLight: String,
     var timeTurnOffLight: String,
+    var autoResetAppEveryday: String,
     var timeResetOnEveryDay: String,
     var dropSensor: String,
     var inchingMode: String,
@@ -30,5 +32,6 @@ data class InitSetup (
     var timeoutPaymentByQrCode: String,
     var timeClosingSession: String,
     var timeStartSession: String,
+    var numberSlot: Int,
     var role: String,
 )

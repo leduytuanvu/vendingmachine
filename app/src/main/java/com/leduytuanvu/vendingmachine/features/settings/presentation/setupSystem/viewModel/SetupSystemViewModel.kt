@@ -1,6 +1,7 @@
 package com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewModel
 
 import android.content.Context
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -20,6 +21,8 @@ import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.Screens
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.core.util.sendEvent
+import com.leduytuanvu.vendingmachine.features.auth.data.model.request.LoginRequest
+import com.leduytuanvu.vendingmachine.features.auth.domain.repository.AuthRepository
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSystem.viewState.SetupSystemViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,6 +62,7 @@ const val ID: Byte = 0x00
 @HiltViewModel
 class SetupSystemViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val authRepository: AuthRepository,
     private val portConnectionDatasource: PortConnectionDatasource,
     private val byteArrays: ByteArrays,
     private val baseRepository: BaseRepository,
@@ -86,23 +90,31 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
+                logger.debug("1")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
+                logger.debug("2")
                 val serialSimId = settingsRepository.getSerialSimId()
-                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine)
+                logger.debug("3")
+                portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
+                logger.debug("4")
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
                 }
+                logger.debug("5")
                 portConnectionDatasource.startReadingVendingMachine()
+                logger.debug("6")
                 startCollectingData()
                 portConnectionDatasource.sendCommandVendingMachine(
                     byteArrays.vmReadTemp,
-
                 )
+                logger.debug("7")
                 if (baseRepository.isHaveNetwork(context)) {
+                    logger.debug("8")
                     val informationOfMachine = settingsRepository.getInformationOfMachine()
+                    logger.debug("9")
                     _state.update { it.copy(
                         initSetup = initSetup,
                         serialSimId = serialSimId,
@@ -110,6 +122,7 @@ class SetupSystemViewModel @Inject constructor(
                         isLoading = false,
                     ) }
                 } else {
+                    logger.debug("1")
                     _state.update { it.copy(
                         initSetup = initSetup,
                         serialSimId = serialSimId,
@@ -216,6 +229,39 @@ class SetupSystemViewModel @Inject constructor(
         }
     }
 
+    fun saveSetTimeResetOnEveryDay(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                initSetup.timeResetOnEveryDay = "$hour:$minute"
+                rescheduleDailyTask("ResetAppTask", hour, minute)
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "save time reset on every day ${hour}:${minute}",
+                    operationType = "setup payment",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "save default promotion fail in SetupPaymentViewModel/saveDefaultPromotion(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     fun getTemp() {
         logger.debug("getTemp")
         viewModelScope.launch {
@@ -271,6 +317,9 @@ class SetupSystemViewModel @Inject constructor(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
+                val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
+                val loginRequest = LoginRequest(initSetup.username,String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE", ""))
+                val response = authRepository.login(newVendCode,loginRequest)
                 initSetup.vendCode = newVendCode
                 baseRepository.addNewSetupLogToLocal(
                     machineCode = initSetup.vendCode,
@@ -440,6 +489,80 @@ class SetupSystemViewModel @Inject constructor(
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = initSetup.vendCode,
                     errorContent = "update layout home screen fail in SetupSystemViewModel/updateLayoutHomeInLocal(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun updateAutoTurnOnTurnOffLightInLocal(typeAutoTurnOnTurnOffLight: String) {
+        logger.debug("updateAutoTurnOnTurnOffLightInLocal")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                initSetup.autoTurnOnTurnOffLight = typeAutoTurnOnTurnOffLight
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "update auto turn on turn off light to ${initSetup.autoTurnOnTurnOffLight}",
+                    operationType = "setup system",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "update auto turn on turn off light fail in SetupSystemViewModel/updateAutoTurnOnTurnOffLightInLocal(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun updateAutoResetAppEveryDayInLocal(typeAutoResetAppEveryDay: String) {
+        logger.debug("updateAutoResetAppEveryDayInLocal")
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                initSetup.autoResetAppEveryday = typeAutoResetAppEveryDay
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "update auto reset app everyday to ${initSetup.autoTurnOnTurnOffLight}",
+                    operationType = "setup system",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup,
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "update auto reset app everyday fail in SetupSystemViewModel/updateAutoResetAppEveryDayInLocal(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
             }
