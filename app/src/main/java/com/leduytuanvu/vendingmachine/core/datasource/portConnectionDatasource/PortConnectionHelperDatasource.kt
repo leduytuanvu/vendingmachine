@@ -11,6 +11,7 @@ class PortConnectionHelperDatasource {
 
     // Open, close, read, write vending machine port
     external fun openPortVendingMachine(path: String, portName: String, baudRate: Int): Int
+    external fun openPortVendingMachineXY(path: String, portName: String, baudRate: Int): Int
     external fun closePortVendingMachine()
     private external fun readDataPortVendingMachine(bufferSize: Int, callback: DataReceivedCallbackVendingMachine)
     external fun writeDataPortVendingMachine(data: ByteArray): Int

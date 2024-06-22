@@ -12,6 +12,8 @@ data class DataInformationMachineResponse(
     @SerializedName("id") val id: String,
     @SerializedName("code") val code: String,
     @SerializedName("commany_name") val companyName: String,
-    @SerializedName("hotline") val hotline: Int,
+    @SerializedName("hotline") val hotline: String,
     @SerializedName("description") val description: String,
+    @SerializedName("android_id") val androidId: String,
+    @SerializedName("status") val status: Int,
 )

@@ -93,21 +93,39 @@ class PortConnectionDatasource {
     private var callbackDeferredTTS4: CompletableDeferred<DataRxCommunicateTTS4>? = null
     private var portVendingString =""
     // Open port vending machine
-    fun openPortVendingMachine(port: String) : Int {
-        fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+//    fun openPortVendingMachine(port: String, typeVendingMachine: String = "TCN") : Int {
+//        if(typeVendingMachine == "TCN") {
+//            Logger.debug("TCN")
+//            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+//        } else {
+//            Logger.debug("XY")
+//            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 57600)
+//        }
+//        Logger.debug("open port vending machine: $fdPortVendingMachine")
+//        return fdPortVendingMachine
+//    }
 
+    fun openPortVendingMachine(port: String, typeVendingMachine: String = "TCN") : Int {
+        if (typeVendingMachine == "TCN") {
+            Logger.debug("TCN")
+            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+        } else {
+            Logger.debug("XY")
+            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 57600)
+        }
         Logger.debug("open port vending machine: $fdPortVendingMachine")
-
         return fdPortVendingMachine
     }
     fun getListSerialPort(): Array<String> {
-
         return portConnectionHelperDataSource.getAllSerialPorts();
+    }
+    fun getListSerialPortStatus(): Array<Pair<String, Boolean>> {
+        return portConnectionHelperDataSource.getAllSerialPortsStatus();
     }
     // Open port cash box
     fun openPortCashBox(port: String) : Int {
         fdPortCashBox = portConnectionHelperDataSource.openPortCashBox("/dev/", port, 9600)
-        Logger.info("====== $fdPortCashBox")
+        Logger.debug("open port cash box: $fdPortCashBox")
         return fdPortCashBox
     }
 
@@ -152,7 +170,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingVendingMachine(512) { data ->
-                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
                             val receivedText = byteArrayToHexString(data)
@@ -204,12 +222,15 @@ class PortConnectionDatasource {
     }
 
     // Send command vending machine
-    fun sendCommandVendingMachine(
-        byteArray: ByteArray,
-
-    ) : Int {
-        Logger.info("data vending machine send: $portVendingString $fdPortVendingMachine ${byteArrayToHexString(byteArray)}")
+    fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
+//        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
+    }
+
+    // Send command cash box
+    fun sendCommandCashBox(byteArray: ByteArray) : Int {
+//        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
+        return portConnectionHelperDataSource.writeDataPortCashBox(byteArray)
     }
     @OptIn(DelicateCoroutinesApi::class)
     private fun startTimerCommunicateTTYS4() {
@@ -278,11 +299,7 @@ class PortConnectionDatasource {
             Log.d("logcatportsettings", "/dev/ttS4 not open")
         }
     }
-    // Send command cash box
-    fun sendCommandCashBox(byteArray: ByteArray) : Int {
-//        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
-        return portConnectionHelperDataSource.writeDataPortCashBox(byteArray)
-    }
+
 
     // Array byte to hex string
     private fun byteArrayToHexString(byteArray: ByteArray): String {

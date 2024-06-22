@@ -16,6 +16,7 @@ data class SetupSlotViewState (
     val titleDialogWarning: String = "",
     val titleDialogConfirm: String = "",
     val nameFunction: String = "",
+    val numberSlot: String = "0",
     val slot: Slot? = null,
     val initSetup: InitSetup? = null,
     val listSlot: ArrayList<Slot> = arrayListOf(),

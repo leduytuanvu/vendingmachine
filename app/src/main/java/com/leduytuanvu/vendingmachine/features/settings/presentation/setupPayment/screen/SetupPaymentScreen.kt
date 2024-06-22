@@ -158,23 +158,23 @@ fun SetupPaymentContent(
         mutableStateOf(AnnotatedString("30s"))
     }
 
-    val selectedTimeReset = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
-    val onTimeSelectedReset: (Int, Int) -> Unit = { hour, minute ->
-        selectedTimeReset.value = Pair(hour, minute)
-    }
-    var partsReset by remember {
-        mutableStateOf(if (state.initSetup != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0"))
-    }
-    var hourReset by remember { mutableIntStateOf(partsReset[0].toIntOrNull() ?: 0) }
-    var minuteReset by remember { mutableIntStateOf(partsReset.getOrNull(1)?.toIntOrNull() ?: 0) }
+//    val selectedTimeReset = remember { mutableStateOf<Pair<Int, Int>>(Pair(0, 0)) }
+//    val onTimeSelectedReset: (Int, Int) -> Unit = { hour, minute ->
+//        selectedTimeReset.value = Pair(hour, minute)
+//    }
+//    var partsReset by remember {
+//        mutableStateOf(if (state.initSetup != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0"))
+//    }
+//    var hourReset by remember { mutableIntStateOf(partsReset[0].toIntOrNull() ?: 0) }
+//    var minuteReset by remember { mutableIntStateOf(partsReset.getOrNull(1)?.toIntOrNull() ?: 0) }
 
     LaunchedEffect(state.initSetup) {
         selectedItemDefaultPromotion = AnnotatedString(state.initSetup?.initPromotion ?: "ON")
         selectedItemTimeOutPaymentQrCode = AnnotatedString(if(state.initSetup?.timeoutPaymentByQrCode != null) "${state.initSetup.timeoutPaymentByQrCode}s" else "30s")
         selectedItemTimeOutPaymentCash = AnnotatedString(if(state.initSetup?.timeoutPaymentByCash != null) "${state.initSetup.timeoutPaymentByCash}s" else "30s")
-        partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
-        hourReset = partsReset[0].toIntOrNull() ?: 0
-        minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
+//        partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
+//        hourReset = partsReset[0].toIntOrNull() ?: 0
+//        minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
     }
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
@@ -361,36 +361,36 @@ fun SetupPaymentContent(
                     viewModel.downloadListMethodPayment()
                 }
 
-                BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
-                if(state.initSetup!=null){
-                    TimePickerWrapperComposable(
-                        defaultHour = hourReset,
-                        defaultMinute = minuteReset,
-                        onTimeSelected = onTimeSelectedReset
-                    )
-                } else {
-                    TimePickerWrapperComposable(
-                        defaultHour = 0,
-                        defaultMinute = 0,
-                        onTimeSelected = onTimeSelectedReset
-                    )
-                }
-                CustomButtonComposable(
-                    title = "SAVE",
-                    cornerRadius = 4.dp,
-                    titleAlignment = TextAlign.Center,
-                    height = 60.dp,
-                    paddingTop = 18.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 30.dp,
-                ) {
-                    onClick()
-                    viewModel.saveSetTimeResetOnEveryDay(
-                        hour = selectedTimeReset.value.first,
-                        minute = selectedTimeReset.value.second,
-                    )
-                }
+//                BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
+//                if(state.initSetup!=null){
+//                    TimePickerWrapperComposable(
+//                        defaultHour = hourReset,
+//                        defaultMinute = minuteReset,
+//                        onTimeSelected = onTimeSelectedReset
+//                    )
+//                } else {
+//                    TimePickerWrapperComposable(
+//                        defaultHour = 0,
+//                        defaultMinute = 0,
+//                        onTimeSelected = onTimeSelectedReset
+//                    )
+//                }
+//                CustomButtonComposable(
+//                    title = "SAVE",
+//                    cornerRadius = 4.dp,
+//                    titleAlignment = TextAlign.Center,
+//                    height = 60.dp,
+//                    paddingTop = 18.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 30.dp,
+//                ) {
+//                    onClick()
+//                    viewModel.saveSetTimeResetOnEveryDay(
+//                        hour = selectedTimeReset.value.first,
+//                        minute = selectedTimeReset.value.second,
+//                    )
+//                }
 
 //                CustomButtonComposable(
 //                    title = "TURN ON LIGHT",

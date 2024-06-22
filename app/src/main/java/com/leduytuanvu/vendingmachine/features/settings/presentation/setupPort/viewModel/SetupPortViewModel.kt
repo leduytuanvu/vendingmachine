@@ -7,6 +7,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
+import com.leduytuanvu.vendingmachine.core.util.ByteArrays
 import com.leduytuanvu.vendingmachine.core.util.Event
 import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
@@ -56,6 +57,18 @@ class SetupPortViewModel @Inject constructor(
         }
     }
 
+    fun pollStatus() {
+        viewModelScope.launch {
+            portConnectionDataSource.sendCommandCashBox(byteArray = ByteArrays().cbPollStatus)
+        }
+    }
+
+    fun pollStatusVendingMachine() {
+        viewModelScope.launch {
+            portConnectionDataSource.sendCommandVendingMachine(byteArray = ByteArrays().vmPollStatus)
+        }
+    }
+
     fun saveSetupPort(
         typeVendingMachine: String,
         portCashBox: String,
@@ -74,11 +87,13 @@ class SetupPortViewModel @Inject constructor(
                     if (portConnectionDataSource.openPortCashBox(portCashBox) == -1) {
                         openPortCashBox = false
                     } else {
+//                        portConnectionDataSource.startReadingCashBox()
                         portConnectionDataSource.closeCashBoxPort()
                     }
-                    if (portConnectionDataSource.openPortVendingMachine(portVendingMachine) == -1) {
+                    if (portConnectionDataSource.openPortVendingMachine(portVendingMachine,typeVendingMachine) == -1) {
                         openPortVendingMachine = false
                     } else {
+//                        portConnectionDataSource.startReadingVendingMachine()
                         portConnectionDataSource.closeVendingMachinePort()
                     }
                     if(!openPortCashBox || !openPortVendingMachine) {
