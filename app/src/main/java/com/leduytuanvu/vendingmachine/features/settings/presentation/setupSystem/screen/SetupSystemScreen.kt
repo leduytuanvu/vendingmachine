@@ -309,7 +309,7 @@ fun SetupSystemMainContentComposable(
         partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
         hourReset = partsReset[0].toIntOrNull() ?: 0
         minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
-        Logger.info("hour reset: $hourReset, minute reset: $minuteReset")
+//        Logger.info("hour reset: $hourReset, minute reset: $minuteReset")
     }
 
     Column(

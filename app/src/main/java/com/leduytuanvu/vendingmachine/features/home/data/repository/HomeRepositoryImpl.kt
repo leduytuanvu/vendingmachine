@@ -119,7 +119,7 @@ class HomeRepositoryImpl @Inject constructor(
                 carts = carts,
             )
             val response = homeApi.getPromotion(request)
-            logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
+//            logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
             return response.data
         } catch (e: Exception) {
             throw e
@@ -149,7 +149,7 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun getSlotDrop(productCode: String): Slot? {
         try {
-            logger.debug("product code: $productCode")
+//            logger.debug("product code: $productCode")
             val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
                 type = object : TypeToken<ArrayList<Slot>>() {}.type,
                 path = pathFileSlot
@@ -210,9 +210,9 @@ class HomeRepositoryImpl @Inject constructor(
             val matchingSlots = listSlot.filter {
                 it.productCode == productCode && !it.isLock && it.inventory > 0
             }
-            for(item in ArrayList(matchingSlots)) {
-                Logger.debug("slot another found: $item")
-            }
+//            for(item in ArrayList(matchingSlots)) {
+//                Logger.debug("slot another found: $item")
+//            }
             // Return the matching slots
             return ArrayList(matchingSlots)
         } catch (e: Exception) {
@@ -232,7 +232,7 @@ class HomeRepositoryImpl @Inject constructor(
                 events = listEvents,
             )
             val response = homeApi.logMulti(logServerRequest)
-            logger.info(response.toString())
+//            logger.info(response.toString())
             return response.data
         } catch (e: Exception) {
             throw e

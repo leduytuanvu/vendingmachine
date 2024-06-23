@@ -693,6 +693,7 @@ fun SetupSlotContent(
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
                                                 )
+
                                             } else {
                                                 if (slot.slot == 10
                                                     || slot.slot == 20
