@@ -93,7 +93,7 @@ internal fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val localStorageDatasource = LocalStorageDatasource()
-    Logger.debug("HomeScreen")
+//    Logger.debug("HomeScreen")
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
@@ -114,7 +114,9 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(60000)
-            viewModel.pushLogToServer()
+            if(!state.isVendingMachineBusy) {
+                viewModel.pushLogToServer()
+            }
 //            viewModel.pushDepositWithdrawToServer()
 //            viewModel.pushSyncOrderToServer()
 //            viewModel.pushUpdatePromotionToServer()

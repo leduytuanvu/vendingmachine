@@ -63,12 +63,12 @@ class SetupSlotViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                logger.debug("1")
+//                logger.debug("1")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
-                logger.debug("2")
+//                logger.debug("2")
                 portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
@@ -76,10 +76,10 @@ class SetupSlotViewModel @Inject constructor(
 //                logger.debug("3")
 //                portConnectionDatasource.startReadingVendingMachine()
                 startCollectingData()
-                logger.debug("4")
+//                logger.debug("4")
                 val listSlot = settingsRepository.getListSlotFromLocal()
                 val listProduct = settingsRepository.getListProductFromLocal()
-                logger.debug("5")
+//                logger.debug("5")
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -962,7 +962,8 @@ class SetupSlotViewModel @Inject constructor(
                 "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
                 "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
                 "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
-                "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00,5C,50,00,AC"))
+                "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
+                "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
                 else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
             }
         }

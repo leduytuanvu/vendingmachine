@@ -247,7 +247,7 @@ fun TransactionContent(
                 ) {
                     navController.popBackStack()
                 }
-                Logger.debug("build again")
+//                Logger.debug("build again")
                 if(state.initSetup!=null) {
                     Text("Time closing session: ${state.initSetup.timeClosingSession}")
                     Spacer(modifier = Modifier.height(6.dp))

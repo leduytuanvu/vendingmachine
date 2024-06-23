@@ -106,13 +106,14 @@ class PortConnectionDatasource {
 //    }
 
     fun openPortVendingMachine(port: String, typeVendingMachine: String = "TCN") : Int {
-        if (typeVendingMachine == "TCN") {
-            Logger.debug("TCN")
-            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
-        } else {
-            Logger.debug("XY")
-            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 57600)
-        }
+//        if (typeVendingMachine == "TCN") {
+//            Logger.debug("TCN")
+//            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
+//        } else {
+//            Logger.debug("XY")
+//            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 57600)
+//        }
+        fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
         Logger.debug("open port vending machine: $fdPortVendingMachine")
         return fdPortVendingMachine
     }
