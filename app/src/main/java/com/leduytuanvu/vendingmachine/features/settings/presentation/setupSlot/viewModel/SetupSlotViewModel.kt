@@ -27,13 +27,11 @@ import com.leduytuanvu.vendingmachine.features.settings.domain.model.Slot
 import com.leduytuanvu.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.leduytuanvu.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -728,21 +726,26 @@ class SetupSlotViewModel @Inject constructor(
         logger.debug("addMoreProductToLocalListSlot")
         viewModelScope.launch {
             try {
-                _state.update { it.copy(isLoading = true) }
-                for (itemAdd in _state.value.listSlotAddMore) {
-                    for (item in _state.value.listSlot) {
-                        if (item.slot == itemAdd.slot) {
-                            item.inventory = 10
-                            item.capacity = 10
-                            item.productCode = product.productCode
-                            item.productName = product.productName
-                            item.price = product.price
-                            baseRepository.addNewFillLogToLocal(
-                                machineCode = _state.value.initSetup!!.vendCode,
-                                fillType = "setup slot",
-                                content = "add more product ${product.productCode} to slot ${itemAdd.slot}",
-                            )
-                            break
+                _state.update { it.copy(
+                    isChooseImage = false,
+                    isLoading = true,
+                ) }
+                withContext(Dispatchers.IO) {
+                    for (itemAdd in _state.value.listSlotAddMore) {
+                        for (item in _state.value.listSlot) {
+                            if (item.slot == itemAdd.slot) {
+                                item.inventory = 10
+                                item.capacity = 10
+                                item.productCode = product.productCode
+                                item.productName = product.productName
+                                item.price = product.price
+                                baseRepository.addNewFillLogToLocal(
+                                    machineCode = _state.value.initSetup!!.vendCode,
+                                    fillType = "setup slot",
+                                    content = "add more product ${product.productCode} to slot ${itemAdd.slot}",
+                                )
+                                break
+                            }
                         }
                     }
                 }
@@ -760,7 +763,6 @@ class SetupSlotViewModel @Inject constructor(
             } finally {
                 _state.update {
                     it.copy(
-                        isChooseImage = false,
                         isLoading = false,
                     )
                 }

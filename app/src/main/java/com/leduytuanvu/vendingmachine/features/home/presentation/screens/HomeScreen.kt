@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,9 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -151,6 +157,7 @@ fun HomeContent(
     localStorageDatasource: LocalStorageDatasource,
 ) {
     var checkTouch by remember { mutableLongStateOf(0) }
+    val focusManager = LocalFocusManager.current
     // Capture any interaction on the screen
     val interactionModifier = Modifier.pointerInput(Unit) {
         detectTapGestures {
@@ -827,7 +834,19 @@ fun HomeContent(
                                     colors = outlinedTextFieldColors(
                                         focusedBorderColor = Color.Gray,
                                         unfocusedBorderColor = Color.Gray,
+                                    ),
+                                    keyboardOptions = KeyboardOptions.Default.copy(
+                                        keyboardType = KeyboardType.Text,
+                                        imeAction = ImeAction.Done
+                                    ),
+                                    visualTransformation = VisualTransformation.None,
+                                    keyboardActions = KeyboardActions (
+                                        onDone = {
+//                                            keyboardControllerNumberSlot?.hide()
+                                            focusManager.clearFocus()
+                                        }
                                     )
+
                                 )
                                 CustomButtonComposable(
                                     title = "Áp dụng",
@@ -872,7 +891,7 @@ fun HomeContent(
                                     modifier = Modifier.weight(1f),
                                     fontSize = 20.sp,
                                 )
-                                Text("${if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ"}", fontSize = 20.sp)
+                                Text(if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ", fontSize = 20.sp)
                             }
                             Spacer(modifier = Modifier.height(28.dp))
                             Text(

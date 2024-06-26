@@ -740,7 +740,7 @@ fun SetupSlotContent(
                                                         fontWeight = FontWeight.Bold,
                                                     )
                                                 } else {
-                                                    Logger.info("index: $slot.slot, list slot: ${state.listSlot.size}")
+//                                                    Logger.info("index: $slot.slot, list slot: ${state.listSlot.size}")
                                                     if(slot.slot<state.listSlot.size) {
                                                         val slotNext = state.listSlot[index+1]
                                                         if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
