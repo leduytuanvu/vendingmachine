@@ -101,7 +101,7 @@ class BaseRepositoryImpl @Inject constructor(
                 pathFileLogServer,
                 gson.toJson(listLogServerLocal),
             )
-            EventBus.sendEvent(Event.Toast(errorContent))
+//            EventBus.sendEvent(Event.Toast(errorContent))
         } catch (e: Exception) {
             throw e
         }

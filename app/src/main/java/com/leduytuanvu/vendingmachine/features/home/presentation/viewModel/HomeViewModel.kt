@@ -14,15 +14,6 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogServer
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogsLocal
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
-import com.leduytuanvu.vendingmachine.core.util.ByteArrays
-import com.leduytuanvu.vendingmachine.core.util.Event
-import com.leduytuanvu.vendingmachine.core.util.Logger
-import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
-import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
-import com.leduytuanvu.vendingmachine.core.util.pathFilePaymentMethod
-import com.leduytuanvu.vendingmachine.core.util.pathFileSlot
-import com.leduytuanvu.vendingmachine.core.util.pathFolderAds
-import com.leduytuanvu.vendingmachine.core.util.sendEvent
 import com.leduytuanvu.vendingmachine.features.home.domain.repository.HomeRepository
 import com.leduytuanvu.vendingmachine.features.home.presentation.viewState.HomeViewState
 import com.leduytuanvu.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
@@ -52,10 +43,6 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogDepositWithdraw
-import com.leduytuanvu.vendingmachine.core.util.pathFileLogDepositWithdrawServer
-import com.leduytuanvu.vendingmachine.core.util.toBase64
-import com.leduytuanvu.vendingmachine.core.util.toDateTimeString
-import com.leduytuanvu.vendingmachine.core.util.toId
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.GetQrCodeRequest
@@ -76,17 +63,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdateInventor
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogUpdatePromotion
 
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.TypeTXCommunicateAvf
-import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
-import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
-import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
-import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateTrackingAds
-
-import com.leduytuanvu.vendingmachine.core.util.pathFileLogUpdateInventoryServer
-import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
-import com.leduytuanvu.vendingmachine.core.util.pathFileUpdateDeliveryStatus
-import com.leduytuanvu.vendingmachine.core.util.pathFileUpdatePromotion
-import com.leduytuanvu.vendingmachine.core.util.pathFolderBigAds
-import com.leduytuanvu.vendingmachine.core.util.toVietNamDong
+import com.leduytuanvu.vendingmachine.core.util.*
 
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
 import com.leduytuanvu.vendingmachine.features.home.data.model.request.DataSyncOrderRequest
@@ -134,6 +111,9 @@ class HomeViewModel @Inject constructor (
 
     private val _setupCashBox = MutableStateFlow(false)
     val setupCashBox: StateFlow<Boolean> = _setupCashBox.asStateFlow()
+
+    private val _isDropProduct = MutableStateFlow(false)
+    val isDropProduct: StateFlow<Boolean> = _isDropProduct.asStateFlow()
 
     private val _dataTmpCashBox = MutableStateFlow("")
     val dataTmpCashBox: StateFlow<String> = _dataTmpCashBox.asStateFlow()
@@ -520,6 +500,7 @@ class HomeViewModel @Inject constructor (
         logger.info("dropProduct")
         viewModelScope.launch {
             try {
+                _isDropProduct.value = true
                 _state.update { it.copy(isVendingMachineBusy = true) }
                 if(countdownTimer!=null) {
                     countdownTimer!!.cancel()
@@ -534,6 +515,13 @@ class HomeViewModel @Inject constructor (
                 val listSlotDropSuccess: ArrayList<Slot> = arrayListOf()
                 val listSlotNotFound: ArrayList<Slot> = arrayListOf()
                 val listSlotShowInHome: ArrayList<Slot> = arrayListOf()
+                var listLogSyncOrderTransaction: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                    path = pathFileSyncOrderTransaction
+                )
+                if(listLogSyncOrderTransaction.isNullOrEmpty()) {
+                    listLogSyncOrderTransaction = arrayListOf()
+                }
                 val listSlotInCart = _state.value.listSlotInCard
                 var sensorHasAnObstruction = false
                 var quantityNeedDrop = 0
@@ -949,79 +937,70 @@ class HomeViewModel @Inject constructor (
                             )
                         }
                     }
-
+                    logger.info("list log sync order 00: "+_state.value.logSyncOrder!!.productDetails)
                     if(listAllSlotDropFail.isNotEmpty()) {
                         logger.info("list all slot drop fail: "+listAllSlotDropFail.toString())
                         for(item in listAllSlotDropFail) {
-//                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode }
-//                            if(index!=-1) {
-//                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "failed"
-//                                _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-//                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatusNote = item.messDrop
-//                                _state.value.logSyncOrder!!.productDetails[index].amount = "${_state.value.logSyncOrder!!.productDetails[index].quantity!!*_state.value.logSyncOrder!!.productDetails[index].price!!.toInt()}"
-//                            } else {
-                                val tmp = ProductSyncOrderRequest(
-                                    productCode = item.productCode,
-                                    productName = item.productName,
-                                    price = item.price.toString(),
-                                    quantity = item.inventory,
-                                    discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                                    amount = (item.inventory*item.price).toString(),
-                                    deliveryStatus = "failed",
-                                    slot = item.slot,
-                                    cabinetCode = "MT01",
-                                    deliveryStatusNote = item.messDrop,
-                                )
-                                _state.value.logSyncOrder!!.productDetails.add(tmp)
-//                            }
+                            val tmp = ProductSyncOrderRequest(
+                                productCode = item.productCode,
+                                productName = item.productName,
+                                price = item.price.toString(),
+                                quantity = item.inventory,
+                                discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
+                                amount = (item.inventory*item.price).toString(),
+                                deliveryStatus = "failed",
+                                slot = item.slot,
+                                cabinetCode = "MT01",
+                                deliveryStatusNote = item.messDrop,
+                            )
+                            _state.value.logSyncOrder!!.productDetails.add(tmp)
                         }
+                        logger.info("list log sync order 11: "+_state.value.logSyncOrder!!.productDetails)
                     }
                     if(listSlotDropSuccess.isNotEmpty()) {
                         logger.info("list slot drop success: "+listSlotDropSuccess.toString())
+                        val logSyncOrder = LogSyncOrder(
+                            machineCode = _state.value.initSetup!!.vendCode,
+                            orderCode = _state.value.logSyncOrder!!.orderCode,
+                            androidId = _state.value.initSetup!!.androidId,
+                            orderTime = _state.value.logSyncOrder!!.orderTime,
+                            totalAmount = _state.value.logSyncOrder!!.totalAmount,
+                            totalDiscount = _state.value.logSyncOrder!!.totalDiscount,
+                            paymentAmount = _state.value.logSyncOrder!!.paymentAmount,
+                            paymentMethodId = _state.value.logSyncOrder!!.paymentMethodId,
+                            paymentTime = _state.value.logSyncOrder!!.paymentTime,
+                            timeSynchronizedToServer = _state.value.logSyncOrder!!.timeSynchronizedToServer,
+                            timeReleaseProducts = _state.value.logSyncOrder!!.timeReleaseProducts,
+                            rewardType = _state.value.logSyncOrder!!.rewardType,
+                            rewardValue = _state.value.logSyncOrder!!.rewardValue.toString(),
+                            rewardMaxValue = _state.value.logSyncOrder!!.rewardMaxValue,
+                            paymentStatus = "success",
+                            deliveryStatus = "success",
+                            voucherCode = _state.value.logSyncOrder!!.voucherCode,
+                            productDetails = arrayListOf(),
+                            isSent = false,
+                        )
                         for(item in listSlotDropSuccess) {
-//                            val index = _state.value.logSyncOrder!!.productDetails.indexOfFirst { it.productCode == item.productCode && it.deliveryStatus == "success" }
-//                            logger.info("indexxxxxxxx: $index, product code: ${item.productCode}")
-//                            if(index!=-1) {
-//                                _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
-//                                _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-//                                _state.value.logSyncOrder!!.productDetails[index].amount = "${_state.value.logSyncOrder!!.productDetails[index].quantity!!*_state.value.logSyncOrder!!.productDetails[index].price!!.toInt()}"
-////                                if(_state.value.logSyncOrder!!.productDetails[index].deliveryStatusNote == item.messDrop) {
-////                                    _state.value.logSyncOrder!!.productDetails[index].deliveryStatus = "success"
-////                                    _state.value.logSyncOrder!!.productDetails[index].quantity = item.inventory
-////                                    _state.value.logSyncOrder!!.productDetails[index].amount = "${_state.value.logSyncOrder!!.productDetails[index].quantity!!*_state.value.logSyncOrder!!.productDetails[index].price!!.toInt()}"
-////                                } else {
-////                                    val tmp = ProductSyncOrderRequest(
-////                                        productCode = item.productCode,
-////                                        productName = item.productName,
-////                                        price = item.price.toString(),
-////                                        quantity = item.inventory,
-////                                        discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-////                                        amount = (item.inventory*item.price).toString(),
-////                                        deliveryStatus = "success",
-////                                        slot = item.slot,
-////                                        cabinetCode = "MT01",
-////                                        deliveryStatusNote = item.messDrop,
-////                                    )
-////                                    _state.value.logSyncOrder!!.productDetails.add(tmp)
-////                                }
-//                            } else {
-                                val tmp = ProductSyncOrderRequest(
-                                    productCode = item.productCode,
-                                    productName = item.productName,
-                                    price = item.price.toString(),
-                                    quantity = item.inventory,
-                                    discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                                    amount = (item.inventory*item.price).toString(),
-                                    deliveryStatus = "success",
-                                    slot = item.slot,
-                                    cabinetCode = "MT01",
-                                    deliveryStatusNote = item.messDrop,
-                                )
-                                _state.value.logSyncOrder!!.productDetails.add(tmp)
-//                            }
+                            val tmp = ProductSyncOrderRequest(
+                                productCode = item.productCode,
+                                productName = item.productName,
+                                price = item.price.toString(),
+                                quantity = item.inventory,
+                                discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
+                                amount = (item.inventory*item.price).toString(),
+                                deliveryStatus = "success",
+                                slot = item.slot,
+                                cabinetCode = "MT01",
+                                deliveryStatusNote = item.messDrop,
+                            )
+                            logSyncOrder.productDetails.add(tmp)
+                            _state.value.logSyncOrder!!.productDetails.add(tmp)
                         }
+                        logger.debug("log sync order size: ${_state.value.logSyncOrder!!.productDetails.size}")
+                        logger.debug("log syncorder 1: ${_state.value.logSyncOrder}")
+                        listLogSyncOrderTransaction.add(logSyncOrder)
                     }
-                    logger.info("list sync order: ${ _state.value.logSyncOrder!!.productDetails}")
+
                     // Sync order
                     var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
                         type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
@@ -1032,6 +1011,7 @@ class HomeViewModel @Inject constructor (
                     }
                     listSyncOrder.add(_state.value.logSyncOrder!!)
                     baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
+                    baseRepository.writeDataToLocal(listLogSyncOrderTransaction, pathFileSyncOrderTransaction)
                     if(_state.value.nameMethodPayment != "cash") {
                         // Update delivery status
                         var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
@@ -1208,6 +1188,7 @@ class HomeViewModel @Inject constructor (
                     errorContent = "drop product fail in HomeViewModel/dropProduct(): ${e.message}",
                 )
             } finally {
+                _isDropProduct.value = false
                 _state.update { it.copy(
                     isVendingMachineBusy = false,
                     promotion = null,
@@ -1292,16 +1273,20 @@ class HomeViewModel @Inject constructor (
                 _isCashBoxNormal.value = true
                 if (dataByteArray[6] == 0x00.toByte()) {
                     if(dataHexString != _dataTmpCashBox.value) {
-                        _dataTmpCashBox.value = dataHexString
-                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbStack)
-                        when (dataByteArray[7]) {
-                            0x03.toByte() -> processingCash(5000)
-                            0x04.toByte() -> processingCash(10000)
-                            0x05.toByte() -> processingCash(20000)
-                            0x06.toByte() -> processingCash(50000)
-                            0x07.toByte() -> processingCash(100000)
-                            0x08.toByte() -> processingCash(200000)
-                            0x09.toByte() -> processingCash(500000)
+                        if(_isDropProduct.value) {
+                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbReject)
+                        } else {
+                            _dataTmpCashBox.value = dataHexString
+                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbStack)
+                            when (dataByteArray[7]) {
+                                0x03.toByte() -> processingCash(5000)
+                                0x04.toByte() -> processingCash(10000)
+                                0x05.toByte() -> processingCash(20000)
+                                0x06.toByte() -> processingCash(50000)
+                                0x07.toByte() -> processingCash(100000)
+                                0x08.toByte() -> processingCash(200000)
+                                0x09.toByte() -> processingCash(500000)
+                            }
                         }
                     }
                 } else {
@@ -1389,13 +1374,98 @@ class HomeViewModel @Inject constructor (
     fun pushLogToServer() {
         logger.debug("pushLogToServer")
         viewModelScope.launch {
+            try {
+                val listLogServerLocalCheck: ArrayList<LogsLocal>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
+                    path = pathFileLogServer
+                )
+                val listLogServerLocalCheckTmp: ArrayList<LogsLocal> = arrayListOf()
+                if(!listLogServerLocalCheck.isNullOrEmpty()) {
+                    for(item in listLogServerLocalCheck) {
+                        if(!item.isSent) {
+                            listLogServerLocalCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listLogServerLocalCheckTmp, pathFileLogServer)
+                }
+                val listUpdateInventoryCheck: ArrayList<LogUpdateInventory>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogUpdateInventory>>() {}.type,
+                    path = pathFileLogUpdateInventoryServer
+                )
+                val listUpdateInventoryCheckTmp: ArrayList<LogUpdateInventory> = arrayListOf()
+                if(!listUpdateInventoryCheck.isNullOrEmpty()) {
+                    for(item in listUpdateInventoryCheck) {
+                        if(!item.isSent) {
+                            listUpdateInventoryCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listUpdateInventoryCheckTmp, pathFileLogUpdateInventoryServer)
+                }
+                val listDepositWithdrawCheck: ArrayList<LogDepositWithdraw>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogDepositWithdraw>>() {}.type,
+                    path = pathFileLogDepositWithdrawServer
+                )
+                val listDepositWithdrawCheckTmp: ArrayList<LogDepositWithdraw> = arrayListOf()
+                if(!listDepositWithdrawCheck.isNullOrEmpty()) {
+                    for(item in listDepositWithdrawCheck) {
+                        if(!item.isSent) {
+                            listDepositWithdrawCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listDepositWithdrawCheckTmp, pathFileLogDepositWithdrawServer)
+                }
+                val listSyncOrderCheck: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                    path = pathFileSyncOrder,
+                )
+                val listSyncOrderCheckTmp: ArrayList<LogSyncOrder> = arrayListOf()
+                if(!listSyncOrderCheck.isNullOrEmpty()) {
+                    for(item in listSyncOrderCheck) {
+                        if(!item.isSent) {
+                            listSyncOrderCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listSyncOrderCheckTmp, pathFileSyncOrder)
+                }
+                val listUpdatePromotionCheck: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                    path = pathFileUpdatePromotion,
+                )
+                val listUpdatePromotionCheckTmp: ArrayList<LogUpdatePromotion> = arrayListOf()
+                if(!listUpdatePromotionCheck.isNullOrEmpty()) {
+                    for(item in listUpdatePromotionCheck) {
+                        if(!item.isSent) {
+                            listUpdatePromotionCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listUpdatePromotionCheckTmp, pathFileUpdatePromotion)
+                }
+                val listUpdateDeliveryStatusCheck: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                    path = pathFileUpdateDeliveryStatus,
+                )
+                val listUpdateDeliveryStatusCheckTmp: ArrayList<LogUpdateDeliveryStatus> = arrayListOf()
+                if(!listUpdateDeliveryStatusCheck.isNullOrEmpty()) {
+                    for(item in listUpdateDeliveryStatusCheck) {
+                        if(!item.isSent) {
+                            listUpdateDeliveryStatusCheckTmp.add(item)
+                        }
+                    }
+                    baseRepository.writeDataToLocal(listUpdateDeliveryStatusCheckTmp, pathFileUpdateDeliveryStatus)
+                }
+            } catch(e: Exception) {
+                logger.debug("error when remove item")
+            }
+
             if(baseRepository.isHaveNetwork(context)) {
                 try {
-                    val listLogServerLocal: ArrayList<LogsLocal> = baseRepository.getDataFromLocal(
+                    logger.debug("11111")
+                    val listLogServerLocal: ArrayList<LogsLocal>? = baseRepository.getDataFromLocal(
                         type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
                         path = pathFileLogServer
-                    )!!
-                    if(listLogServerLocal.isNotEmpty()) {
+                    )
+                    logger.debug("22222")
+                    if(!listLogServerLocal.isNullOrEmpty()) {
                         val listLogServer: ArrayList<LogServer> = arrayListOf()
                         for(item in listLogServerLocal) {
                             if(!item.isSent) {
@@ -1423,15 +1493,15 @@ class HomeViewModel @Inject constructor (
                         }
                     }
                 } catch (e: Exception) {
-                    logger.debug("error in push log to server: ${e.message}")
+                    logger.debug("error in push log to server1: ${e.message}")
                 }
 
                 try {
-                    val listUpdateInventory: ArrayList<LogUpdateInventory> = baseRepository.getDataFromLocal(
+                    val listUpdateInventory: ArrayList<LogUpdateInventory>? = baseRepository.getDataFromLocal(
                         type = object : TypeToken<ArrayList<LogUpdateInventory>>() {}.type,
                         path = pathFileLogUpdateInventoryServer
-                    )!!
-                    if(listUpdateInventory.isNotEmpty()) {
+                    )
+                    if(!listUpdateInventory.isNullOrEmpty()) {
                         for(item in listUpdateInventory) {
                             if(!item.isSent) {
                                 val logServer = UpdateInventoryRequest(
@@ -1448,18 +1518,17 @@ class HomeViewModel @Inject constructor (
                                 }
                             }
                         }
-
                     }
                 } catch (e: Exception) {
-                    logger.debug("error in push log to server: ${e.message}")
+                    logger.debug("error in push log to server2: ${e.message}")
                 }
 
                 try {
-                    val listDepositWithdraw: ArrayList<LogDepositWithdraw> = baseRepository.getDataFromLocal(
+                    val listDepositWithdraw: ArrayList<LogDepositWithdraw>? = baseRepository.getDataFromLocal(
                         type = object : TypeToken<ArrayList<LogDepositWithdraw>>() {}.type,
                         path = pathFileLogDepositWithdrawServer
-                    )!!
-                    if(listDepositWithdraw.isNotEmpty()) {
+                    )
+                    if(!listDepositWithdraw.isNullOrEmpty()) {
                         for(item in listDepositWithdraw) {
                             if(!item.isSent) {
                                 val depositAndWithdrawMoneyRequest = DepositAndWithdrawMoneyRequest(
@@ -1487,7 +1556,7 @@ class HomeViewModel @Inject constructor (
                         }
                     }
                 } catch (e: Exception) {
-                    logger.debug("error in push log to server: ${e.message}")
+                    logger.debug("error in push log to server3: ${e.message}")
                 }
 
                 try {
@@ -2271,7 +2340,7 @@ class HomeViewModel @Inject constructor (
     }
 
     fun readDoor() {
-        logger.debug("readDoor")
+//        logger.debug("readDoor")
         viewModelScope.launch {
             portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmReadDoor)
         }

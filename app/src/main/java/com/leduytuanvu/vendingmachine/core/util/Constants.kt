@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-const val BASE_URL = "https://dev-api.avf.vn"
+const val BASE_URL = "https://api.avf.vn"
 
 @SuppressLint("SdCardPath")
 const val pathFolderVendingMachineData = "/sdcard/VendingMachineData"
@@ -36,6 +36,8 @@ const val pathFolderImagePayment = "/sdcard/VendingMachineData/Payment/Image"
 const val pathFilePriceOfProduct = "/sdcard/VendingMachineData/Product/PriceOfProduct.json"
 @SuppressLint("SdCardPath")
 const val pathFileSyncOrder = "/sdcard/VendingMachineData/Log/SyncOrder.json"
+@SuppressLint("SdCardPath")
+const val pathFileSyncOrderTransaction = "/sdcard/VendingMachineData/Log/SyncOrderTransaction.json"
 @SuppressLint("SdCardPath")
 const val pathFileUpdatePromotion = "/sdcard/VendingMachineData/Log/UpdatePromotion.json"
 @SuppressLint("SdCardPath")

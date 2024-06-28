@@ -9,13 +9,7 @@ import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.common.base.domain.model.LogSyncOrder
 import com.leduytuanvu.vendingmachine.common.base.domain.repository.BaseRepository
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
-import com.leduytuanvu.vendingmachine.core.util.ByteArrays
-import com.leduytuanvu.vendingmachine.core.util.Event
-import com.leduytuanvu.vendingmachine.core.util.Logger
-import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
-import com.leduytuanvu.vendingmachine.core.util.pathFileSyncOrder
-import com.leduytuanvu.vendingmachine.core.util.sendEvent
-import com.leduytuanvu.vendingmachine.core.util.toId
+import com.leduytuanvu.vendingmachine.core.util.*
 import com.leduytuanvu.vendingmachine.features.settings.data.model.request.EndOfSessionRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.request.MoneyBoxRequest
 import com.leduytuanvu.vendingmachine.features.settings.data.model.request.MoneyDataRequest
@@ -57,17 +51,15 @@ class TransactionViewModel @Inject constructor (
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                logger.debug("${initSetup}")
                 initSetup.timeStartSession = LocalDateTime.now().toString()
-                logger.debug("1")
                 if(initSetup.timeClosingSession.isEmpty()) {
-                    initSetup.timeClosingSession = LocalDateTime.now().toString()
+                    initSetup.timeClosingSession = "Never ended a session before"
                 }
-                logger.debug("2")
                 var listSyncOrder: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                    path = pathFileSyncOrder
+                    path = pathFileSyncOrderTransaction
                 )
+                logger.debug("345665767: ${listSyncOrder}")
                 if(listSyncOrder == null) {
                     listSyncOrder = arrayListOf()
                 }
@@ -106,8 +98,11 @@ class TransactionViewModel @Inject constructor (
                             // Parse the date string to a ZonedDateTime object
                             val dateTime = ZonedDateTime.parse(item.orderTime, inputFormatter)
                             logger.debug("orderTimeConverter: ${dateTime.format(outputFormatter)}")
+                            logger.debug("time1: ${dateTime.format(outputFormatter)}")
+                            logger.debug("time2: ${initSetup.timeClosingSession}")
                             val comparisonResult = compareDateTimeStrings(dateTime.format(outputFormatter), initSetup.timeClosingSession)
                             if(comparisonResult>0) {
+                                logger.debug("ifffff")
                                 if(item.paymentMethodId=="cash") {
                                     countTransactionByCash+=1
                                     for(itemTmp in item.productDetails) {
@@ -123,6 +118,8 @@ class TransactionViewModel @Inject constructor (
                                         }
                                     }
                                 }
+                            } else {
+                                logger.debug("elseeeee")
                             }
                         }
                     }
@@ -303,7 +300,8 @@ class TransactionViewModel @Inject constructor (
                             _state.value.initSetup!!.timeClosingSession = LocalDateTime.now().toString()
                             val initSetup = _state.value.initSetup
                             baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-
+                            val listLogSyncOrderTransaction: ArrayList<LogSyncOrder> = arrayListOf()
+                            baseRepository.writeDataToLocal(listLogSyncOrderTransaction, pathFileSyncOrderTransaction)
                             _state.update { it.copy(
                                 initSetup = initSetup,
                                 isConfirm = false,
