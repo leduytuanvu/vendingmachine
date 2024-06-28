@@ -53,9 +53,9 @@ fun InitSetupContent(
     viewModel: InitSetupViewModel,
     navController: NavHostController,
 ) {
-    var inputVendingMachineCode by remember { mutableStateOf("AVF000043") }
-    var inputUsername by remember { mutableStateOf("admin") }
-    var inputPassword by remember { mutableStateOf("AVF@1234") }
+    var inputVendingMachineCode by remember { mutableStateOf("") }
+    var inputUsername by remember { mutableStateOf("") }
+    var inputPassword by remember { mutableStateOf("") }
     var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
     var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS2")) }
     var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("ttyS1")) }
