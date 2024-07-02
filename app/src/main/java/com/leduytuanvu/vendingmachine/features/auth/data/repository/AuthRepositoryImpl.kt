@@ -5,6 +5,7 @@ import com.leduytuanvu.vendingmachine.common.base.data.model.BaseListResponse
 import com.leduytuanvu.vendingmachine.common.base.data.model.BaseResponse
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
+import com.leduytuanvu.vendingmachine.core.util.Logger
 import com.leduytuanvu.vendingmachine.core.util.pathFileInitSetup
 import com.leduytuanvu.vendingmachine.features.auth.data.model.request.ActivateTheMachineRequest
 import com.leduytuanvu.vendingmachine.features.auth.data.remote.AuthApi
@@ -54,6 +55,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun encodePassword(decodeString: String): String {
         try {
+            Logger.debug("encodePassword: $decodeString")
             val tmpString = decodeString + "567890VENDINGMACHINE"
             val data = tmpString.toByteArray(Charsets.UTF_8)
             return Base64.encodeToString(data, Base64.DEFAULT)

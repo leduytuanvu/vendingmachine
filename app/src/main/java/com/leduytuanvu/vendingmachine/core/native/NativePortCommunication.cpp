@@ -9,6 +9,137 @@
 
 static int serialPortVendingMachine = -1;
 static int serialPortCashBox = -1;
+static int usbPortVendingMachine = -1;
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_openUsbPortVendingMachine(JNIEnv *env, jobject, jstring path, jint baudRate) {
+    // Convert jstring to const char*
+    const char *nativePath = env->GetStringUTFChars(path, JNI_FALSE);
+    if (nativePath == nullptr) return -1; // OutOfMemoryError already thrown
+
+    // Open the USB port
+    usbPortVendingMachine = open(nativePath, O_RDWR | O_NOCTTY | O_SYNC);
+    env->ReleaseStringUTFChars(path, nativePath);
+    if (usbPortVendingMachine == -1) {
+        return -1; // Could not open the port
+    }
+
+    // Set baud rate and configure serial port settings
+    speed_t speed;
+    switch (baudRate) {
+        case 9600: speed = B9600; break;
+        case 19200: speed = B19200; break;
+        case 38400: speed = B38400; break;
+        case 57600: speed = B57600; break;
+        case 115200: speed = B115200; break;
+        // Add other baud rates as necessary
+        default: speed = B9600; // Default to B9600 if no match
+    }
+
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+    if (tcgetattr(usbPortVendingMachine, &tty) != 0) {
+        close(usbPortVendingMachine);
+        return -1; // Error from tcgetattr
+    }
+
+    cfsetospeed(&tty, speed);
+    cfsetispeed(&tty, speed);
+
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
+    tty.c_iflag &= ~IGNBRK;         // disable break processing
+    tty.c_lflag = 0;                // no signaling chars, no echo,
+                                    // no canonical processing
+    tty.c_oflag = 0;                // no remapping, no delays
+    tty.c_cc[VMIN]  = 0;            // read doesn't block
+    tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
+
+    tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
+                                    // enable reading
+    tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
+    tty.c_cflag |= 0;
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CRTSCTS;
+
+    if (tcsetattr(usbPortVendingMachine, TCSANOW, &tty) != 0) {
+        close(usbPortVendingMachine);
+        return -1; // Error from tcsetattr
+    }
+
+    return 0; // Success
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_writeDataUsbPortVendingMachine(JNIEnv *env, jobject, jbyteArray data) {
+    if (usbPortVendingMachine == -1) return -1;
+
+    // Convert jbyteArray to a native byte array
+    jsize length = env->GetArrayLength(data);
+    jbyte *dataPtr = env->GetByteArrayElements(data, nullptr);
+    if (dataPtr == nullptr) return -1; // OutOfMemoryError already thrown
+
+    // Write data to the USB port
+    int bytesWritten = write(usbPortVendingMachine, dataPtr, length);
+
+    // Release the data array
+    env->ReleaseByteArrayElements(data, dataPtr, JNI_ABORT);
+
+    return bytesWritten;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_readDataUsbPortVendingMachine(JNIEnv *env, jobject, jint bufferSize, jobject callback) {
+    if (usbPortVendingMachine == -1) return;
+
+    // Create a byte array to store the received data
+    jbyteArray data = env->NewByteArray(bufferSize);
+    if (data == nullptr) return; // OutOfMemoryError already thrown
+
+    // Read data from the USB port
+    jbyte *dataPtr = env->GetByteArrayElements(data, nullptr);
+    if (dataPtr == nullptr) return; // OutOfMemoryError already thrown
+
+    int bytesRead = read(usbPortVendingMachine, dataPtr, bufferSize);
+    if (bytesRead > 0) {
+        // Create a jbyteArray to store the read data
+        jbyteArray dataArray = env->NewByteArray(bytesRead);
+        if (dataArray == nullptr) {
+            env->ReleaseByteArrayElements(data, dataPtr, JNI_ABORT);
+            return; // OutOfMemoryError already thrown
+        }
+        // Copy data from the buffer to the jbyteArray
+        env->SetByteArrayRegion(dataArray, 0, bytesRead, dataPtr);
+
+        // Call the provided callback function with the received data
+        jclass callbackClass = env->GetObjectClass(callback);
+        jmethodID callbackMethod = env->GetMethodID(callbackClass, "onDataReceivedVendingMachine", "([B)V");
+        env->CallVoidMethod(callback, callbackMethod, dataArray);
+
+        // Release the data array
+        env->ReleaseByteArrayElements(data, dataPtr, JNI_ABORT);
+        env->DeleteLocalRef(dataArray);
+    } else {
+        // If no data was read or there was an error, call the callback with an empty byte array
+        jclass callbackClass = env->GetObjectClass(callback);
+        jmethodID callbackMethod = env->GetMethodID(callbackClass, "onDataReceivedVendingMachine", "([B)V");
+        env->CallVoidMethod(callback, callbackMethod, data);
+
+        // Release the data array
+        env->ReleaseByteArrayElements(data, dataPtr, 0);
+    }
+
+    env->DeleteLocalRef(data);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_closeUsbPortVendingMachine(JNIEnv *env, jobject) {
+    if (usbPortVendingMachine != -1) {
+        close(usbPortVendingMachine);
+        usbPortVendingMachine = -1;
+    }
+}
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_leduytuanvu_vendingmachine_core_datasource_portConnectionDatasource_PortConnectionHelperDatasource_openPortVendingMachine(JNIEnv *env, jobject, jstring path, jstring portName, jint baudRate) {

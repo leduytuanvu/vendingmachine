@@ -3,9 +3,8 @@ package com.leduytuanvu.vendingmachine.core.di
 import android.content.Context
 import android.util.Base64
 import com.google.gson.Gson
+import com.leduytuanvu.vendingmachine.BuildConfig
 import com.leduytuanvu.vendingmachine.common.base.domain.model.InitSetup
-//import com.leduytuanvu.vendingmachine.core.room.LogExceptionDao
-//import com.leduytuanvu.vendingmachine.core.room.RoomRepository
 import com.leduytuanvu.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionDatasource
 import com.leduytuanvu.vendingmachine.core.datasource.portConnectionDatasource.PortConnectionHelperDatasource
@@ -114,7 +113,8 @@ object AppModule {
         .addInterceptor(authInterceptor)
         .build()
     private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
+//        .baseUrl(BASE_URL)
+        .baseUrl(BuildConfig.API_URL)
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()

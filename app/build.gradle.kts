@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.kotlinSymbolProcessing)
     alias(libs.plugins.daggerHiltAndroid)
-
+    kotlin("kapt")
     kotlin("plugin.serialization") version "1.8.0" // Use the appropriate version
 }
 
@@ -45,6 +45,12 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+            buildConfigField("String", "API_URL", "\"https://api.avf.vn\"")
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
@@ -52,23 +58,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_URL", "\"https://api.avf.vn\"")
         }
     }
-
-//    buildTypes {
-////        release {
-////            isMinifyEnabled = false
-////            proguardFiles(
-////                getDefaultProguardFile("proguard-android-optimize.txt"),
-////                "proguard-rules.pro"
-////            )
-////        }
-//        release {
-//            signingConfig signingConfigs.release
-//        }
-//    }
-
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_9
@@ -83,6 +75,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -138,7 +131,8 @@ dependencies {
 
     // Dagger Hilt
     implementation(libs.dagger.hilt.android)
-    ksp(libs.dagger.hilt.android.compiler)
+    kapt(libs.dagger.hilt.android.compiler)
+//    ksp(libs.dagger.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
 
@@ -156,12 +150,15 @@ dependencies {
     // Interceptor
     implementation(libs.logging.interceptor)
 
-    implementation("androidx.work:work-runtime-ktx:2.7.1")
+    // Runtime
+    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation("com.google.zxing:core:3.4.1")
+    // Lifecycle
+    implementation(libs.core)
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    // Location
+    implementation(libs.play.services.location)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
 }

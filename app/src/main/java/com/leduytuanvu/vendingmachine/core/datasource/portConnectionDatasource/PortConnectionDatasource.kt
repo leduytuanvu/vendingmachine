@@ -117,6 +117,19 @@ class PortConnectionDatasource {
         Logger.debug("open port vending machine: $fdPortVendingMachine")
         return fdPortVendingMachine
     }
+
+    fun openUsbPortVendingMachine(port: String, typeVendingMachine: String = "TCN") : Int {
+        fdPortVendingMachine = portConnectionHelperDataSource.openUsbPortVendingMachine("/dev/", port, 9600)
+        Logger.debug("open port vending machine: $fdPortVendingMachine")
+        return fdPortVendingMachine
+    }
+
+    // Close vending machine ports
+    fun closeUsbPortVendingMachine() {
+        portConnectionHelperDataSource.closeUsbPortVendingMachine()
+        Logger.info("PortConnectionDataSource: port vending machine is disconnected")
+    }
+
     fun getListSerialPort(): Array<String> {
         return portConnectionHelperDataSource.getAllSerialPorts();
     }
@@ -145,6 +158,10 @@ class PortConnectionDatasource {
     fun startReadingVendingMachine() {
         readThreadVendingMachine.start()
     }
+    // Start reading vending machine ports
+    fun startReadingUsbVendingMachine() {
+        readUsbThreadVendingMachine.start()
+    }
     // Start reading cash box ports
     fun startReadingCashBox() {
         readThreadCashBox.start()
@@ -161,6 +178,45 @@ class PortConnectionDatasource {
             return true
         }
         return false
+    }
+
+    // Read thread vending machine
+    private val readUsbThreadVendingMachine = object : Thread() {
+        @SuppressLint("SuspiciousIndentation")
+        override fun run() {
+            Logger.info("PortConnectionDataSource: start read thread vending machine")
+            while (!currentThread().isInterrupted) {
+                try {
+                    portConnectionHelperDataSource.startReadingUsbVendingMachine(512) { data ->
+//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+                        coroutineScope.launch {
+                            _dataFromVendingMachine.emit(data)
+                            val receivedText = byteArrayToHexString(data)
+                            when (receivedText) {
+                                "00,5D,00,00,5D" ->
+                                    typeRXCommunicateAvf = TypeRXCommunicateAvf.SUCCESS
+                                "00,5C,00,00,5C" -> {
+                                    if(typeTXCommunicateAvf == TypeTXCommunicateAvf.ENQUIRY_SLOT){
+                                        typeRXCommunicateAvf = TypeRXCommunicateAvf.SLOT_NOT_FOUND
+                                    }
+                                }
+                            }
+                            cancelTimerCommunicateTTYS4()
+                            callbackDeferredTTS4?.complete(
+                                DataRxCommunicateTTS4(
+                                    typeRXCommunicateAvf,
+                                    receivedText
+                                )
+                            )
+                            callbackDeferredTTS4 = null
+                        }
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    break
+                }
+            }
+        }
     }
 
     // Read thread vending machine
@@ -226,6 +282,12 @@ class PortConnectionDatasource {
     fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
 //        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
+    }
+
+    // Send command vending machine
+    fun sendCommandUsbVendingMachine(byteArray: ByteArray) : Int {
+//        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
+        return portConnectionHelperDataSource.writeDataUsbPortVendingMachine(byteArray)
     }
 
     // Send command cash box

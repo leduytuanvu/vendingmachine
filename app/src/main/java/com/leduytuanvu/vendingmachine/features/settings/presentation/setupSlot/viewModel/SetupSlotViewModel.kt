@@ -956,17 +956,21 @@ class SetupSlotViewModel @Inject constructor(
     fun processingDataFromVendingMachine(dataByteArray: ByteArray) {
         if(_checkFirst.value) {
             val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
-            when (dataHexString) {
-                "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
-                "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
-                "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
-                "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
-                "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
-                "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
-                "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
-                "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
-                "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
-                else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+            if(dataHexString!="00,5D,00,00,5D" || dataHexString!="00,5D,01,00,5E" || dataHexString!="00,5C,00,00,5C") {
+                logger.debug("status door")
+            } else {
+                when (dataHexString) {
+                    "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
+                    "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
+                    "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
+                    "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
+                    "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
+                    "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
+                    "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
+                    "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
+                    "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
+                    else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+                }
             }
         }
 //        if (dataHexString.contains("00,5D,00,00,5D")) {
