@@ -5,6 +5,9 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="kotlin.vendingmachine.app">
+        <State />
+      </entry>
       <entry key="vendingmachine">
         <State />
       </entry>

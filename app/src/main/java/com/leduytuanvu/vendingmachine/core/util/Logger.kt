@@ -3,7 +3,7 @@ package com.leduytuanvu.vendingmachine.core.util
 import android.util.Log
 
 object Logger {
-    private const val TAG = "vudeptrai"
+    private const val TAG = "vuldt"
 
     fun debug(message: String) {
         Log.d(TAG, message)

@@ -1,5 +1,6 @@
 package com.leduytuanvu.vendingmachine.features.splash.presentation.initSetup.viewModel
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.core.content.ContextCompat
@@ -47,6 +48,7 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+@SuppressLint("StaticFieldLeak")
 @HiltViewModel
 class InitSetupViewModel @Inject constructor(
     private val baseRepository: BaseRepository,
@@ -109,9 +111,12 @@ class InitSetupViewModel @Inject constructor(
                     } else if (loginRequest.password.isEmpty()) {
                         sendEvent(Event.Toast("Password must not empty!"))
                     } else {
+                        logger.debug("1")
                         val passwordEncode = authRepository.encodePassword(loginRequest.password)
+                        logger.debug("2")
                         val responseLogin = authRepository.login(inputVendingMachineCode, loginRequest)
                         if (responseLogin.accessToken!!.isNotEmpty()) {
+                            logger.debug("3")
                             baseRepository.addNewAuthyLogToLocal(
                                 machineCode = inputVendingMachineCode,
                                 authyType = "login",
@@ -120,8 +125,10 @@ class InitSetupViewModel @Inject constructor(
                             val baudRateCashBox = "9600"
                             val baudRateVendingMachine = "9600"
                             val androidId = baseRepository.getAndroidId()
+                            logger.debug("android id: $androidId")
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
+//                                androidId = "3699b4175e004910",
                                 androidId = androidId,
                                 username = loginRequest.username,
                                 password = passwordEncode,
@@ -167,46 +174,48 @@ class InitSetupViewModel @Inject constructor(
                                         androidId = androidId,
                                     )
                                     val responseActivateTheMachine = authRepository.activateTheMachine(activateTheMachineRequest)
-                                    if(responseActivateTheMachine.code==200) {
+                                    if(responseActivateTheMachine.code==200 || responseActivateTheMachine.code==400) {
                                         val listPaymentMethod = settingsRepository.getListPaymentMethodFromServer()
                                         if (!baseRepository.isFolderExists(pathFolderImagePayment)) {
                                             baseRepository.createFolder(pathFolderImagePayment)
                                         }
-                                        for (item in listPaymentMethod) {
-                                            if(item.imageUrl!!.isNotEmpty()) {
-                                                var notHaveError = true
-                                                for (i in 1..3) {
-                                                    try {
-                                                        val request = ImageRequest.Builder(context = context)
-                                                            .data(item.imageUrl)
-                                                            .build()
-                                                        val result = withContext(Dispatchers.IO) {
-                                                            Coil.imageLoader(context).execute(request).drawable
-                                                        }
-                                                        if (result != null) {
-                                                            val file =
-                                                                File(pathFolderImagePayment, "${item.methodName}.png")
-                                                            withContext(Dispatchers.IO) {
-                                                                file.outputStream().use { outputStream ->
-                                                                    result.toBitmap().compress(
-                                                                        Bitmap.CompressFormat.PNG,
-                                                                        1,
-                                                                        outputStream
-                                                                    )
+                                        if(listPaymentMethod.isNotEmpty()) {
+                                            for (item in listPaymentMethod) {
+                                                if(item.imageUrl!!.isNotEmpty()) {
+                                                    var notHaveError = true
+                                                    for (i in 1..3) {
+                                                        try {
+                                                            val request = ImageRequest.Builder(context = context)
+                                                                .data(item.imageUrl)
+                                                                .build()
+                                                            val result = withContext(Dispatchers.IO) {
+                                                                Coil.imageLoader(context).execute(request).drawable
+                                                            }
+                                                            if (result != null) {
+                                                                val file =
+                                                                    File(pathFolderImagePayment, "${item.methodName}.png")
+                                                                withContext(Dispatchers.IO) {
+                                                                    file.outputStream().use { outputStream ->
+                                                                        result.toBitmap().compress(
+                                                                            Bitmap.CompressFormat.PNG,
+                                                                            1,
+                                                                            outputStream
+                                                                        )
+                                                                    }
                                                                 }
                                                             }
+                                                            logger.debug("download ${item.imageUrl} success")
+                                                        } catch (e: Exception) {
+                                                            notHaveError = false
+                                                            logger.debug("${e.message}")
+                                                        } finally {
+                                                            if (notHaveError) break
                                                         }
-                                                        logger.debug("download ${item.imageUrl} success")
-                                                    } catch (e: Exception) {
-                                                        notHaveError = false
-                                                        logger.debug("${e.message}")
-                                                    } finally {
-                                                        if (notHaveError) break
                                                     }
                                                 }
                                             }
+                                            baseRepository.writeDataToLocal(data = listPaymentMethod, path = pathFilePaymentMethod)
                                         }
-                                        baseRepository.writeDataToLocal(data = listPaymentMethod, path = pathFilePaymentMethod)
                                         val listSlot = arrayListOf<Slot>()
                                         for(i in 1..initSetup.numberSlot) {
                                             listSlot.add(
@@ -253,44 +262,63 @@ class InitSetupViewModel @Inject constructor(
                                         }
                                         sendEvent(Event.Toast("Setup init success"))
                                     } else {
-                                        baseRepository.deleteFile(pathFileInitSetup)
-                                        baseRepository.addNewErrorLogToLocal(
-                                            machineCode = initSetup.vendCode,
-                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
-                                        )
+                                        if(baseRepository.isFileExists(pathFileInitSetup)) {
+                                            baseRepository.deleteFile(pathFileInitSetup)
+                                        }
+                                        sendEvent(Event.Toast("Activate the machine fail: ${responseActivateTheMachine.message}"))
+//                                        baseRepository.deleteFile(pathFileInitSetup)
+//                                        baseRepository.addNewErrorLogToLocal(
+//                                            machineCode = initSetup.vendCode,
+//                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
+//                                        )
                                     }
                                 } else {
-                                    baseRepository.deleteFile(pathFileInitSetup)
-                                    baseRepository.addNewErrorLogToLocal(
-                                        machineCode = initSetup.vendCode,
-                                        errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
-                                    )
+//                                    baseRepository.deleteFile(pathFileInitSetup)
+                                    if(baseRepository.isFileExists(pathFileInitSetup)) {
+                                        baseRepository.deleteFile(pathFileInitSetup)
+                                    }
+                                    sendEvent(Event.Toast("Not found account or role is null/empty!"))
+//                                    baseRepository.addNewErrorLogToLocal(
+//                                        machineCode = initSetup.vendCode,
+//                                        errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
+//                                    )
                                 }
                             } else {
-                                baseRepository.deleteFile(pathFileInitSetup)
-                                baseRepository.addNewErrorLogToLocal(
-                                    machineCode = initSetup.vendCode,
-                                    errorContent = "get list account from server fail in InitSetupViewModel/writeInitSetupToLocal()",
-                                )
+//                                baseRepository.deleteFile(pathFileInitSetup)
+                                if(baseRepository.isFileExists(pathFileInitSetup)) {
+                                    baseRepository.deleteFile(pathFileInitSetup)
+                                }
+                                sendEvent(Event.Toast("Get list account from server fail: ${responseGetListAccount.message}"))
+//                                baseRepository.addNewErrorLogToLocal(
+//                                    machineCode = initSetup.vendCode,
+//                                    errorContent = "get list account from server fail in InitSetupViewModel/writeInitSetupToLocal()",
+//                                )
                             }
                         } else {
-                            baseRepository.addNewErrorLogToLocal(
-                                machineCode = "error when machine code has not been entered",
-                                errorContent = "access token get from api is empty in InitSetupViewModel/writeInitSetupToLocal()",
-                            )
+                            sendEvent(Event.Toast("Login fail, please check your username, password and vending machine code!"))
                         }
                     }
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
                 }
             } catch (e: Exception) {
+                logger.debug("writeInitSetupToLocal error: ${e.message}")
                 if(baseRepository.isFileExists(pathFileInitSetup)) {
                     baseRepository.deleteFile(pathFileInitSetup)
                 }
-                baseRepository.addNewErrorLogToLocal(
-                    machineCode = "error when machine code has not been entered",
-                    errorContent = "write init setup to local in the first time fail in InitSetupViewModel/writeInitSetupToLocal(): ${e.message}",
-                )
+                if(e.message!=null) {
+                    if(e.message!!.contains("401")) {
+                        sendEvent(Event.Toast("Login fail, please check your username, password and vending machine code!"))
+                    } else {
+                        sendEvent(Event.Toast("Setup init fail: ${e.message}"))
+                    }
+                } else {
+                    sendEvent(Event.Toast("Setup init fail!"))
+                }
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = "error when machine code has not been entered",
+//                    errorContent = "write init setup to local in the first time fail in InitSetupViewModel/writeInitSetupToLocal(): ${e.message}",
+//                )
             } finally {
                 _state.update { it.copy(isLoading = false) }
             }

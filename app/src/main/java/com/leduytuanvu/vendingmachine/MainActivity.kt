@@ -44,6 +44,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.leduytuanvu.vendingmachine.core.util.pathFileLogServer
 import java.io.File
+//import com.leduytuanvu.vendingmachine.BuildConfig
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
             restartApp()
         }
+
         // Check if the WRITE_EXTERNAL_STORAGE permission is granted
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
             == PackageManager.PERMISSION_GRANTED) {
@@ -81,7 +83,7 @@ class MainActivity : ComponentActivity() {
                         EventBus.events.collect { event ->
                             when (event) {
                                 is Event.Toast -> {
-                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_LONG).show()
                                 }
                                 is Event.NavigateToHomeScreen -> {
                                     navController.navigate(Screens.SettingScreenRoute.route)

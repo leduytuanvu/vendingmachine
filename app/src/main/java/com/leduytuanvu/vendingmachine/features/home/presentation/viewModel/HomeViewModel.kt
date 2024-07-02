@@ -560,15 +560,28 @@ class HomeViewModel @Inject constructor (
                                 } else {
                                     productDispense(0, slot.slot)
                                 }
+                                logger.debug("1 ------------")
                                 var result = withTimeoutOrNull(18000L) {
                                     statusDropProduct.first { it != DropSensorResult.ANOTHER }
                                 }
+                                logger.debug("2 ------------")
                                 if (result == null) {
+                                    logger.debug("3 ------------")
                                     messDropFailed = "TIMEOUT_WAITING_FOR_DISPENSE_RESULT"
                                     logger.debug(messDropFailed)
                                     homeRepository.lockSlot(slot.slot)
+                                    val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                    if(indexAllSlotDropFail!=-1) {
+                                        listAllSlotDropFail[indexAllSlotDropFail].messDrop = messDropFailed
+                                        listAllSlotDropFail[indexAllSlotDropFail].inventory++
+                                    } else {
+                                        slot.inventory = 1
+                                        slot.messDrop = messDropFailed
+                                        listAllSlotDropFail.add(slot)
+                                    }
                                     continue
                                 }
+                                logger.debug("4 ------------")
                                 if(_state.value.initSetup!!.dropSensor=="OFF"
                                     && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
                                             || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
@@ -723,6 +736,15 @@ class HomeViewModel @Inject constructor (
 //                                                        slotAnother.inventory = 1
 //                                                        listSlotDropFail.add(slotAnother)
 //                                                    }
+                                                        val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                                        if(indexAnotherAllSlotDropFail!=-1) {
+                                                            listAllSlotDropFail[indexAnotherAllSlotDropFail].messDrop = messDropFailed
+                                                            listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
+                                                        } else {
+                                                            slot.inventory = 1
+                                                            slot.messDrop = messDropFailed
+                                                            listAllSlotDropFail.add(slot)
+                                                        }
                                                         homeRepository.lockSlot(slotAnother.slot)
                                                         continue
                                                     }
@@ -840,6 +862,24 @@ class HomeViewModel @Inject constructor (
                                                     }
                                                 } else {
                                                     listSlotNotFound.add(item)
+                                                    val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                                    if(indexAnotherAllSlotDropFail!=-1) {
+                                                        listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
+                                                    } else {
+                                                        item.slot = -1
+                                                        item.inventory = 1
+                                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                                        listAllSlotDropFail.add(item)
+                                                    }
+
+                                                    val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                                    if(indexAllSlotDropFailCheck!=-1) {
+                                                        listSlotDropFail[indexAllSlotDropFailCheck].inventory++
+                                                    } else {
+                                                        item.inventory = 1
+                                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                                        listSlotDropFail.add(item)
+                                                    }
                                                     logger.debug("Not found ${item.productCode} in slot at local!")
                                                 }
                                             }
@@ -849,9 +889,29 @@ class HomeViewModel @Inject constructor (
                                 }
                             } else {
                                 listSlotNotFound.add(item)
+                                val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                if(indexAllSlotDropFail!=-1) {
+                                    listAllSlotDropFail[indexAllSlotDropFail].inventory++
+                                } else {
+                                    item.slot = -1
+                                    item.inventory = 1
+                                    item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                    listAllSlotDropFail.add(item)
+                                }
+
+                                val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                if(indexAllSlotDropFailCheck!=-1) {
+                                    listSlotDropFail[indexAllSlotDropFailCheck].inventory++
+                                } else {
+                                    item.inventory = 1
+                                    item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                    listSlotDropFail.add(item)
+                                }
+//                                listSlotNotFound.add(item)
                                 logger.debug("Not found ${item.productCode} in slot at local!")
                             }
                             if(checkDropProductFailAll) {
+                                logger.debug("vo check all r ne")
                                 val tmpSlot = item
                                 val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == tmpSlot.slot }
                                 if (indexSlotTmp!=-1) {
@@ -937,9 +997,7 @@ class HomeViewModel @Inject constructor (
                             )
                         }
                     }
-                    logger.info("list log sync order 00: "+_state.value.logSyncOrder!!.productDetails)
                     if(listAllSlotDropFail.isNotEmpty()) {
-                        logger.info("list all slot drop fail: "+listAllSlotDropFail.toString())
                         for(item in listAllSlotDropFail) {
                             val tmp = ProductSyncOrderRequest(
                                 productCode = item.productCode,
@@ -1944,7 +2002,7 @@ class HomeViewModel @Inject constructor (
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-//              initSetup.currentCash = 50000
+              initSetup.currentCash = 50000
                 // Get list method payment
                 val listPaymentMethod: ArrayList<PaymentMethodResponse> = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<PaymentMethodResponse>>() {}.type,
