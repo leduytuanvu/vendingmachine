@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.leduytuanvu.vendingmachine"
+    namespace = "com.combros.vendingmachine"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.leduytuanvu.vendingmachine"
+        applicationId = "com.combros.vendingmachine"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -39,7 +39,7 @@ android {
         create("release") {
             keyAlias = "key0"
             keyPassword = "1234567890"
-            storeFile = file("C:\\leduytuanvu\\develop\\kotlin\\vendingmachine\\keystore\\keystore.jks")
+            storeFile = file("C:\\leduytuanvu\\develop\\kotlin\\vendingmachine\\keystore\\keystore2.jks")
             storePassword = "1234567890"
         }
     }
@@ -91,7 +91,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path("src/main/java/com/leduytuanvu/vendingmachine/core/native/CMakeLists.txt")
+            path("src/main/java/com/combros/vendingmachine/core/native/CMakeLists.txt")
         }
     }
     buildToolsVersion = "34.0.0"
