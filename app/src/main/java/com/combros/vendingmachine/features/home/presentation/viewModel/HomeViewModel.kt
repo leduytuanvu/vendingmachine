@@ -548,111 +548,45 @@ class HomeViewModel @Inject constructor (
                     }
                     outerLoop@ for (item in listSlotInCart) {
                         for (index in 1..item.inventory) {
-                            var messDropFailed = ""
-                            var checkDropProductFailAll = true
-                            val slot = homeRepository.getSlotDrop(item.productCode)
-                            if (slot != null) {
-                                _statusDropProduct.value = DropSensorResult.ANOTHER
-                                if(_state.value.initSetup!!.dropSensor=="OFF") {
-                                    productDispenseNotSensor(0, slot.slot)
-                                } else {
-                                    productDispense(0, slot.slot)
+                            _statusDropProduct.value = DropSensorResult.ANOTHER
+                            checkDropSensor(0)
+                            var resultCheckDropSensor = withTimeoutOrNull(2000L) {
+                                statusDropProduct.first { it != DropSensorResult.ANOTHER }
+                            }
+                            if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                resultCheckDropSensor = DropSensorResult.ANOTHER
+                            }
+
+                            if(resultCheckDropSensor == DropSensorResult.NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM) {
+                                _state.update {
+                                    it.copy(
+                                        isShowWaitForDropProduct = false,
+                                        listSlotInCard = arrayListOf(),
+                                        isWarning = true,
+                                        titleDialogWarning = "Cảm biến rơi hiện có vấn đề. Xin vui lòng thử lại sau!",
+                                    )
                                 }
-                                logger.debug("1 ------------")
-                                var result = withTimeoutOrNull(18000L) {
-                                    statusDropProduct.first { it != DropSensorResult.ANOTHER }
-                                }
-                                logger.debug("2 ------------")
-                                if (result == null) {
-                                    logger.debug("3 ------------")
-                                    messDropFailed = "TIMEOUT_WAITING_FOR_DISPENSE_RESULT"
-                                    logger.debug(messDropFailed)
-                                    homeRepository.lockSlot(slot.slot)
-                                    val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                    if(indexAllSlotDropFail!=-1) {
-                                        listAllSlotDropFail[indexAllSlotDropFail].messDrop = messDropFailed
-                                        listAllSlotDropFail[indexAllSlotDropFail].inventory++
+                            } else {
+                                var messDropFailed = ""
+                                var checkDropProductFailAll = true
+                                val slot = homeRepository.getSlotDrop(item.productCode)
+                                if (slot != null) {
+                                    _statusDropProduct.value = DropSensorResult.ANOTHER
+                                    if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                        productDispenseNotSensor(0, slot.slot)
                                     } else {
-                                        slot.inventory = 1
-                                        slot.messDrop = messDropFailed
-                                        listAllSlotDropFail.add(slot)
+                                        productDispense(0, slot.slot)
                                     }
-                                    continue
-                                }
-                                logger.debug("4 ------------")
-                                if(_state.value.initSetup!!.dropSensor=="OFF"
-                                    && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                            || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
-                                            || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
-                                            || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
-                                    ) {
-                                    result = DropSensorResult.SUCCESS
-                                }
-                                when (result) {
-                                    DropSensorResult.SUCCESS -> {
-                                        val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
-                                        if(indexSlotDropSuccess!=-1) {
-                                            listSlotDropSuccess[indexSlotDropSuccess].messDrop = "SUCCESS"
-                                            listSlotDropSuccess[indexSlotDropSuccess].inventory++
-                                        } else {
-                                            slot.inventory = 1
-                                            slot.messDrop = "SUCCESS"
-                                            listSlotDropSuccess.add(slot)
-                                        }
-//                                        baseRepository.addNewSpringLogToLocal(
-//                                            machineCode = _state.value.initSetup!!.vendCode,
-//                                            slot = slot.slot,
-//                                            numberOfRevolutions = 1,
-//                                        )
-//                                        baseRepository.addNewSensorLogToLocal(
-//                                            machineCode = _state.value.initSetup!!.vendCode,
-//                                            cabinetCode = "MT01",
-//                                            productCode = slot.productCode,
-//                                            status = "true",
-//                                            slot = slot.slot.toString(),
-//                                        )
-                                        homeRepository.minusInventory(slot.slot)
-                                        item.inventory--
-                                        cashDropped += item.price
-                                        quantityDropped++
-                                        checkDropProductFailAll = false
+                                    logger.debug("1 ------------")
+                                    var result = withTimeoutOrNull(18000L) {
+                                        statusDropProduct.first { it != DropSensorResult.ANOTHER }
                                     }
-                                    DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
-                                        val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
-                                        if(indexSlotDropSuccess!=-1) {
-                                            listSlotDropSuccess[indexSlotDropSuccess].messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
-                                            listSlotDropSuccess[indexSlotDropSuccess].inventory++
-                                        } else {
-                                            slot.inventory = 1
-                                            slot.messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
-                                            listSlotDropSuccess.add(slot)
-                                        }
-//                                        baseRepository.addNewSpringLogToLocal(
-//                                            machineCode = _state.value.initSetup!!.vendCode,
-//                                            slot = slot.slot,
-//                                            numberOfRevolutions = 1,
-//                                        )
-//                                        baseRepository.addNewSensorLogToLocal(
-//                                            machineCode = _state.value.initSetup!!.vendCode,
-//                                            cabinetCode = "MT01",
-//                                            productCode = slot.productCode,
-//                                            status = "true",
-//                                            slot = slot.slot.toString(),
-//                                        )
-                                        homeRepository.minusInventory(slot.slot)
-                                        item.inventory--
-                                        cashDropped += item.price
-                                        quantityDropped++
-                                        checkDropProductFailAll = false
-                                    }
-                                    DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                        messDropFailed = "SENSOR_HAS_AN_OBSTACLE"
-                                        logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
-                                        sensorHasAnObstruction = true
-                                        break@outerLoop
-                                    }
-                                    else -> {
-                                        messDropFailed = result.name
+                                    logger.debug("2 ------------")
+                                    if (result == null) {
+                                        logger.debug("3 ------------")
+                                        messDropFailed = "TIMEOUT_WAITING_FOR_DISPENSE_RESULT"
+                                        logger.debug(messDropFailed)
+                                        homeRepository.lockSlot(slot.slot)
                                         val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
                                         if(indexAllSlotDropFail!=-1) {
                                             listAllSlotDropFail[indexAllSlotDropFail].messDrop = messDropFailed
@@ -662,6 +596,91 @@ class HomeViewModel @Inject constructor (
                                             slot.messDrop = messDropFailed
                                             listAllSlotDropFail.add(slot)
                                         }
+                                        continue
+                                    }
+                                    logger.debug("4 ------------")
+                                    if(_state.value.initSetup!!.dropSensor=="OFF"
+                                        && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                                || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                                || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                                || result == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                    ) {
+                                        result = DropSensorResult.SUCCESS
+                                    }
+                                    when (result) {
+                                        DropSensorResult.SUCCESS -> {
+                                            val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
+                                            if(indexSlotDropSuccess!=-1) {
+                                                listSlotDropSuccess[indexSlotDropSuccess].messDrop = "SUCCESS"
+                                                listSlotDropSuccess[indexSlotDropSuccess].inventory++
+                                            } else {
+                                                slot.inventory = 1
+                                                slot.messDrop = "SUCCESS"
+                                                listSlotDropSuccess.add(slot)
+                                            }
+//                                        baseRepository.addNewSpringLogToLocal(
+//                                            machineCode = _state.value.initSetup!!.vendCode,
+//                                            slot = slot.slot,
+//                                            numberOfRevolutions = 1,
+//                                        )
+//                                        baseRepository.addNewSensorLogToLocal(
+//                                            machineCode = _state.value.initSetup!!.vendCode,
+//                                            cabinetCode = "MT01",
+//                                            productCode = slot.productCode,
+//                                            status = "true",
+//                                            slot = slot.slot.toString(),
+//                                        )
+                                            homeRepository.minusInventory(slot.slot)
+                                            item.inventory--
+                                            cashDropped += item.price
+                                            quantityDropped++
+                                            checkDropProductFailAll = false
+                                        }
+                                        DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
+                                            val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
+                                            if(indexSlotDropSuccess!=-1) {
+                                                listSlotDropSuccess[indexSlotDropSuccess].messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
+                                                listSlotDropSuccess[indexSlotDropSuccess].inventory++
+                                            } else {
+                                                slot.inventory = 1
+                                                slot.messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
+                                                listSlotDropSuccess.add(slot)
+                                            }
+//                                        baseRepository.addNewSpringLogToLocal(
+//                                            machineCode = _state.value.initSetup!!.vendCode,
+//                                            slot = slot.slot,
+//                                            numberOfRevolutions = 1,
+//                                        )
+//                                        baseRepository.addNewSensorLogToLocal(
+//                                            machineCode = _state.value.initSetup!!.vendCode,
+//                                            cabinetCode = "MT01",
+//                                            productCode = slot.productCode,
+//                                            status = "true",
+//                                            slot = slot.slot.toString(),
+//                                        )
+                                            homeRepository.minusInventory(slot.slot)
+                                            item.inventory--
+                                            cashDropped += item.price
+                                            quantityDropped++
+                                            checkDropProductFailAll = false
+                                        }
+                                        DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                            messDropFailed = "SENSOR_HAS_AN_OBSTACLE"
+                                            logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
+                                            sensorHasAnObstruction = true
+                                            break@outerLoop
+                                        }
+                                        else -> {
+                                            messDropFailed = result.name
+                                            val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                            if(indexAllSlotDropFail!=-1) {
+                                                listAllSlotDropFail[indexAllSlotDropFail].messDrop = messDropFailed
+                                                listAllSlotDropFail[indexAllSlotDropFail].inventory++
+                                            } else {
+                                                slot.inventory = 1
+                                                slot.messDrop = messDropFailed
+                                                listAllSlotDropFail.add(slot)
+                                            }
 //                                        baseRepository.addNewSensorLogToLocal(
 //                                            machineCode = _state.value.initSetup!!.vendCode,
 //                                            cabinetCode = "MT01",
@@ -678,21 +697,21 @@ class HomeViewModel @Inject constructor (
 //                                                numberOfRevolutions = 1,
 //                                            )
 //                                        }
-                                        homeRepository.lockSlot(slot.slot)
-                                        val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
-                                        if(listAnotherSlot.isEmpty()) {
-                                            var countItemSlotDropSuccess = 0
-                                            var countItemSlotDropFail = 0
-                                            for(itemTmpCheckSlot in listSlotDropSuccess) {
-                                                if(itemTmpCheckSlot.productCode == slot.productCode){
-                                                    countItemSlotDropSuccess += itemTmpCheckSlot.inventory
+                                            homeRepository.lockSlot(slot.slot)
+                                            val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
+                                            if(listAnotherSlot.isEmpty()) {
+                                                var countItemSlotDropSuccess = 0
+                                                var countItemSlotDropFail = 0
+                                                for(itemTmpCheckSlot in listSlotDropSuccess) {
+                                                    if(itemTmpCheckSlot.productCode == slot.productCode){
+                                                        countItemSlotDropSuccess += itemTmpCheckSlot.inventory
+                                                    }
                                                 }
-                                            }
-                                            for(itemTmpCheckSlot in listAllSlotDropFail) {
-                                                if(itemTmpCheckSlot.productCode == slot.productCode){
-                                                    countItemSlotDropFail += itemTmpCheckSlot.inventory
+                                                for(itemTmpCheckSlot in listAllSlotDropFail) {
+                                                    if(itemTmpCheckSlot.productCode == slot.productCode){
+                                                        countItemSlotDropFail += itemTmpCheckSlot.inventory
+                                                    }
                                                 }
-                                            }
 //                                            logger.info("countItemSlotDropSuccess: $countItemSlotDropSuccess, countItemSlotDropFail: $countItemSlotDropFail, item.inventory: ${item.inventory}")
 //                                            val checkCount = item.inventory - countItemSlotDropSuccess
 //                                            if(checkCount>countItemSlotDropFail) {
@@ -711,22 +730,22 @@ class HomeViewModel @Inject constructor (
 //                                                slot.inventory = 1
 //                                                listSlotDropFail.add(slot)
 //                                            }
-                                        } else {
-                                            for (itemAnother in listAnotherSlot) {
-                                                val slotAnother = homeRepository.getSlotDrop(item.productCode)
-                                                logger.debug("slotAnother found: $slotAnother")
-                                                if (slotAnother != null) {
-                                                    _statusDropProduct.value = DropSensorResult.ANOTHER
-                                                    if(_state.value.initSetup!!.dropSensor=="OFF") {
-                                                        productDispenseNotSensor(0, slotAnother.slot)
-                                                    } else {
-                                                        productDispense(0, slotAnother.slot)
-                                                    }
-                                                    var anotherResult = withTimeoutOrNull(18000L) {
-                                                        statusDropProduct.first { it != DropSensorResult.ANOTHER }
-                                                    }
-                                                    if (anotherResult == null) {
-                                                        logger.debug("Timeout waiting for another dispense result")
+                                            } else {
+                                                for (itemAnother in listAnotherSlot) {
+                                                    val slotAnother = homeRepository.getSlotDrop(item.productCode)
+                                                    logger.debug("slotAnother found: $slotAnother")
+                                                    if (slotAnother != null) {
+                                                        _statusDropProduct.value = DropSensorResult.ANOTHER
+                                                        if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                                            productDispenseNotSensor(0, slotAnother.slot)
+                                                        } else {
+                                                            productDispense(0, slotAnother.slot)
+                                                        }
+                                                        var anotherResult = withTimeoutOrNull(18000L) {
+                                                            statusDropProduct.first { it != DropSensorResult.ANOTHER }
+                                                        }
+                                                        if (anotherResult == null) {
+                                                            logger.debug("Timeout waiting for another dispense result")
 //                                                    val indexAnotherSlotTmp = listSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
 //                                                    if (indexAnotherSlotTmp!=-1) {
 //                                                        listSlotDropFail[indexAnotherSlotTmp].inventory++
@@ -734,103 +753,103 @@ class HomeViewModel @Inject constructor (
 //                                                        slotAnother.inventory = 1
 //                                                        listSlotDropFail.add(slotAnother)
 //                                                    }
-                                                        val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
-                                                        if(indexAnotherAllSlotDropFail!=-1) {
-                                                            listAllSlotDropFail[indexAnotherAllSlotDropFail].messDrop = messDropFailed
-                                                            listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
-                                                        } else {
-                                                            slot.inventory = 1
-                                                            slot.messDrop = messDropFailed
-                                                            listAllSlotDropFail.add(slot)
-                                                        }
-                                                        homeRepository.lockSlot(slotAnother.slot)
-                                                        continue
-                                                    }
-                                                    if(_state.value.initSetup!!.dropSensor=="OFF"
-                                                        && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
-                                                                || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
-                                                                || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
-                                                                || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
-                                                    ) {
-                                                        anotherResult = DropSensorResult.SUCCESS
-                                                    }
-                                                    when (anotherResult) {
-                                                        DropSensorResult.SUCCESS -> {
-                                                            val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slotAnother.slot }
-                                                            if(indexSlotDropSuccess!=-1) {
-                                                                listSlotDropSuccess[indexSlotDropSuccess].messDrop = "SUCCESS"
-                                                                listSlotDropSuccess[indexSlotDropSuccess].inventory++
-                                                            } else {
-                                                                slotAnother.inventory = 1
-                                                                slotAnother.messDrop = "SUCCESS"
-                                                                listSlotDropSuccess.add(slotAnother)
-                                                            }
-//                                                            baseRepository.addNewSensorLogToLocal(
-//                                                                machineCode = _state.value.initSetup!!.vendCode,
-//                                                                cabinetCode = "MT01",
-//                                                                productCode = slotAnother.productCode,
-//                                                                status = "true",
-//                                                                slot = slotAnother.slot.toString(),
-//                                                            )
-//                                                            baseRepository.addNewSpringLogToLocal(
-//                                                                machineCode = _state.value.initSetup!!.vendCode,
-//                                                                slot = slotAnother.slot,
-//                                                                numberOfRevolutions = 1,
-//                                                            )
-//                                                            logger.debug("SUCCESS: $anotherResult")
-                                                            homeRepository.minusInventory(slotAnother.slot)
-                                                            item.inventory--
-                                                            cashDropped += item.price
-                                                            quantityDropped++
-                                                            checkDropProductFailAll = false
-                                                            break
-                                                        }
-                                                        DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
-                                                            val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slotAnother.slot }
-                                                            if(indexSlotDropSuccess!=-1) {
-                                                                listSlotDropSuccess[indexSlotDropSuccess].messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
-                                                                listSlotDropSuccess[indexSlotDropSuccess].inventory++
-                                                            } else {
-                                                                slotAnother.inventory = 1
-                                                                slotAnother.messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
-                                                                listSlotDropSuccess.add(slotAnother)
-                                                            }
-//                                                            baseRepository.addNewSensorLogToLocal(
-//                                                                machineCode = _state.value.initSetup!!.vendCode,
-//                                                                cabinetCode = "MT01",
-//                                                                productCode = slotAnother.productCode,
-//                                                                status = "true",
-//                                                                slot = slotAnother.slot.toString(),
-//                                                            )
-//                                                            baseRepository.addNewSpringLogToLocal(
-//                                                                machineCode = _state.value.initSetup!!.vendCode,
-//                                                                slot = slotAnother.slot,
-//                                                                numberOfRevolutions = 1,
-//                                                            )
-//                                                            logger.debug("SUCCESS: $anotherResult")
-                                                            homeRepository.minusInventory(slotAnother.slot)
-                                                            item.inventory--
-                                                            cashDropped += item.price
-                                                            quantityDropped++
-                                                            checkDropProductFailAll = false
-                                                            break
-                                                        }
-                                                        DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                                            logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
-                                                            sensorHasAnObstruction = true
-                                                            break@outerLoop
-                                                        }
-                                                        else -> {
-                                                            messDropFailed = anotherResult.name
-                                                            val indexAllAnotherSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
-                                                            if(indexAllAnotherSlotDropFail!=-1) {
-                                                                listAllSlotDropFail[indexAllAnotherSlotDropFail].messDrop = messDropFailed
-                                                                listAllSlotDropFail[indexAllAnotherSlotDropFail].inventory++
+                                                            val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slot.slot }
+                                                            if(indexAnotherAllSlotDropFail!=-1) {
+                                                                listAllSlotDropFail[indexAnotherAllSlotDropFail].messDrop = messDropFailed
+                                                                listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
                                                             } else {
                                                                 slot.inventory = 1
                                                                 slot.messDrop = messDropFailed
                                                                 listAllSlotDropFail.add(slot)
                                                             }
+                                                            homeRepository.lockSlot(slotAnother.slot)
+                                                            continue
+                                                        }
+                                                        if(_state.value.initSetup!!.dropSensor=="OFF"
+                                                            && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                                                                    || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                                                                    || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                                                                    || anotherResult == DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION)
+                                                        ) {
+                                                            anotherResult = DropSensorResult.SUCCESS
+                                                        }
+                                                        when (anotherResult) {
+                                                            DropSensorResult.SUCCESS -> {
+                                                                val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slotAnother.slot }
+                                                                if(indexSlotDropSuccess!=-1) {
+                                                                    listSlotDropSuccess[indexSlotDropSuccess].messDrop = "SUCCESS"
+                                                                    listSlotDropSuccess[indexSlotDropSuccess].inventory++
+                                                                } else {
+                                                                    slotAnother.inventory = 1
+                                                                    slotAnother.messDrop = "SUCCESS"
+                                                                    listSlotDropSuccess.add(slotAnother)
+                                                                }
+//                                                            baseRepository.addNewSensorLogToLocal(
+//                                                                machineCode = _state.value.initSetup!!.vendCode,
+//                                                                cabinetCode = "MT01",
+//                                                                productCode = slotAnother.productCode,
+//                                                                status = "true",
+//                                                                slot = slotAnother.slot.toString(),
+//                                                            )
+//                                                            baseRepository.addNewSpringLogToLocal(
+//                                                                machineCode = _state.value.initSetup!!.vendCode,
+//                                                                slot = slotAnother.slot,
+//                                                                numberOfRevolutions = 1,
+//                                                            )
+//                                                            logger.debug("SUCCESS: $anotherResult")
+                                                                homeRepository.minusInventory(slotAnother.slot)
+                                                                item.inventory--
+                                                                cashDropped += item.price
+                                                                quantityDropped++
+                                                                checkDropProductFailAll = false
+                                                                break
+                                                            }
+                                                            DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
+                                                                val indexSlotDropSuccess = listSlotDropSuccess.indexOfFirst { it.slot == slotAnother.slot }
+                                                                if(indexSlotDropSuccess!=-1) {
+                                                                    listSlotDropSuccess[indexSlotDropSuccess].messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
+                                                                    listSlotDropSuccess[indexSlotDropSuccess].inventory++
+                                                                } else {
+                                                                    slotAnother.inventory = 1
+                                                                    slotAnother.messDrop = "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
+                                                                    listSlotDropSuccess.add(slotAnother)
+                                                                }
+//                                                            baseRepository.addNewSensorLogToLocal(
+//                                                                machineCode = _state.value.initSetup!!.vendCode,
+//                                                                cabinetCode = "MT01",
+//                                                                productCode = slotAnother.productCode,
+//                                                                status = "true",
+//                                                                slot = slotAnother.slot.toString(),
+//                                                            )
+//                                                            baseRepository.addNewSpringLogToLocal(
+//                                                                machineCode = _state.value.initSetup!!.vendCode,
+//                                                                slot = slotAnother.slot,
+//                                                                numberOfRevolutions = 1,
+//                                                            )
+//                                                            logger.debug("SUCCESS: $anotherResult")
+                                                                homeRepository.minusInventory(slotAnother.slot)
+                                                                item.inventory--
+                                                                cashDropped += item.price
+                                                                quantityDropped++
+                                                                checkDropProductFailAll = false
+                                                                break
+                                                            }
+                                                            DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                                                logger.debug("+++++SENSOR_HAS_AN_OBSTACLE: $result")
+                                                                sensorHasAnObstruction = true
+                                                                break@outerLoop
+                                                            }
+                                                            else -> {
+                                                                messDropFailed = anotherResult.name
+                                                                val indexAllAnotherSlotDropFail = listAllSlotDropFail.indexOfFirst { it.slot == slotAnother.slot }
+                                                                if(indexAllAnotherSlotDropFail!=-1) {
+                                                                    listAllSlotDropFail[indexAllAnotherSlotDropFail].messDrop = messDropFailed
+                                                                    listAllSlotDropFail[indexAllAnotherSlotDropFail].inventory++
+                                                                } else {
+                                                                    slot.inventory = 1
+                                                                    slot.messDrop = messDropFailed
+                                                                    listAllSlotDropFail.add(slot)
+                                                                }
 //                                                            baseRepository.addNewSensorLogToLocal(
 //                                                                machineCode = _state.value.initSetup!!.vendCode,
 //                                                                cabinetCode = "MT01",
@@ -855,71 +874,74 @@ class HomeViewModel @Inject constructor (
 //                                                            slotAnother.inventory = 1
 //                                                            listSlotDropFail.add(slotAnother)
 //                                                        }
-                                                            homeRepository.lockSlot(slotAnother.slot)
+                                                                homeRepository.lockSlot(slotAnother.slot)
+                                                            }
                                                         }
-                                                    }
-                                                } else {
-                                                    listSlotNotFound.add(item)
-                                                    val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
-                                                    if(indexAnotherAllSlotDropFail!=-1) {
-                                                        listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
                                                     } else {
-                                                        item.slot = -1
-                                                        item.inventory = 1
-                                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
-                                                        listAllSlotDropFail.add(item)
-                                                    }
+                                                        listSlotNotFound.add(item)
+                                                        val indexAnotherAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                                        if(indexAnotherAllSlotDropFail!=-1) {
+                                                            listAllSlotDropFail[indexAnotherAllSlotDropFail].inventory++
+                                                        } else {
+                                                            item.slot = -1
+                                                            item.inventory = 1
+                                                            item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                                            listAllSlotDropFail.add(item)
+                                                        }
 
-                                                    val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
-                                                    if(indexAllSlotDropFailCheck!=-1) {
-                                                        listSlotDropFail[indexAllSlotDropFailCheck].inventory++
-                                                    } else {
-                                                        item.inventory = 1
-                                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
-                                                        listSlotDropFail.add(item)
+                                                        val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                                        if(indexAllSlotDropFailCheck!=-1) {
+                                                            listSlotDropFail[indexAllSlotDropFailCheck].inventory++
+                                                        } else {
+                                                            item.inventory = 1
+                                                            item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                                            listSlotDropFail.add(item)
+                                                        }
+                                                        logger.debug("Not found ${item.productCode} in slot at local!")
                                                     }
-                                                    logger.debug("Not found ${item.productCode} in slot at local!")
                                                 }
                                             }
+                                            logger.debug("FAIL: $result")
                                         }
-                                        logger.debug("FAIL: $result")
                                     }
                                 }
-                            } else {
-                                listSlotNotFound.add(item)
-                                val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
-                                if(indexAllSlotDropFail!=-1) {
-                                    listAllSlotDropFail[indexAllSlotDropFail].inventory++
-                                } else {
-                                    item.slot = -1
-                                    item.inventory = 1
-                                    item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
-                                    listAllSlotDropFail.add(item)
-                                }
+                                else {
+                                    listSlotNotFound.add(item)
+                                    val indexAllSlotDropFail = listAllSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                    if(indexAllSlotDropFail!=-1) {
+                                        listAllSlotDropFail[indexAllSlotDropFail].inventory++
+                                    } else {
+                                        item.slot = -1
+                                        item.inventory = 1
+                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                        listAllSlotDropFail.add(item)
+                                    }
 
-                                val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
-                                if(indexAllSlotDropFailCheck!=-1) {
-                                    listSlotDropFail[indexAllSlotDropFailCheck].inventory++
-                                } else {
-                                    item.inventory = 1
-                                    item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
-                                    listSlotDropFail.add(item)
-                                }
+                                    val indexAllSlotDropFailCheck = listSlotDropFail.indexOfFirst { it.productCode == item.productCode }
+                                    if(indexAllSlotDropFailCheck!=-1) {
+                                        listSlotDropFail[indexAllSlotDropFailCheck].inventory++
+                                    } else {
+                                        item.inventory = 1
+                                        item.messDrop = "NOT FOUND ANY SLOT HAVE PRODUCT CODE IS ${item.productCode}"
+                                        listSlotDropFail.add(item)
+                                    }
 //                                listSlotNotFound.add(item)
-                                logger.debug("Not found ${item.productCode} in slot at local!")
-                            }
-                            if(checkDropProductFailAll) {
-                                logger.debug("vo check all r ne")
-                                val tmpSlot = item
-                                val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == tmpSlot.slot }
-                                if (indexSlotTmp!=-1) {
-                                    listSlotDropFail[indexSlotTmp].inventory++
-                                    listSlotDropFail[indexSlotTmp].messDrop = messDropFailed
-                                } else {
-                                    tmpSlot.inventory = 1
-                                    tmpSlot.messDrop = messDropFailed
-                                    listSlotDropFail.add(tmpSlot)
+                                    logger.debug("Not found ${item.productCode} in slot at local!")
                                 }
+                                if(checkDropProductFailAll) {
+                                    logger.debug("vo check all r ne")
+                                    val tmpSlot = item
+                                    val indexSlotTmp = listSlotDropFail.indexOfFirst { it.slot == tmpSlot.slot }
+                                    if (indexSlotTmp!=-1) {
+                                        listSlotDropFail[indexSlotTmp].inventory++
+                                        listSlotDropFail[indexSlotTmp].messDrop = messDropFailed
+                                    } else {
+                                        tmpSlot.inventory = 1
+                                        tmpSlot.messDrop = messDropFailed
+                                        listSlotDropFail.add(tmpSlot)
+                                    }
+                                }
+//                            delay(2000)
                             }
                         }
                     }

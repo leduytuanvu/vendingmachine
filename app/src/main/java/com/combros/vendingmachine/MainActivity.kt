@@ -38,13 +38,14 @@ import com.combros.vendingmachine.ui.theme.VendingmachineTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.combros.vendingmachine.core.util.pathFileLogServer
 import java.io.File
-//import com.leduytuanvu.vendingmachine.BuildConfig
+import android.os.Process
+import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -54,6 +55,14 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val localStorageDatasource = LocalStorageDatasource()
+        val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
+        if(initSetup!=null) {
+            initSetup.autoStartApplication = "ON"
+            localStorageDatasource.writeData(pathFileInitSetup, localStorageDatasource.gson.toJson(initSetup))
+        }
+
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
             restartApp()
         }
@@ -67,12 +76,14 @@ class MainActivity : ComponentActivity() {
             // Permission is not granted, request it
             requestPermissionLauncherReadWriteExternalStorage.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
+
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.READ_PHONE_STATE
             ) != PackageManager.PERMISSION_GRANTED) {
             requestPermissionLauncherReadPhoneState.launch(Manifest.permission.READ_PHONE_STATE)
         }
+
         setContent {
             hideStatusBar()
             VendingmachineTheme {
@@ -109,7 +120,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            Toast.makeText(this, "READ_PHONE_STATE permission is required to get SIM Serial ID", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "READ PHONE STATE permission is required to get SIM Serial ID", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -119,7 +130,7 @@ class MainActivity : ComponentActivity() {
             performFileOperations()
         } else {
             // Permission denied, handle accordingly (e.g., show a message)
-            Toast.makeText(this, "WRITE_EXTERNAL_STORAGE permission is required to save logs", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "WRITE EXTERNAL STORAGE permission is required to save logs", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -129,22 +140,16 @@ class MainActivity : ComponentActivity() {
             val parentDir = file.parentFile
             if (parentDir != null) {
                 if (!parentDir.exists()) {
-                    val dirCreated = parentDir.mkdirs()
-                    Log.d("MainActivity", "Parent directory created: $dirCreated")
+                    parentDir.mkdirs()
                 }
                 if (parentDir.exists()) {
                     if (!file.exists()) {
-                        val fileCreated = file.createNewFile()
-                        Log.d("MainActivity", "File created: $fileCreated")
+                        file.createNewFile()
                     }
-                } else {
-                    Log.d("MainActivity", "Parent directory does not exist and could not be created: ${parentDir.absolutePath}")
                 }
-            } else {
-                Log.d("MainActivity", "Parent directory is null for the file: ${file.absolutePath}")
             }
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error performing file operations: ${e.message}", e)
+            Toast.makeText(this, "Error performing file operations: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -179,11 +184,19 @@ class MainActivity : ComponentActivity() {
                     val intent = intent
                     finish()
                     startActivity(intent)
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    Process.killProcess(Process.myPid())
                 }, 1000)
+            } else {
+                closeApp(this)
             }
         }
     }
+}
+
+fun closeApp(activity: Activity) {
+    activity.finishAffinity() // Close all activities
+    Process.killProcess(Process.myPid()) // Kill the current process
+    exitProcess(0) // Terminate the process
 }
 
 class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
@@ -195,7 +208,6 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
             "TurnOnLightTask" -> {
                 val localStorageDatasource = LocalStorageDatasource()
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-                Logger.debug("task scheduled turn on light")
                 if(initSetup!=null) {
                     if(initSetup.autoTurnOnTurnOffLight=="ON") {
                         portConnectionDatasource.sendCommandVendingMachine(
@@ -208,7 +220,6 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
             "TurnOffLightTask" -> {
                 val localStorageDatasource = LocalStorageDatasource()
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-                Logger.debug("task scheduled turn off light")
                 if(initSetup!=null) {
                     if(initSetup.autoTurnOnTurnOffLight=="ON") {
                         portConnectionDatasource.sendCommandVendingMachine(
@@ -224,10 +235,11 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
                 if(initSetup != null) {
                     if(initSetup.autoResetAppEveryday=="ON") {
                         val appContext = applicationContext
-                        restartApp(appContext)
+                        val intent = Intent(appContext, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        appContext.startActivity(intent)
                     }
                 }
-                Logger.debug("task scheduled reset app")
                 Result.success()
             }
             else -> {
@@ -251,10 +263,4 @@ class BootReceiver : BroadcastReceiver() {
             }
         }
     }
-}
-
-fun restartApp(context: Context) {
-    val intent = Intent(context, MainActivity::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-    context.startActivity(intent)
 }

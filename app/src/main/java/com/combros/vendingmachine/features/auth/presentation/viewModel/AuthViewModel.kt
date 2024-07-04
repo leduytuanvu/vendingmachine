@@ -88,17 +88,39 @@ class AuthViewModel @Inject constructor (
                         sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                     }
                 }
-                _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
-                Logger.debug("error: ${e.message}")
-                val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<InitSetup>() {}.type,
-                    path = pathFileInitSetup
-                )!!
-                baseRepository.addNewErrorLogToLocal(
-                    machineCode = initSetup.vendCode,
-                    errorContent = "login fail in AuthViewModel/login(): ${e.message}",
-                )
+                if(e.message!=null) {
+                    if(e.message!!.contains("timeout")) {
+                        val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<InitSetup>() {}.type,
+                            path = pathFileInitSetup
+                        )!!
+                        val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
+                        val realPassword = String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE")
+                        if(username==initSetup.username && password==realPassword) {
+                            baseRepository.addNewAuthyLogToLocal(
+                                machineCode = initSetup.vendCode,
+                                authyType = "login",
+                                username = initSetup.username,
+                            )
+                            navController.popBackStack()
+                            navController.popBackStack()
+                            navController.navigate(Screens.SettingScreenRoute.route)
+                        } else {
+                            sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
+                        }
+                    } else {
+                        val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<InitSetup>() {}.type,
+                            path = pathFileInitSetup
+                        )!!
+                        baseRepository.addNewErrorLogToLocal(
+                            machineCode = initSetup.vendCode,
+                            errorContent = "login fail in AuthViewModel/login(): ${e.message}",
+                        )
+                    }
+                }
+            } finally {
                 _state.update { it.copy(isLoading = false) }
             }
         }
