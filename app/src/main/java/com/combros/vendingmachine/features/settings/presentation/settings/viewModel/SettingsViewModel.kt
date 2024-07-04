@@ -58,6 +58,18 @@ class SettingsViewModel @Inject constructor (
         }
     }
 
+    fun navigateToHomeAndroid() {
+        viewModelScope.launch {
+            val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                type = object : TypeToken<InitSetup>() {}.type,
+                path = pathFileInitSetup
+            )!!
+            initSetup.autoStartApplication = "OFF"
+            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+            throw Exception("kill app")
+        }
+    }
+
     fun loadInitTransaction() {
         logger.debug("loadInitTransaction")
         viewModelScope.launch {

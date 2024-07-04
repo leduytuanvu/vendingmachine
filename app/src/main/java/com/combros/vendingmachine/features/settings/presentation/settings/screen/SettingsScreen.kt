@@ -102,9 +102,11 @@ fun SettingsContent(
                 ButtonSettingsComposable("HOME", function = {
                     navController.navigate(Screens.HomeScreenRoute.route)
                 }, )
-//                ButtonSettingsComposable("HOME ANDROID", function = {
+                ButtonSettingsComposable("HOME ANDROID", function = {
 //                    throw Exception("Deliberate crash for testing purposes")
-//                })
+                    viewModel.navigateToHomeAndroid()
+
+                })
                 if(state.initSetup!=null) {
                     if(state.initSetup.role == "admin") {
                         ButtonSettingsComposable("SET UP PORT", function = {

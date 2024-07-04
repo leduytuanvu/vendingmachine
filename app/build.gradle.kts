@@ -1,9 +1,27 @@
+// This block of code is used to apply various plugins to the project.
 plugins {
+    // This applies the Android Application plugin to the project.
+    // This plugin extends the 'com.android.application' plugin and allows you to build an Android app.
     alias(libs.plugins.androidApplication)
+
+    // This applies the JetBrains Kotlin Android plugin to the project.
+    // This plugin allows you to write Android apps using the Kotlin language.
     alias(libs.plugins.jetbrainsKotlinAndroid)
+
+    // This applies the Kotlin Symbol Processing (KSP) plugin to the project.
+    // KSP is a fast, lightweight compiler plugin for processing Kotlin code.
     alias(libs.plugins.kotlinSymbolProcessing)
+
+    // This applies the Dagger Hilt Android plugin to the project.
+    // Hilt is a dependency injection library for Android that reduces the boilerplate of doing manual dependency injection in your project.
     alias(libs.plugins.daggerHiltAndroid)
+
+    // This applies the Kotlin Annotation Processing (kapt) plugin to the project.
+    // kapt is a compiler plugin for Kotlin that allows you to use annotation processors, which can create boilerplate code for you.
     kotlin("kapt")
+
+    // This applies the Kotlin Serialization plugin to the project.
+    // This plugin allows you to convert data classes to and from JSON.
     kotlin("plugin.serialization") version "1.8.0" // Use the appropriate version
 }
 
