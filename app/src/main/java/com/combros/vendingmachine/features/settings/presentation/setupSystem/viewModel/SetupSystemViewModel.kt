@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -85,31 +86,22 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                logger.debug("1")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
-                logger.debug("2")
                 val serialSimId = settingsRepository.getSerialSimId()
-                logger.debug("3")
                 portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
-                logger.debug("4")
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
                 }
-                logger.debug("5")
                 portConnectionDatasource.startReadingVendingMachine()
-                logger.debug("6")
                 startCollectingData()
                 portConnectionDatasource.sendCommandVendingMachine(
                     byteArrays.vmReadTemp,
                 )
-                logger.debug("7")
                 if (baseRepository.isHaveNetwork(context)) {
-                    logger.debug("8")
                     val informationOfMachine = settingsRepository.getInformationOfMachine()
-                    logger.debug("9")
                     _state.update { it.copy(
                         initSetup = initSetup,
                         serialSimId = serialSimId,
@@ -117,7 +109,6 @@ class SetupSystemViewModel @Inject constructor(
                         isLoading = false,
                     ) }
                 } else {
-                    logger.debug("1")
                     _state.update { it.copy(
                         initSetup = initSetup,
                         serialSimId = serialSimId,
@@ -165,6 +156,8 @@ class SetupSystemViewModel @Inject constructor(
             } else if(_nameFun.value == "updateTemperatureInLocal") {
                 _statusVendingMachine.value = true
             } else if(_nameFun.value == "setTemp") {
+                _statusVendingMachine.value = true
+            }  else if(_nameFun.value == "turnOffLight" || _nameFun.value == "turnOnLight") {
                 _statusVendingMachine.value = true
             }
         } else if(dataHexString.contains("00,5C,10,00,6C")) {
@@ -1223,12 +1216,32 @@ class SetupSystemViewModel @Inject constructor(
         }
     }
 
-    fun onLight() {
-        portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
+    fun turnOnLight() {
+        viewModelScope.launch {
+            _nameFun.value = "turnOnLight"
+            _statusVendingMachine.value = false
+            portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
+            delay(1001)
+            if(_statusVendingMachine.value) {
+                sendEvent(Event.Toast("SUCCESS"))
+            } else {
+                sendEvent(Event.Toast("FAIL"))
+            }
+        }
     }
 
-    fun offLight() {
-        portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOffLight)
+    fun turnOffLight() {
+        viewModelScope.launch {
+            _nameFun.value = "turnOffLight"
+            _statusVendingMachine.value = false
+            portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOffLight)
+            delay(1001)
+            if(_statusVendingMachine.value) {
+                sendEvent(Event.Toast("SUCCESS"))
+            } else {
+                sendEvent(Event.Toast("FAIL"))
+            }
+        }
     }
 
 

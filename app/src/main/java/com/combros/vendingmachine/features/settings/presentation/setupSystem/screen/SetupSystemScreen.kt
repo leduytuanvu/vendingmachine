@@ -877,7 +877,6 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateTemperatureInLocal(inputTemperature)
                 }
 
-
                 BodyTextComposable(title = "Temperature 1: ${state.temp1}${if(state.temp1.isNotEmpty()&&state.temp1!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 BodyTextComposable(title = "Temperature 2: ${state.temp2}${if(state.temp2.isNotEmpty()&&state.temp2!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 CustomButtonComposable(
@@ -892,34 +891,9 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.getTemp()
                 }
-
-                CustomButtonComposable(
-                    title = "ON LIGHT",
-                    wrap = true,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 50.dp,
-                ) {
-                    onClick()
-                    viewModel.onLight()
-                }
-                CustomButtonComposable(
-                    title = "OFF LIGHT",
-                    wrap = true,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 50.dp,
-                ) {
-                    onClick()
-                    viewModel.offLight()
-                }
-            } else {
+            }
             CustomButtonComposable(
-                title = "ON LIGHT",
+                title = "TURN ON LIGHT",
                 wrap = true,
                 cornerRadius = 4.dp,
                 height = 60.dp,
@@ -928,10 +902,10 @@ fun SetupSystemMainContentComposable(
                 paddingBottom = 50.dp,
             ) {
                 onClick()
-                viewModel.onLight()
+                viewModel.turnOnLight()
             }
             CustomButtonComposable(
-                title = "OFF LIGHT",
+                title = "TURN OFF LIGHT",
                 wrap = true,
                 cornerRadius = 4.dp,
                 height = 60.dp,
@@ -940,91 +914,8 @@ fun SetupSystemMainContentComposable(
                 paddingBottom = 50.dp,
             ) {
                 onClick()
-                viewModel.offLight()
+                viewModel.turnOffLight()
             }
-                }
-            }
-
-
-//        CustomButtonComposable(
-//            title = "ON LIGHT",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.onLight()
-//        }
-//        CustomButtonComposable(
-//            title = "OFF LIGHT",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.offLight()
-//        }
-////        CustomButtonComposable(
-////            title = "RESET FACTORY",
-////            cornerRadius = 4.dp,
-////            height = 60.dp,
-////            fontWeight = FontWeight.Bold,
-////            titleAlignment = TextAlign.Center,
-////            fontSize = 20.sp,
-////            paddingBottom = 20.dp,
-////        ) {
-////            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
-////        }
-//
-//        CustomButtonComposable(
-//            title = "REFRESH",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            val randomSN = Random().nextInt(256).toByte()
-//
-//            // Define the LED status (0 for off, 1 for on)
-//            val ledStatus = 1 // Change this to 0 for turning off the LED
-//
-//            // Call the turnOnLed function with the generated SN and LED status
-////            turnOnLed()
-//            viewModel.turnOnLed()
-//        }
-
-//        CustomButtonComposable(
-//            title = "ON",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.check1()
-//        }
-//        CustomButtonComposable(
-//            title = "OFF",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.check2()
-//        }
+        }
     }
 }
