@@ -3,6 +3,7 @@ package com.combros.vendingmachine.features.home.presentation.screens
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -116,7 +117,7 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(60000)
+            delay(300000)
             if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
             }
@@ -200,6 +201,9 @@ fun HomeContent(
                             context = context,
                             listAds = state.listAds,
                             onClickHideAds = { viewModel.hideAdsDebounced() },
+                            onSnStartAdsHome = {
+
+                            }
                         )
                     }
                 } else {
@@ -1126,7 +1130,11 @@ fun HomeContent(
                     onClickHideAds = {
 //                        updateInteractionTime()
                         viewModel.hideBigAds()
+                    },
+                    onStartBigAds = {
+//                        viewModel.startBigAds()
                     }
+
                 )
             }
             if(state.isShowWaitForDropProduct) {

@@ -120,13 +120,16 @@ fun SettingsContent(
                 ButtonSettingsComposable("SET UP SLOT", function = {
                     navController.navigate(Screens.SetupSlotScreenRoute.route)
                 })
-                if(state.initSetup!=null) {
-                    if(state.initSetup.role == "admin") {
-                        ButtonSettingsComposable("SET UP SYSTEM", function = {
-                            navController.navigate(Screens.SetupSystemScreenRoute.route)
-                        })
-                    }
-                }
+                ButtonSettingsComposable("SET UP SYSTEM", function = {
+                    navController.navigate(Screens.SetupSystemScreenRoute.route)
+                })
+//                if(state.initSetup!=null) {
+//                    if(state.initSetup.role == "admin") {
+//                        ButtonSettingsComposable("SET UP SYSTEM", function = {
+//                            navController.navigate(Screens.SetupSystemScreenRoute.route)
+//                        })
+//                    }
+//                }
                 if(state.initSetup!=null) {
                     if(state.initSetup.role == "admin") {
                         ButtonSettingsComposable("SET UP PAYMENT", function = {

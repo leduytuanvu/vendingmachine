@@ -108,12 +108,9 @@ class InitSetupViewModel @Inject constructor(
                     } else if (loginRequest.password.isEmpty()) {
                         sendEvent(Event.Toast("Password must not empty!"))
                     } else {
-                        logger.debug("1")
                         val passwordEncode = authRepository.encodePassword(loginRequest.password)
-                        logger.debug("2")
                         val responseLogin = authRepository.login(inputVendingMachineCode, loginRequest)
                         if (responseLogin.accessToken!!.isNotEmpty()) {
-                            logger.debug("3")
                             baseRepository.addNewAuthyLogToLocal(
                                 machineCode = inputVendingMachineCode,
                                 authyType = "login",
@@ -125,7 +122,6 @@ class InitSetupViewModel @Inject constructor(
                             logger.debug("android id: $androidId")
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
-//                                androidId = "3699b4175e004910",
                                 androidId = androidId,
                                 username = loginRequest.username,
                                 password = passwordEncode,
