@@ -25,7 +25,33 @@ fun LocalDateTime.toDateTimeString(pattern: String = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     }
 }
 
+ fun LocalDateTime.toYYYYMMdd(pattern: String = "yyyy-MM-dd"): String {
+    try {
+        val formatter = DateTimeFormatter.ofPattern(pattern)
+        return this.format(formatter)
+    } catch (e: Exception) {
+        throw e
+    }
+}
+fun LocalDateTime.toddMMyyyyHHmmss(pattern: String = "dd/MM/yyyy HH:mm:ss"): String {
+    try {
+        val formatter = DateTimeFormatter.ofPattern(pattern)
+        return this.format(formatter)
+    } catch (e: Exception) {
+        throw e
+    }
+}
+
 fun String.toDateTime(format: String = "yyyy-MM-dd'T'HH:mm:ss'Z'"): LocalDateTime {
+    try {
+        val formatter = DateTimeFormatter.ofPattern(format)
+        return LocalDateTime.parse(this, formatter)
+    } catch (e: Exception) {
+        throw e
+    }
+}
+
+fun String.ddMMyyyyHHmmsstoDateTime(format: String = "dd/MM/yyy HH:mm:ss"): LocalDateTime {
     try {
         val formatter = DateTimeFormatter.ofPattern(format)
         return LocalDateTime.parse(this, formatter)

@@ -91,7 +91,7 @@ fun AdsHomeComposable(
     context: Context,
     listAds: ArrayList<String>,
     onClickHideAds: () -> Unit,
-
+    onStartAdsHome: (path: String) -> Unit,
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
 
@@ -104,20 +104,25 @@ fun AdsHomeComposable(
             factory = {
                 VideoView(context).apply {
                     setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
                     setOnCompletionListener {
                         currentVideoIndex = (currentVideoIndex + 1) % listAds.size
                         setVideoPath(listAds[currentVideoIndex])
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         start()
-
+                        onStartAdsHome(nameAds)
                     }
                     if (listAds.isNotEmpty()) {
                         setVideoPath(listAds[currentVideoIndex])
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         start()
-
+                        onStartAdsHome(nameAds)
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().clipToBounds()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clipToBounds()
         )
 
         Button(
