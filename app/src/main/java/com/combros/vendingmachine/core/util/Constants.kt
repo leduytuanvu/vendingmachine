@@ -3,9 +3,10 @@ package com.combros.vendingmachine.core.util
 import android.annotation.SuppressLint
 import androidx.compose.ui.text.AnnotatedString
 import java.text.SimpleDateFormat
+
 import java.util.Date
 import java.util.Locale
-
+import org.threeten.bp.LocalDateTime
 const val BASE_URL = "https://api.avf.vn"
 
 @SuppressLint("SdCardPath")
@@ -43,7 +44,10 @@ const val pathFileUpdatePromotion = "/sdcard/VendingMachineData/Log/UpdatePromot
 @SuppressLint("SdCardPath")
 const val pathFileUpdateDeliveryStatus = "/sdcard/VendingMachineData/Log/UpdateDeliveryStatus.json"
 @SuppressLint("SdCardPath")
-const val pathFileUpdateTrackingAds = "/sdcard/VendingMachineData/Log/UpdateTrackingAds.json"
+fun pathFileUpdateTrackingAds():String{
+    val date = LocalDateTime.now().toDateTimeString()
+    return  "/sdcard/VendingMachineData/Log/TrackingAds/${date}/UpdateTrackingAds.json";
+}
 
 val itemsPort = listOf(
     AnnotatedString("ttyS0"),

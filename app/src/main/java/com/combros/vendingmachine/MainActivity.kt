@@ -204,9 +204,9 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
     private val byteArrays = ByteArrays()
     override fun doWork(): Result {
         val taskName = inputData.getString("TASK_NAME")
+        val localStorageDatasource = LocalStorageDatasource()
         return when (taskName) {
             "TurnOnLightTask" -> {
-                val localStorageDatasource = LocalStorageDatasource()
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
                 if(initSetup!=null) {
                     if(initSetup.autoTurnOnTurnOffLight=="ON") {
@@ -218,7 +218,6 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
                 Result.success()
             }
             "TurnOffLightTask" -> {
-                val localStorageDatasource = LocalStorageDatasource()
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
                 if(initSetup!=null) {
                     if(initSetup.autoTurnOnTurnOffLight=="ON") {
@@ -230,7 +229,6 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
                 Result.success()
             }
             "ResetApp" -> {
-                val localStorageDatasource = LocalStorageDatasource()
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
                 if(initSetup != null) {
                     if(initSetup.autoResetAppEveryday=="ON") {
