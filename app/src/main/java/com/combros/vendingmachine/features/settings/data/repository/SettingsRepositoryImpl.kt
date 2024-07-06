@@ -205,7 +205,7 @@ class SettingsRepositoryImpl @Inject constructor(
                 telephonyManager.simSerialNumber
             }
         } catch (e: Exception) {
-            throw e
+            return ""
         }
     }
 

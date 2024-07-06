@@ -66,7 +66,7 @@ class LocalStorageDatasource @Inject constructor() {
             val type: Type = object : TypeToken<T>() {}.type
             return gson.fromJson(json, type)
         } catch (e: Exception) {
-            throw e
+            return null
         }
     }
 

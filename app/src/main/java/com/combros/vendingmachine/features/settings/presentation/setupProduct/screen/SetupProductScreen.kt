@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -198,24 +199,29 @@ fun SetupProductContent(
                         contentDescription = ""
                     )
                 }
-                LazyVerticalStaggeredGrid(
-                    modifier = Modifier.pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                onClick()
-                            }
-                        )
-                    }.nestedScroll(nestedScrollConnection),
-                    columns = StaggeredGridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalItemSpacing = 10.dp,
-                ) {
-                    items(state.listProduct.size) { index ->
-                        ItemSetupProductComposable(state.listProduct[index])
+                if(state.listProduct.isNotEmpty()) {
+                    LazyVerticalStaggeredGrid(
+                        modifier = Modifier.pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    onClick()
+                                }
+                            )
+                        }.nestedScroll(nestedScrollConnection),
+                        columns = StaggeredGridCells.Fixed(3),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalItemSpacing = 10.dp,
+                    ) {
+                        items(state.listProduct.size) { index ->
+                            ItemSetupProductComposable(state.listProduct[index])
+                        }
+                        items(3) {
+                            Spacer(modifier = Modifier.height(94.dp))
+                        }
                     }
-                    items(3) {
-                        Spacer(modifier = Modifier.height(94.dp))
-                    }
+                } else {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("Not have any product in local")
                 }
             }
         )

@@ -324,90 +324,93 @@ fun SetupSystemMainContentComposable(
             }.nestedScroll(nestedScrollConnection),
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-        BodyTextComposable(
-            title = "Application version: $appVersionName", 
-            fontWeight = FontWeight.Bold, 
-            paddingBottom = 50.dp,
-        )
 
-        BodyTextComposable(
-            title = "Android id: ${if(state.initSetup!=null) state.initSetup.androidId ?: "" else ""}",
-            fontWeight = FontWeight.Bold,
-            paddingBottom = 50.dp,
-        )
-
-        BodyTextComposable(title = "Serial sim id: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        CustomButtonComposable(
-            title = "REFRESH",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.getSerialSimId()
-        }
-
-        BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold, paddingBottom = 12.dp)
-        BodyTextComposable(title = "Id: ${state.informationOfMachine?.id ?: ""}", paddingBottom = 10.dp)
-        BodyTextComposable(title = "Android id: ${state.informationOfMachine?.androidId ?: ""}", paddingBottom = 10.dp)
-        BodyTextComposable(title = "Code: ${state.informationOfMachine?.code ?: ""}", paddingBottom = 10.dp)
-        BodyTextComposable(title = "Company name: ${state.informationOfMachine?.companyName ?: ""}", paddingBottom = 10.dp)
-        BodyTextComposable(title = "Hotline: ${state.informationOfMachine?.hotline ?: ""}", paddingBottom = 10.dp)
-        BodyTextComposable(title = "Description: ${state.informationOfMachine?.description ?: ""}", paddingBottom = 12.dp)
-
-        CustomButtonComposable(
-            title = "REFRESH",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.getInformationOfMachine()
-        }
-
-
-
-        BodyTextComposable(title = "Vending machine code", fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
         if(state.initSetup!=null) {
-            TitleAndEditTextComposable(
-                title = "",
-                paddingBottom = 12.dp,
-                initText = state.initSetup.vendCode
-            ) {
-                onClick()
-                inputVendingMachineCode = it
-            }
-        } else {
-            TitleAndEditTextComposable(
-                title = "",
-                paddingBottom = 12.dp,
-                initText = ""
-            ) {
-                onClick()
-                inputVendingMachineCode = it
-            }
-        }
+            if(state.initSetup.role == "admin") {
+                BodyTextComposable(
+                    title = "Application version: $appVersionName",
+                    fontWeight = FontWeight.Bold,
+                    paddingBottom = 50.dp,
+                )
 
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            keyboardController?.hide()
-            viewModel.updateVendCodeInLocal(inputVendingMachineCode)
-        }
+                BodyTextComposable(
+                    title = "Android id: ${if(state.initSetup!=null) state.initSetup.androidId ?: "" else ""}",
+                    fontWeight = FontWeight.Bold,
+                    paddingBottom = 50.dp,
+                )
+
+                BodyTextComposable(title = "Serial sim id: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                CustomButtonComposable(
+                    title = "REFRESH",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.getSerialSimId()
+                }
+
+                BodyTextComposable(title = "Information of vending machine", fontWeight = FontWeight.Bold, paddingBottom = 12.dp)
+                BodyTextComposable(title = "Id: ${state.informationOfMachine?.id ?: ""}", paddingBottom = 10.dp)
+                BodyTextComposable(title = "Android id: ${state.informationOfMachine?.androidId ?: ""}", paddingBottom = 10.dp)
+                BodyTextComposable(title = "Code: ${state.informationOfMachine?.code ?: ""}", paddingBottom = 10.dp)
+                BodyTextComposable(title = "Company name: ${state.informationOfMachine?.companyName ?: ""}", paddingBottom = 10.dp)
+                BodyTextComposable(title = "Hotline: ${state.informationOfMachine?.hotline ?: ""}", paddingBottom = 10.dp)
+                BodyTextComposable(title = "Description: ${state.informationOfMachine?.description ?: ""}", paddingBottom = 12.dp)
+
+                CustomButtonComposable(
+                    title = "REFRESH",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.getInformationOfMachine()
+                }
+
+
+
+                BodyTextComposable(title = "Vending machine code", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                if(state.initSetup!=null) {
+                    TitleAndEditTextComposable(
+                        title = "",
+                        paddingBottom = 12.dp,
+                        initText = state.initSetup.vendCode
+                    ) {
+                        onClick()
+                        inputVendingMachineCode = it
+                    }
+                } else {
+                    TitleAndEditTextComposable(
+                        title = "",
+                        paddingBottom = 12.dp,
+                        initText = ""
+                    ) {
+                        onClick()
+                        inputVendingMachineCode = it
+                    }
+                }
+
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    keyboardController?.hide()
+                    viewModel.updateVendCodeInLocal(inputVendingMachineCode)
+                }
 
 //        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
 //        TitleAndDropdownComposable(title = "", items = listOf(
@@ -428,546 +431,491 @@ fun SetupSystemMainContentComposable(
 //            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
 //        }
 
-        BodyTextComposable(title = "Withdrawal allowed", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemWithdrawalAllowed, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemWithdrawalAllowed = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateWithdrawalAllowedInLocal(selectedItemWithdrawalAllowed.toString())
-        }
+                BodyTextComposable(title = "Withdrawal allowed", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemWithdrawalAllowed, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemWithdrawalAllowed = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateWithdrawalAllowedInLocal(selectedItemWithdrawalAllowed.toString())
+                }
 
-        BodyTextComposable(title = "Automatically start the application", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemAutoStartApplication, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemAutoStartApplication = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateAutoStartApplicationInLocal(selectedItemAutoStartApplication.toString())
-        }
+                BodyTextComposable(title = "Automatically start the application", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemAutoStartApplication, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemAutoStartApplication = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateAutoStartApplicationInLocal(selectedItemAutoStartApplication.toString())
+                }
 
-        BodyTextComposable(title = "Layout home screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("3"),
-            AnnotatedString("4"),
-            AnnotatedString("5"),
-            AnnotatedString("6"),
-        ), selectedItem = selectedItemLayoutHomeScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemLayoutHomeScreen = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
-        }
+                BodyTextComposable(title = "Layout home screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("3"),
+                    AnnotatedString("4"),
+                    AnnotatedString("5"),
+                    AnnotatedString("6"),
+                ), selectedItem = selectedItemLayoutHomeScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemLayoutHomeScreen = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
+                }
 
-        BodyTextComposable(title = "Auto turn on light and turn off light", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemAutoTurnOnTurnOffLight, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemAutoTurnOnTurnOffLight = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateAutoTurnOnTurnOffLightInLocal(selectedItemAutoTurnOnTurnOffLight.toString())
-        }
+                BodyTextComposable(title = "Auto turn on light and turn off light", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemAutoTurnOnTurnOffLight, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemAutoTurnOnTurnOffLight = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateAutoTurnOnTurnOffLightInLocal(selectedItemAutoTurnOnTurnOffLight.toString())
+                }
 
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 18.dp).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
-                    }
-                )
-            }) {
-            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
-                    }
-                )
-            }) {
-                BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 18.dp).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
+                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
+                        BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
 //                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
-                if(state.initSetup!=null) {
-                    TimePickerWrapperComposable(
-                        defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
-                        defaultMinute = state.initSetup.timeTurnOnLight.split(":")[1].toInt(),
-                        onTimeSelected = onTimeSelectedTurnOn
-                    )
-                } else {
-                    TimePickerWrapperComposable(
-                        defaultHour = 0,
-                        defaultMinute = 0,
-                        onTimeSelected = onTimeSelectedTurnOn
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
+                        if(state.initSetup!=null) {
+                            TimePickerWrapperComposable(
+                                defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
+                                defaultMinute = state.initSetup.timeTurnOnLight.split(":")[1].toInt(),
+                                onTimeSelected = onTimeSelectedTurnOn
+                            )
+                        } else {
+                            TimePickerWrapperComposable(
+                                defaultHour = 0,
+                                defaultMinute = 0,
+                                onTimeSelected = onTimeSelectedTurnOn
+                            )
+                        }
                     }
-                )
-            }) {
-                BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
+                        BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
 //                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
-                if(state.initSetup!=null) {
+                        if(state.initSetup!=null) {
+                            TimePickerWrapperComposable(
+                                defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
+                                defaultMinute = state.initSetup.timeTurnOffLight.split(":")[1].toInt(),
+                                onTimeSelected = onTimeSelectedTurnOff
+                            )
+                        } else {
+                            TimePickerWrapperComposable(
+                                defaultHour = 0,
+                                defaultMinute = 0,
+                                onTimeSelected = onTimeSelectedTurnOff
+                            )
+                        }
+                    }
+                }
+
+                CustomButtonComposable(
+                    title = "SAVE",
+                    titleAlignment = TextAlign.Center,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateTimeTurnOnTurnOffLightInLocal(
+                        timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
+                        timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
+                    )
+                }
+
+                BodyTextComposable(title = "Auto reset app every day", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemAutoResetAppEveryday, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemAutoResetAppEveryday = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateAutoResetAppEveryDayInLocal(selectedItemAutoResetAppEveryday.toString())
+                }
+
+                BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
+                if(state.initSetup!=null){
+                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
                     TimePickerWrapperComposable(
-                        defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
-                        defaultMinute = state.initSetup.timeTurnOffLight.split(":")[1].toInt(),
-                        onTimeSelected = onTimeSelectedTurnOff
+                        defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
+                        defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
+                        onTimeSelected = onTimeSelectedReset
                     )
                 } else {
+                    Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
                     TimePickerWrapperComposable(
                         defaultHour = 0,
                         defaultMinute = 0,
-                        onTimeSelected = onTimeSelectedTurnOff
+                        onTimeSelected = onTimeSelectedReset
                     )
                 }
-            }
-        }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    cornerRadius = 4.dp,
+                    titleAlignment = TextAlign.Center,
+                    height = 60.dp,
+                    paddingTop = 18.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 30.dp,
+                ) {
+                    onClick()
+                    viewModel.saveSetTimeResetOnEveryDay(
+                        hour = selectedTimeReset.value.first,
+                        minute = selectedTimeReset.value.second,
+                    )
+                }
 
-        CustomButtonComposable(
-            title = "SAVE",
-            titleAlignment = TextAlign.Center,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateTimeTurnOnTurnOffLightInLocal(
-                timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
-                timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
-            )
-        }
+                CustomButtonComposable(
+                    title = "CHECK THE DROP SENSOR",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.checkDropSensor()
+                }
 
-        BodyTextComposable(title = "Auto reset app every day", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemAutoResetAppEveryday, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemAutoResetAppEveryday = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateAutoResetAppEveryDayInLocal(selectedItemAutoResetAppEveryday.toString())
-        }
+                BodyTextComposable(title = "Drop sensor", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemDropSensor, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemDropSensor = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateDropSensorInLocal(selectedItemDropSensor.toString())
+                }
 
-        BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
-        if(state.initSetup!=null){
-            Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
-            TimePickerWrapperComposable(
-                defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
-                defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
-                onTimeSelected = onTimeSelectedReset
-            )
-        } else {
-            Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
-            TimePickerWrapperComposable(
-                defaultHour = 0,
-                defaultMinute = 0,
-                onTimeSelected = onTimeSelectedReset
-            )
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            cornerRadius = 4.dp,
-            titleAlignment = TextAlign.Center,
-            height = 60.dp,
-            paddingTop = 18.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 30.dp,
-        ) {
-            onClick()
-            viewModel.saveSetTimeResetOnEveryDay(
-                hour = selectedTimeReset.value.first,
-                minute = selectedTimeReset.value.second,
-            )
-        }
+                BodyTextComposable(title = "Inching mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("0"),
+                    AnnotatedString("1"),
+                    AnnotatedString("2"),
+                    AnnotatedString("3"),
+                    AnnotatedString("4"),
+                    AnnotatedString("5"),
+                ), selectedItem = selectedItemInchingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemInchingMode = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
+                }
 
-        CustomButtonComposable(
-            title = "CHECK THE DROP SENSOR",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.checkDropSensor()
-        }
+                BodyTextComposable(title = "Big Ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemBigAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemBigAds = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateBigAdsInLocal(selectedItemBigAds.toString())
+                }
 
-        BodyTextComposable(title = "Drop sensor", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemDropSensor, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemDropSensor = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateDropSensorInLocal(selectedItemDropSensor.toString())
-        }
+                BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("30s"),
+                    AnnotatedString("60s"),
+                    AnnotatedString("90s"),
+                    AnnotatedString("120s"),
+                    AnnotatedString("150s"),
+                    AnnotatedString("180s"),
+                    AnnotatedString("210s"),
+                    AnnotatedString("240s"),
+                    AnnotatedString("270s"),
+                    AnnotatedString("300s"),
+                ), selectedItem = selectedItemTimeJumpToAdsScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemTimeJumpToAdsScreen = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateTimeJumpToAdsScreenInLocal(selectedItemTimeJumpToAdsScreen.toString().substringBefore("s"))
+                }
 
-        BodyTextComposable(title = "Inching mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("0"),
-            AnnotatedString("1"),
-            AnnotatedString("2"),
-            AnnotatedString("3"),
-            AnnotatedString("4"),
-            AnnotatedString("5"),
-        ), selectedItem = selectedItemInchingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemInchingMode = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
-        }
+                BodyTextComposable(title = "Glass heating mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("ON"),
+                    AnnotatedString("OFF"),
+                ), selectedItem = selectedItemGlassHeatingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemGlassHeatingMode = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateGlassHeatingModeInLocal(selectedItemGlassHeatingMode.toString())
+                }
 
-        BodyTextComposable(title = "Big Ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemBigAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemBigAds = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateBigAdsInLocal(selectedItemBigAds.toString())
-        }
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 18.dp).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
 
-        BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("30s"),
-            AnnotatedString("60s"),
-            AnnotatedString("90s"),
-            AnnotatedString("120s"),
-            AnnotatedString("150s"),
-            AnnotatedString("180s"),
-            AnnotatedString("210s"),
-            AnnotatedString("240s"),
-            AnnotatedString("270s"),
-            AnnotatedString("300s"),
-        ), selectedItem = selectedItemTimeJumpToAdsScreen, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemTimeJumpToAdsScreen = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateTimeJumpToAdsScreenInLocal(selectedItemTimeJumpToAdsScreen.toString().substringBefore("s"))
-        }
-
-        BodyTextComposable(title = "Glass heating mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        TitleAndDropdownComposable(title = "", items = listOf(
-            AnnotatedString("ON"),
-            AnnotatedString("OFF"),
-        ), selectedItem = selectedItemGlassHeatingMode, paddingTop = 2.dp, paddingBottom = 12.dp) {
-            onClick()
-            selectedItemGlassHeatingMode = it
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateGlassHeatingModeInLocal(selectedItemGlassHeatingMode.toString())
-        }
-
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 18.dp).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
+                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
+                        BodyTextComposable(title = "Lowest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                        if(state.initSetup!=null) {
+                            EditTextComposable(initText = state.initSetup.lowestTempWarning, keyboardTypeNumber = true) {
+                                onClick()
+                                inputLowestTempWarning = it
+                            }
+                        } else {
+                            EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                                onClick()
+                                inputLowestTempWarning = it
+                            }
+                        }
                     }
-                )
-            }) {
-
-            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
-                    }
-                )
-            }) {
-                BodyTextComposable(title = "Lowest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-                if(state.initSetup!=null) {
-                    EditTextComposable(initText = state.initSetup.lowestTempWarning, keyboardTypeNumber = true) {
-                        onClick()
-                        inputLowestTempWarning = it
-                    }
-                } else {
-                    EditTextComposable(initText = "", keyboardTypeNumber = true) {
-                        onClick()
-                        inputLowestTempWarning = it
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onClick()
+                            }
+                        )
+                    }) {
+                        BodyTextComposable(title = "Highest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                        if(state.initSetup!=null) {
+                            EditTextComposable(initText = state.initSetup.highestTempWarning, keyboardTypeNumber = true) {
+                                onClick()
+                                inputHighestTempWarning = it
+                            }
+                        } else {
+                            EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                                onClick()
+                                inputHighestTempWarning = it
+                            }
+                        }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
-                    }
-                )
-            }) {
-                BodyTextComposable(title = "Highest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                CustomButtonComposable(
+                    title = "SAVE",
+                    cornerRadius = 4.dp,
+                    titleAlignment = TextAlign.Center,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateHighestAndLowestTempWarningInLocal(inputHighestTempWarning, inputLowestTempWarning)
+                }
+
+                BodyTextComposable(title = "Temperature", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
                 if(state.initSetup!=null) {
-                    EditTextComposable(initText = state.initSetup.highestTempWarning, keyboardTypeNumber = true) {
+                    TitleAndEditTextComposable(
+                        title = "",
+                        paddingBottom = 12.dp,
+                        initText = state.initSetup.temperature,
+                        keyboardTypeNumber = true
+                    ) {
                         onClick()
-                        inputHighestTempWarning = it
+                        inputTemperature = it
                     }
                 } else {
-                    EditTextComposable(initText = "", keyboardTypeNumber = true) {
+                    TitleAndEditTextComposable(
+                        title = "",
+                        paddingBottom = 12.dp,
+                        initText = "",
+                        keyboardTypeNumber = true
+                    ) {
                         onClick()
-                        inputHighestTempWarning = it
+                        inputTemperature = it
                     }
                 }
-            }
-        }
-        CustomButtonComposable(
-            title = "SAVE",
-            cornerRadius = 4.dp,
-            titleAlignment = TextAlign.Center,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.updateHighestAndLowestTempWarningInLocal(inputHighestTempWarning, inputLowestTempWarning)
-        }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    keyboardController?.hide()
+                    viewModel.updateTemperatureInLocal(inputTemperature)
+                }
 
-        BodyTextComposable(title = "Temperature", fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
-        if(state.initSetup!=null) {
-            TitleAndEditTextComposable(
-                title = "",
-                paddingBottom = 12.dp,
-                initText = state.initSetup.temperature,
-                keyboardTypeNumber = true
+                BodyTextComposable(title = "Temperature 1: ${state.temp1}${if(state.temp1.isNotEmpty()&&state.temp1!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Temperature 2: ${state.temp2}${if(state.temp2.isNotEmpty()&&state.temp2!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                CustomButtonComposable(
+                    title = "READ TEMPERATURE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.getTemp()
+                }
+            }
+            CustomButtonComposable(
+                title = "TURN ON LIGHT",
+                wrap = true,
+                cornerRadius = 4.dp,
+                height = 60.dp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                paddingBottom = 50.dp,
             ) {
                 onClick()
-                inputTemperature = it
+                viewModel.turnOnLight()
             }
-        } else {
-            TitleAndEditTextComposable(
-                title = "",
-                paddingBottom = 12.dp,
-                initText = "",
-                keyboardTypeNumber = true
+            CustomButtonComposable(
+                title = "TURN OFF LIGHT",
+                wrap = true,
+                cornerRadius = 4.dp,
+                height = 60.dp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                paddingBottom = 50.dp,
             ) {
                 onClick()
-                inputTemperature = it
+                viewModel.turnOffLight()
             }
         }
-        CustomButtonComposable(
-            title = "SAVE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            keyboardController?.hide()
-            viewModel.updateTemperatureInLocal(inputTemperature)
-        }
-
-
-        BodyTextComposable(title = "Temperature 1: ${state.temp1}${if(state.temp1.isNotEmpty()&&state.temp1!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        BodyTextComposable(title = "Temperature 2: ${state.temp2}${if(state.temp2.isNotEmpty()&&state.temp2!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-        CustomButtonComposable(
-            title = "READ TEMPERATURE",
-            wrap = true,
-            cornerRadius = 4.dp,
-            height = 60.dp,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            paddingBottom = 50.dp,
-        ) {
-            onClick()
-            viewModel.getTemp()
-        }
-//        CustomButtonComposable(
-//            title = "ON LIGHT",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.onLight()
-//        }
-//        CustomButtonComposable(
-//            title = "OFF LIGHT",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.offLight()
-//        }
-////        CustomButtonComposable(
-////            title = "RESET FACTORY",
-////            cornerRadius = 4.dp,
-////            height = 60.dp,
-////            fontWeight = FontWeight.Bold,
-////            titleAlignment = TextAlign.Center,
-////            fontSize = 20.sp,
-////            paddingBottom = 20.dp,
-////        ) {
-////            viewModel.showDialogConfirm("Are you sure to reset factory?", null, "resetFactory")
-////        }
-//
-//        CustomButtonComposable(
-//            title = "REFRESH",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            val randomSN = Random().nextInt(256).toByte()
-//
-//            // Define the LED status (0 for off, 1 for on)
-//            val ledStatus = 1 // Change this to 0 for turning off the LED
-//
-//            // Call the turnOnLed function with the generated SN and LED status
-////            turnOnLed()
-//            viewModel.turnOnLed()
-//        }
-
-//        CustomButtonComposable(
-//            title = "ON",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.check1()
-//        }
-//        CustomButtonComposable(
-//            title = "OFF",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            onClick()
-//            viewModel.check2()
-//        }
     }
 }

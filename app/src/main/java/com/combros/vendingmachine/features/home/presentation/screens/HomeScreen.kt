@@ -119,8 +119,8 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(60000)
-            if (!state.isVendingMachineBusy) {
+            delay(300000)
+            if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
             }
         }
@@ -204,12 +204,10 @@ fun HomeContent(
                             listAds = state.listAds,
                             onClickHideAds = { viewModel.hideAdsDebounced() },
                             onStartAdsHome = {
-
                                 viewModel.updateDataTrackingAdsLocal(
                                     nameAds = it,
                                     typeAds = TypeAds.HomeAds.name
                                 )
-
                             }
                         )
                     }
@@ -932,6 +930,7 @@ fun HomeContent(
                                     fontWeight = FontWeight.Bold,
                                 ) {
                                     viewModel.applyPromotionDebounced(text)
+                                    focusManager.clearFocus()
                                 }
                             }
                             Spacer(modifier = Modifier.height(34.dp))
@@ -1226,6 +1225,7 @@ fun HomeContent(
                             typeAds = TypeAds.BigAds.name
                         )
                     }
+
                 )
             }
             if (state.isShowWaitForDropProduct) {

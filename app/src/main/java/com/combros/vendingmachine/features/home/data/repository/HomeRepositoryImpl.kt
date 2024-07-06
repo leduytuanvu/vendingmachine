@@ -105,6 +105,7 @@ class HomeRepositoryImpl @Inject constructor(
                     quantity = item.inventory,
                     discount = 0,
                     amount = item.inventory*item.price,
+                    slot = item.slot,
                 )
                 carts.add(itemCart)
             }

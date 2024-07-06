@@ -19,4 +19,5 @@ data class ItemPromotionRequest (
     @SerializedName("quantity") var quantity: Int?,
     @SerializedName("discount") var discount: Int?,
     @SerializedName("amount") var amount: Int?,
+    @SerializedName("slot") var slot: Int?,
 )
