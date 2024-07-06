@@ -2,6 +2,7 @@ package com.combros.vendingmachine.core.util
 
 import android.annotation.SuppressLint
 import androidx.compose.ui.text.AnnotatedString
+import org.threeten.bp.LocalDateTime
 import java.text.SimpleDateFormat
 
 import java.util.Date
@@ -45,8 +46,8 @@ const val pathFileUpdatePromotion = "/sdcard/VendingMachineData/Log/UpdatePromot
 const val pathFileUpdateDeliveryStatus = "/sdcard/VendingMachineData/Log/UpdateDeliveryStatus.json"
 @SuppressLint("SdCardPath")
 fun pathFileUpdateTrackingAds():String{
-    val date = LocalDateTime.now().toDateTimeString()
-    return  "/sdcard/VendingMachineData/Log/TrackingAds/${date}/UpdateTrackingAds.json";
+    val date = LocalDateTime.now().toYYYYMMdd()
+    return "/sdcard/VendingMachineData/Log/TrackingAds/${date}/UpdateTrackingAds.json"
 }
 
 val itemsPort = listOf(

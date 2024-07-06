@@ -91,7 +91,7 @@ fun AdsHomeComposable(
     context: Context,
     listAds: ArrayList<String>,
     onClickHideAds: () -> Unit,
-    onSnStartAdsHome: (nameAds: String) -> Unit,
+    onStartAdsHome: (path: String) -> Unit,
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
 
@@ -108,19 +108,21 @@ fun AdsHomeComposable(
                     setOnCompletionListener {
                         currentVideoIndex = (currentVideoIndex + 1) % listAds.size
                         setVideoPath(listAds[currentVideoIndex])
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         start()
-                        val nameAds:String = listAds[currentVideoIndex].split("/").last()
-                        onSnStartAdsHome(nameAds)
+                        onStartAdsHome(nameAds)
                     }
                     if (listAds.isNotEmpty()) {
                         setVideoPath(listAds[currentVideoIndex])
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         start()
-                        val nameAds:String = listAds[currentVideoIndex].split("/").last()
-                        onSnStartAdsHome(nameAds)
+                        onStartAdsHome(nameAds)
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().clipToBounds()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clipToBounds()
         )
 
         Button(

@@ -78,7 +78,9 @@ import com.combros.vendingmachine.common.base.presentation.composables.WarningDi
 import com.combros.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
 import com.combros.vendingmachine.core.util.pathFolderImagePayment
 import com.combros.vendingmachine.core.util.pathFolderImageProduct
+import com.combros.vendingmachine.core.util.pathFileUpdateTrackingAds
 import com.combros.vendingmachine.core.util.toVietNamDong
+import com.combros.vendingmachine.features.home.domain.model.TypeAds
 import com.combros.vendingmachine.features.home.presentation.composables.AdsHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.BackgroundHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.BigAdsComposable
@@ -109,7 +111,7 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(5000)
-            if(!state.isVendingMachineBusy) {
+            if (!state.isVendingMachineBusy) {
                 viewModel.readDoor()
             }
         }
@@ -158,16 +160,16 @@ fun HomeContent(
             checkTouch = 0
         }
     }
-    if(state.initSetup!=null) {
-        if(!state.isShowBigAds && !state.isShowWaitForDropProduct) {
+    if (state.initSetup != null) {
+        if (!state.isShowBigAds && !state.isShowWaitForDropProduct) {
             checkTouch = 0
             LaunchedEffect(Unit) {
                 while (true) {
                     delay(1000L)
                     checkTouch++
 //                    Logger.debug("check touch = $checkTouch, ${state.initSetup.timeoutJumpToBigAdsScreen.toLong()}")
-                    if(state.initSetup.fullScreenAds == "ON") {
-                        if(checkTouch>state.initSetup.timeoutJumpToBigAdsScreen.toLong() && state.listBigAds.isNotEmpty()) {
+                    if (state.initSetup.fullScreenAds == "ON") {
+                        if (checkTouch > state.initSetup.timeoutJumpToBigAdsScreen.toLong() && state.listBigAds.isNotEmpty()) {
 //                        Logger.debug("vo check touch")
                             viewModel.showBigAds()
                             break
@@ -195,14 +197,17 @@ fun HomeContent(
         ) {
             BackgroundHomeComposable()
             Column(modifier = Modifier.fillMaxSize()) {
-                if(state.listAds.isNotEmpty()) {
-                    if(state.isShowAds && !state.isShowBigAds) {
+                if (state.listAds.isNotEmpty()) {
+                    if (state.isShowAds && !state.isShowBigAds) {
                         AdsHomeComposable(
                             context = context,
                             listAds = state.listAds,
                             onClickHideAds = { viewModel.hideAdsDebounced() },
-                            onSnStartAdsHome = {
-
+                            onStartAdsHome = {
+                                viewModel.updateDataTrackingAdsLocal(
+                                    nameAds = it,
+                                    typeAds = TypeAds.HomeAds.name
+                                )
                             }
                         )
                     }
@@ -217,7 +222,7 @@ fun HomeContent(
 
                     }
                 }
-                if(state.initSetup!=null) {
+                if (state.initSetup != null) {
                     DatetimeHomeComposable(
                         temp1 = state.temp1,
                         temp2 = state.temp2,
@@ -249,8 +254,11 @@ fun HomeContent(
                         )
                     }
                 }
-                if(state.initSetup!=null) {
-                    InformationHomeComposable(navController = navController, vendCode = state.initSetup!!.vendCode)
+                if (state.initSetup != null) {
+                    InformationHomeComposable(
+                        navController = navController,
+                        vendCode = state.initSetup!!.vendCode
+                    )
                 } else {
                     Row(
                         modifier = Modifier
@@ -285,7 +293,11 @@ fun HomeContent(
                                         contentDescription = ""
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text(text = "1900.99.99.80", color = Color.White, fontSize = 15.sp)
+                                    Text(
+                                        text = "1900.99.99.80",
+                                        color = Color.White,
+                                        fontSize = 15.sp
+                                    )
                                 }
                                 Text(text = "AVF000000", color = Color.White, fontSize = 13.sp)
                             }
@@ -304,8 +316,9 @@ fun HomeContent(
                                 contentDescription = ""
                             )
                         }
-                        Box(modifier = Modifier
-                            .weight(1f),
+                        Box(
+                            modifier = Modifier
+                                .weight(1f),
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -324,9 +337,10 @@ fun HomeContent(
                         }
                     }
                 }
-                if(state.initSetup!=null) {
+                if (state.initSetup != null) {
                     Box(modifier = Modifier.fillMaxHeight()) {
-                        val chunks = state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
+                        val chunks =
+                            state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
                         Column(
                             modifier = Modifier
                                 .padding(start = 20.dp, end = 20.dp)
@@ -365,17 +379,19 @@ fun HomeContent(
                                                 val imageModifier = Modifier
                                                     .width(150.dp)
                                                     .height(150.dp)
-                                                val imagePainter = if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                        pathFolderImageProduct + "/${slot.productCode}.png"
-                                                    )
-                                                ) {
-                                                    val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                        .data(pathFolderImageProduct + "/${slot.productCode}.png")
-                                                        .build()
-                                                    rememberAsyncImagePainter(imageRequest)
-                                                } else {
-                                                    painterResource(id = R.drawable.image_error)
-                                                }
+                                                val imagePainter =
+                                                    if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                            pathFolderImageProduct + "/${slot.productCode}.png"
+                                                        )
+                                                    ) {
+                                                        val imageRequest =
+                                                            ImageRequest.Builder(LocalContext.current)
+                                                                .data(pathFolderImageProduct + "/${slot.productCode}.png")
+                                                                .build()
+                                                        rememberAsyncImagePainter(imageRequest)
+                                                    } else {
+                                                        painterResource(id = R.drawable.image_error)
+                                                    }
                                                 Image(
                                                     modifier = imageModifier,
                                                     painter = imagePainter,
@@ -403,7 +419,10 @@ fun HomeContent(
                                                     fontWeight = FontWeight.Bold,
                                                 )
 
-                                                if (state.listSlotInCard.isNotEmpty() && viewModel.getInventoryByProductCode(slot.productCode) != -1) {
+                                                if (state.listSlotInCard.isNotEmpty() && viewModel.getInventoryByProductCode(
+                                                        slot.productCode
+                                                    ) != -1
+                                                ) {
                                                     Box(
                                                         modifier = Modifier
                                                             .height(60.dp)
@@ -434,7 +453,11 @@ fun HomeContent(
                                                                 contentDescription = ""
                                                             )
                                                             Text(
-                                                                "${viewModel.getInventoryByProductCode(slot.productCode)}",
+                                                                "${
+                                                                    viewModel.getInventoryByProductCode(
+                                                                        slot.productCode
+                                                                    )
+                                                                }",
                                                                 fontSize = 19.sp,
                                                             )
                                                             Image(
@@ -483,7 +506,11 @@ fun HomeContent(
                                                                 painter = painterResource(id = R.drawable.image_select_to_buy),
                                                                 contentDescription = ""
                                                             )
-                                                            Text("Chọn mua", color = Color.White, fontSize = 18.sp)
+                                                            Text(
+                                                                "Chọn mua",
+                                                                color = Color.White,
+                                                                fontSize = 18.sp
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -524,8 +551,17 @@ fun HomeContent(
                                         modifier = Modifier
 
                                     ) {
-                                        Text("Số dư tiền mặt", fontSize = 15.sp, color = Color.White)
-                                        Text(state.initSetup.currentCash.toVietNamDong(), fontSize = 26.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            "Số dư tiền mặt",
+                                            fontSize = 15.sp,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            state.initSetup.currentCash.toVietNamDong(),
+                                            fontSize = 26.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Box(
@@ -536,12 +572,14 @@ fun HomeContent(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Column(
-                                        modifier = Modifier.padding(end = 10.dp).clickable {
-                                            checkTouch = 0
-                                            if (state.initSetup.withdrawalAllowed == "ON") {
-                                                viewModel.withdrawalMoney()
-                                            }
-                                        },
+                                        modifier = Modifier
+                                            .padding(end = 10.dp)
+                                            .clickable {
+                                                checkTouch = 0
+                                                if (state.initSetup.withdrawalAllowed == "ON") {
+                                                    viewModel.withdrawalMoney()
+                                                }
+                                            },
                                         verticalArrangement = Arrangement.Center,
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
@@ -564,7 +602,7 @@ fun HomeContent(
                                 }
                             }
                             Spacer(modifier = Modifier.weight(1f))
-                            if(!state.isShowAds) {
+                            if (!state.isShowAds) {
                                 Button(
                                     modifier = Modifier
                                         .padding(end = 14.dp, top = 14.dp)
@@ -587,8 +625,8 @@ fun HomeContent(
                                 }
                             }
                         }
-                        if(state.listSlotInCard.isNotEmpty()) {
-                            Row (
+                        if (state.listSlotInCard.isNotEmpty()) {
+                            Row(
                                 modifier = Modifier
                                     .height(120.dp)
                                     .background(Color.White)
@@ -600,15 +638,19 @@ fun HomeContent(
                                 val imageModifier = Modifier
                                     .width(80.dp)
                                     .height(80.dp)
-                                val imagePainter = if (state.slotAtBottom!!.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                        pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")) {
-                                    val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                        .data(pathFolderImageProduct +"/${state.slotAtBottom.productCode}.png")
-                                        .build()
-                                    rememberAsyncImagePainter(imageRequest)
-                                } else {
-                                    painterResource(id = R.drawable.image_add_slot)
-                                }
+                                val imagePainter =
+                                    if (state.slotAtBottom!!.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                            pathFolderImageProduct + "/${state.slotAtBottom.productCode}.png"
+                                        )
+                                    ) {
+                                        val imageRequest =
+                                            ImageRequest.Builder(LocalContext.current)
+                                                .data(pathFolderImageProduct + "/${state.slotAtBottom.productCode}.png")
+                                                .build()
+                                        rememberAsyncImagePainter(imageRequest)
+                                    } else {
+                                        painterResource(id = R.drawable.image_add_slot)
+                                    }
                                 Image(
                                     modifier = imageModifier,
                                     painter = imagePainter,
@@ -618,7 +660,11 @@ fun HomeContent(
                                 Column() {
                                     Text(state.slotAtBottom.productName)
                                     Text("(Số lượng ${state.slotAtBottom.inventory})")
-                                    Text(state.slotAtBottom.price.toVietNamDong(), color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
+                                    Text(
+                                        state.slotAtBottom.price.toVietNamDong(),
+                                        color = Color(0xFFE72B28),
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                                 Button(
@@ -642,9 +688,24 @@ fun HomeContent(
                                         Arrangement.Center,
                                         Alignment.CenterVertically,
                                     ) {
-                                        Text("Thanh toán", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                        Text(" | ", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                        Text(viewModel.getTotal().toVietNamDong(), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            "Thanh toán",
+                                            color = Color.White,
+                                            fontSize = 19.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            " | ",
+                                            color = Color.White,
+                                            fontSize = 19.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            viewModel.getTotal().toVietNamDong(),
+                                            color = Color.White,
+                                            fontSize = 19.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
                             }
@@ -652,7 +713,7 @@ fun HomeContent(
                     }
                 }
             }
-            if(state.isShowCart && state.listSlotInCard.isNotEmpty()) {
+            if (state.isShowCart && state.listSlotInCard.isNotEmpty()) {
                 Box(modifier = Modifier
                     .fillMaxSize()
                     .clickable { }) {
@@ -698,7 +759,7 @@ fun HomeContent(
                                     .verticalScroll(rememberScrollState())
                             ) {
                                 state.listSlotInCard.forEach { item ->
-                                    Row (
+                                    Row(
                                         modifier = Modifier.padding(bottom = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
@@ -706,17 +767,19 @@ fun HomeContent(
                                             .width(130.dp)
                                             .height(130.dp)
                                             .padding(end = 10.dp)
-                                        val imagePainter = if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                pathFolderImageProduct + "/${item.productCode}.png"
-                                            )
-                                        ) {
-                                            val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                .data(pathFolderImageProduct + "/${item.productCode}.png")
-                                                .build()
-                                            rememberAsyncImagePainter(imageRequest)
-                                        } else {
-                                            painterResource(id = R.drawable.image_error)
-                                        }
+                                        val imagePainter =
+                                            if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                    pathFolderImageProduct + "/${item.productCode}.png"
+                                                )
+                                            ) {
+                                                val imageRequest =
+                                                    ImageRequest.Builder(LocalContext.current)
+                                                        .data(pathFolderImageProduct + "/${item.productCode}.png")
+                                                        .build()
+                                                rememberAsyncImagePainter(imageRequest)
+                                            } else {
+                                                painterResource(id = R.drawable.image_error)
+                                            }
                                         Image(
                                             modifier = imageModifier,
                                             painter = imagePainter,
@@ -732,7 +795,10 @@ fun HomeContent(
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
-                                            Text("Đơn giá: ${item.price.toVietNamDong()}", fontSize = 14.sp)
+                                            Text(
+                                                "Đơn giá: ${item.price.toVietNamDong()}",
+                                                fontSize = 14.sp
+                                            )
                                             Spacer(modifier = Modifier.height(10.dp))
                                             Row(
                                                 modifier = Modifier,
@@ -756,7 +822,8 @@ fun HomeContent(
                                                                 item
                                                             )
                                                         },
-                                                    contentAlignment = Alignment.Center,                                            ) {
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
                                                     Image(
                                                         modifier = Modifier
                                                             .height(20.dp)
@@ -803,7 +870,11 @@ fun HomeContent(
                                                 }
 
                                                 Spacer(modifier = Modifier.weight(1f))
-                                                Text((item.price*item.inventory).toVietNamDong(), color = Color(0xFFE72B28), fontWeight = FontWeight.Bold)
+                                                Text(
+                                                    (item.price * item.inventory).toVietNamDong(),
+                                                    color = Color(0xFFE72B28),
+                                                    fontWeight = FontWeight.Bold
+                                                )
                                             }
                                         }
                                     }
@@ -825,7 +896,12 @@ fun HomeContent(
                                         .padding(end = 10.dp)
                                         .height(60.dp)
                                         .weight(1f),
-                                    placeholder = { Text(text = "Mã giảm giá", fontSize = 18.sp) }, // Hint
+                                    placeholder = {
+                                        Text(
+                                            text = "Mã giảm giá",
+                                            fontSize = 18.sp
+                                        )
+                                    }, // Hint
                                     shape = RoundedCornerShape(4.dp),
                                     textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
                                     colors = outlinedTextFieldColors(
@@ -837,7 +913,7 @@ fun HomeContent(
                                         imeAction = ImeAction.Done
                                     ),
                                     visualTransformation = VisualTransformation.None,
-                                    keyboardActions = KeyboardActions (
+                                    keyboardActions = KeyboardActions(
                                         onDone = {
 //                                            keyboardControllerNumberSlot?.hide()
                                             focusManager.clearFocus()
@@ -866,9 +942,9 @@ fun HomeContent(
                                     fontSize = 20.sp,
                                 )
                                 Text(
-                                    if(state.promotion == null) 0.toVietNamDong()
-                                    else state.promotion.totalDiscount!!.toVietNamDong()
-                                    , fontSize = 20.sp
+                                    if (state.promotion == null) 0.toVietNamDong()
+                                    else state.promotion.totalDiscount!!.toVietNamDong(),
+                                    fontSize = 20.sp
                                 )
                             }
                             Spacer(modifier = Modifier.height(28.dp))
@@ -889,7 +965,10 @@ fun HomeContent(
                                     modifier = Modifier.weight(1f),
                                     fontSize = 20.sp,
                                 )
-                                Text(if(state.initSetup!=null) state.initSetup.currentCash.toVietNamDong() else "0vnđ", fontSize = 20.sp)
+                                Text(
+                                    if (state.initSetup != null) state.initSetup.currentCash.toVietNamDong() else "0vnđ",
+                                    fontSize = 20.sp
+                                )
                             }
                             Spacer(modifier = Modifier.height(28.dp))
                             Text(
@@ -897,7 +976,7 @@ fun HomeContent(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
                             )
-                            if(state.listPaymentMethod.isEmpty()) {
+                            if (state.listPaymentMethod.isEmpty()) {
                                 Text(
                                     "Hiện không có phương thức thanh toán nào khả dụng! Xin vui lòng thử lại sau!",
                                     modifier = Modifier
@@ -954,17 +1033,25 @@ fun HomeContent(
                                                                 .width(44.dp)
                                                                 .height(44.dp)
                                                                 .clickable { }
-                                                            val imagePainter = if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
-                                                                    pathFolderImagePayment + "/${item.methodName}.png"
-                                                                )
-                                                            ) {
-                                                                val imageRequest = ImageRequest.Builder(LocalContext.current)
-                                                                    .data(pathFolderImagePayment + "/${item.methodName}.png")
-                                                                    .build()
-                                                                rememberAsyncImagePainter(imageRequest)
-                                                            } else {
-                                                                painterResource(id = R.drawable.image_error)
-                                                            }
+                                                            val imagePainter =
+                                                                if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
+                                                                        pathFolderImagePayment + "/${item.methodName}.png"
+                                                                    )
+                                                                ) {
+                                                                    val imageRequest =
+                                                                        ImageRequest.Builder(
+                                                                            LocalContext.current
+                                                                        )
+                                                                            .data(
+                                                                                pathFolderImagePayment + "/${item.methodName}.png"
+                                                                            )
+                                                                            .build()
+                                                                    rememberAsyncImagePainter(
+                                                                        imageRequest
+                                                                    )
+                                                                } else {
+                                                                    painterResource(id = R.drawable.image_error)
+                                                                }
                                                             Image(
                                                                 modifier = imageModifier,
                                                                 painter = imagePainter,
@@ -991,7 +1078,7 @@ fun HomeContent(
                                     }
                                 }
                             }
-                            if(state.listPaymentMethod.isNotEmpty()) {
+                            if (state.listPaymentMethod.isNotEmpty()) {
                                 CustomButtonComposable(
                                     title = "Xác nhận thanh toán",
                                     cornerRadius = 6.dp,
@@ -1008,7 +1095,7 @@ fun HomeContent(
                     }
                 }
             }
-            if(state.isShowPushMoney) {
+            if (state.isShowPushMoney) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -1041,7 +1128,7 @@ fun HomeContent(
                     )
                 }
             }
-            if(state.isShowQrCode) {
+            if (state.isShowQrCode) {
 //                Logger.debug("adsfasdffgwrefrgsfgasdfsdfsdfdsffddff")
 //                Box(
 //                    modifier = Modifier
@@ -1124,7 +1211,7 @@ fun HomeContent(
                     }
                 }
             }
-            if(state.isShowBigAds) {
+            if (state.isShowBigAds) {
                 BigAdsComposable(
                     context = context,
                     listAds = state.listAds,
@@ -1133,12 +1220,15 @@ fun HomeContent(
                         viewModel.hideBigAds()
                     },
                     onStartBigAds = {
-//                        viewModel.startBigAds()
+                        viewModel.updateDataTrackingAdsLocal(
+                            nameAds = it,
+                            typeAds = TypeAds.BigAds.name
+                        )
                     }
 
                 )
             }
-            if(state.isShowWaitForDropProduct) {
+            if (state.isShowWaitForDropProduct) {
                 Dialog(
                     onDismissRequest = { /*TODO*/ },
                     properties = DialogProperties(dismissOnClickOutside = false)

@@ -23,7 +23,7 @@ fun BigAdsComposable(
     context: Context,
     listAds: ArrayList<String>,
     onClickHideAds: () -> Unit,
-    onStartBigAds:(nameAds:String) -> Unit,
+    onStartBigAds: (nameAds: String) -> Unit,
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
     Box(
@@ -36,17 +36,18 @@ fun BigAdsComposable(
             factory = {
                 VideoView(context).apply {
                     setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
                     setOnCompletionListener {
                         currentVideoIndex = (currentVideoIndex + 1) % listAds.size
                         setVideoPath(listAds[currentVideoIndex])
                         start()
-                        val nameAds:String = listAds[currentVideoIndex].split("/").last()
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         onStartBigAds(nameAds)
                     }
                     if (listAds.isNotEmpty()) {
                         setVideoPath(listAds[currentVideoIndex])
                         start()
-                        val nameAds:String = listAds[currentVideoIndex].split("/").last()
+                        val nameAds: String = listAds[currentVideoIndex].split("/").last()
                         onStartBigAds(nameAds)
                     }
                 }
