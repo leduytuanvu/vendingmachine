@@ -677,7 +677,12 @@ class SetupSlotViewModel @Inject constructor(
                         item.capacity = 10
                         item.productCode = product.productCode
                         item.productName = product.productName
-                        item.price = product.price
+                        val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
+                        if(indexCheck!=-1) {
+                            item.price = _state.value.listSlot[indexCheck].price
+                        } else {
+                            item.price = product.price
+                        }
                         var slot: Slot? = null
                         for (itemAdd in _state.value.listSlotAddMore) {
                             if (itemAdd.slot == _state.value.slot!!.slot) {
@@ -737,7 +742,12 @@ class SetupSlotViewModel @Inject constructor(
                                 item.capacity = 10
                                 item.productCode = product.productCode
                                 item.productName = product.productName
-                                item.price = product.price
+                                val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
+                                if(indexCheck!=-1) {
+                                    item.price = _state.value.listSlot[indexCheck].price
+                                } else {
+                                    item.price = product.price
+                                }
                                 baseRepository.addNewFillLogToLocal(
                                     machineCode = _state.value.initSetup!!.vendCode,
                                     fillType = "setup slot",

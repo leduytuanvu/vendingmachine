@@ -17,6 +17,7 @@ import com.combros.vendingmachine.core.util.pathFileInitSetup
 import com.combros.vendingmachine.core.util.pathFileProductDetail
 import com.combros.vendingmachine.core.util.pathFolderImageProduct
 import com.combros.vendingmachine.core.util.sendEvent
+import com.combros.vendingmachine.features.settings.domain.model.Product
 import com.combros.vendingmachine.features.settings.domain.repository.SettingsRepository
 import com.combros.vendingmachine.features.settings.presentation.setupProduct.viewState.SetupProductViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -146,17 +147,13 @@ class SetupProductViewModel @Inject constructor(
         logger.debug("loadListProduct")
         viewModelScope.launch {
             try {
-                if (baseRepository.isHaveNetwork(context)) {
-                    _state.update { it.copy(isLoading = true) }
-                    val listProduct = settingsRepository.getListProductFromServer()
-                    _state.update {
-                        it.copy(
-                            listProduct = listProduct,
-                            isLoading = false,
-                        )
-                    }
-                } else {
-                    showDialogWarning("Not have internet, please connect with internet!")
+                val listProductInLocal: ArrayList<Product>? = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<Product>>() {}.type,
+                    path = pathFileProductDetail
+                )
+                logger.debug("listProductInLocal: $listProductInLocal")
+                if(listProductInLocal != null) {
+                    _state.update { it.copy(listProduct = listProductInLocal) }
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -183,12 +180,14 @@ class SetupProductViewModel @Inject constructor(
                             isConfirm = false,
                         )
                     }
+                    val listProduct = settingsRepository.getListProductFromServer()
+//                    _state.update {it.copy(listProduct = listProduct)}
                     val listFileNameInFolder =
                         settingsRepository.getListFileNameInFolder(pathFolderImageProduct)
                     if (!baseRepository.isFolderExists(pathFolderImageProduct)) {
                         baseRepository.createFolder(pathFolderImageProduct)
                     }
-                    for (product in state.value.listProduct) {
+                    for (product in listProduct) {
                         if (product.imageUrl!!.isNotEmpty()) {
                             if (!listFileNameInFolder.contains(product.productCode)) {
                                 var notHaveError = true
@@ -222,10 +221,6 @@ class SetupProductViewModel @Inject constructor(
                             }
                         }
                     }
-                    baseRepository.writeDataToLocal(
-                        data = state.value.listProduct,
-                        path = pathFileProductDetail,
-                    )
                     val initSetup: InitSetup = baseRepository.getDataFromLocal(
                         type = object : TypeToken<InitSetup>() {}.type,
                         path = pathFileInitSetup
@@ -235,6 +230,11 @@ class SetupProductViewModel @Inject constructor(
                         fillType = "download list product from server to local",
                         content = state.value.listProduct.toString(),
                     )
+                    baseRepository.writeDataToLocal(
+                        data = listProduct,
+                        path = pathFileProductDetail,
+                    )
+                    _state.update {it.copy(listProduct = listProduct)}
                     sendEvent(Event.Toast("SUCCESS"))
                 } else {
                     showDialogWarning("Not have internet, please connect with internet!")
