@@ -36,14 +36,12 @@ import com.combros.vendingmachine.features.home.data.model.request.ProductDetail
 import com.combros.vendingmachine.features.home.data.model.request.ProductSyncOrderRequest
 import com.combros.vendingmachine.features.home.data.model.request.SyncOrderRequest
 import com.combros.vendingmachine.features.home.data.model.request.UpdateDeliveryStatusRequest
-import com.combros.vendingmachine.features.home.data.model.request.UpdateInventoryRequest
 import com.combros.vendingmachine.features.home.data.model.request.UpdatePromotionRequest
 import com.combros.vendingmachine.features.home.domain.model.Ads
 import com.combros.vendingmachine.features.home.domain.model.CartExtra
 import com.combros.vendingmachine.features.home.domain.model.DataTrackingAds
 import com.combros.vendingmachine.features.home.domain.model.Extra
 import com.combros.vendingmachine.features.home.domain.model.TrackingAds
-import com.combros.vendingmachine.features.home.domain.model.TypeAds
 import com.combros.vendingmachine.features.home.domain.repository.HomeRepository
 import com.combros.vendingmachine.features.home.presentation.viewState.HomeViewState
 import com.combros.vendingmachine.features.settings.data.model.response.PaymentMethodResponse
@@ -360,8 +358,8 @@ class HomeViewModel @Inject constructor(
     private suspend fun processDataFromVendingMachine(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            if(dataHexString.isNotEmpty()) {
-                if(_state.value.isVendingMachineBusy) {
+            if (dataHexString.isNotEmpty()) {
+                if (_state.value.isVendingMachineBusy) {
                     val result = when (dataHexString) {
                         "00,5D,00,00,5D" -> DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
                         "00,5D,00,AA,07" -> DropSensorResult.SUCCESS
@@ -379,7 +377,7 @@ class HomeViewModel @Inject constructor(
                         logger.debug("Result emitted to dispenseResults: $result")
                     }
                 } else {
-                    if(_dataTmpVendingMachine.value != dataHexString) {
+                    if (_dataTmpVendingMachine.value != dataHexString) {
                         _dataTmpVendingMachine.value = dataHexString
                         if (dataByteArray[0] == 0x00.toByte()
                             && dataByteArray[1] == 0x5D.toByte()
@@ -412,8 +410,8 @@ class HomeViewModel @Inject constructor(
 
                             }
                         } else {
-                            if(dataByteArray[4] == 0x5D.toByte() || dataByteArray[4] == 0x5E.toByte()) {
-                                if(dataByteArray[4] == 0x5D.toByte()) {
+                            if (dataByteArray[4] == 0x5D.toByte() || dataByteArray[4] == 0x5E.toByte()) {
+                                if (dataByteArray[4] == 0x5D.toByte()) {
                                     baseRepository.addNewDoorLogToLocal(
                                         machineCode = _state.value.initSetup!!.vendCode,
                                         cabinetCode = "MT01",
@@ -492,7 +490,7 @@ class HomeViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isVendingMachineBusy = true) }
                 // Stop countdown timer
-                if(countdownTimer!=null) {
+                if (countdownTimer != null) {
                     countdownTimer!!.cancel()
                     countdownTimer = null
                 }
@@ -510,27 +508,28 @@ class HomeViewModel @Inject constructor(
                 // List slot show in home
                 val listSlotShowInHome: ArrayList<Slot> = arrayListOf()
                 // List sync order transaction
-                var listLogSyncOrderTransaction: ArrayList<LogSyncOrder>? = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
-                    path = pathFileSyncOrderTransaction
-                )
-                if(listLogSyncOrderTransaction.isNullOrEmpty()) {
+                var listLogSyncOrderTransaction: ArrayList<LogSyncOrder>? =
+                    baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
+                        path = pathFileSyncOrderTransaction
+                    )
+                if (listLogSyncOrderTransaction.isNullOrEmpty()) {
                     listLogSyncOrderTransaction = arrayListOf()
                 }
 
                 // List slot in cart
                 val listSlotInCart = _state.value.listSlotInCard
                 val listProductDropInCart: ArrayList<Slot> = arrayListOf()
-                if(_state.value.promotion!=null) {
-                    if(_state.value.promotion!!.carts.isNullOrEmpty()) {
-                        for(item in _state.value.listSlotInCard) {
-                            for(smallItem in 0 until item.inventory) {
+                if (_state.value.promotion != null) {
+                    if (_state.value.promotion!!.carts.isNullOrEmpty()) {
+                        for (item in _state.value.listSlotInCard) {
+                            for (smallItem in 0 until item.inventory) {
                                 val tmpItem = item.copy(inventory = 1)
                                 listProductDropInCart.add(tmpItem)
                             }
                         }
                     } else {
-                        for(item in _state.value.promotion!!.carts!!) {
+                        for (item in _state.value.promotion!!.carts!!) {
                             val slot = Slot(
                                 slot = item.slot!!,
                                 productCode = item.productCode!!,
@@ -550,8 +549,8 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    for(item in _state.value.listSlotInCard) {
-                        for(smallItem in 0 until item.inventory) {
+                    for (item in _state.value.listSlotInCard) {
+                        for (smallItem in 0 until item.inventory) {
                             val tmpItem = item.copy(inventory = 1)
                             listProductDropInCart.add(tmpItem)
                         }
@@ -559,12 +558,12 @@ class HomeViewModel @Inject constructor(
                 }
 
                 var indexCheck = -1
-                for(item in listProductDropInCart) {
+                for (item in listProductDropInCart) {
                     val slot = homeRepository.getSlotDrop(item.productCode)
-                    if(slot!=null) {
+                    if (slot != null) {
                         logger.debug("slot: ${slot.slot}")
                         _statusDropProduct.value = DropSensorResult.INITIALIZATION
-                        if(_state.value.initSetup!!.dropSensor=="OFF") {
+                        if (_state.value.initSetup!!.dropSensor == "OFF") {
                             productDispenseNotSensor(0, slot.slot)
                         } else {
                             productDispense(0, slot.slot)
@@ -575,8 +574,9 @@ class HomeViewModel @Inject constructor(
                         logger.debug("done")
                         if (result == null) {
                             homeRepository.lockSlot(slot.slot)
-                            indexCheck = listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "TIMEOUT_WAITING_FOR_DISPENSE_RESULT" }
-                            if(indexCheck!=-1) {
+                            indexCheck =
+                                listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "TIMEOUT_WAITING_FOR_DISPENSE_RESULT" }
+                            if (indexCheck != -1) {
                                 listSlotDropFail[indexCheck].inventory++
                             } else {
                                 val tmpItem = item.copy(
@@ -587,7 +587,7 @@ class HomeViewModel @Inject constructor(
                                 listSlotDropFail.add(tmpItem)
                             }
                         } else {
-                            if(_state.value.initSetup!!.dropSensor=="OFF"
+                            if (_state.value.initSetup!!.dropSensor == "OFF"
                                 && (result == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
                                         || result == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
                                         || result == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
@@ -602,7 +602,8 @@ class HomeViewModel @Inject constructor(
                                     } else {
                                         "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
                                     }
-                                    indexCheck = listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
+                                    indexCheck =
+                                        listSlotDropSuccess.indexOfFirst { it.slot == slot.slot }
                                     if (indexCheck != -1) {
                                         listSlotDropSuccess[indexCheck].messDrop = message
                                         listSlotDropSuccess[indexCheck].inventory++
@@ -615,9 +616,11 @@ class HomeViewModel @Inject constructor(
                                     }
                                     homeRepository.minusInventory(slot.slot)
                                 }
+
                                 DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                    indexCheck = listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "SENSOR_HAS_AN_OBSTACLE" }
-                                    if(indexCheck!=-1) {
+                                    indexCheck =
+                                        listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "SENSOR_HAS_AN_OBSTACLE" }
+                                    if (indexCheck != -1) {
                                         listSlotDropFail[indexCheck].inventory++
                                     } else {
                                         val tmpItem = item.copy(
@@ -628,10 +631,12 @@ class HomeViewModel @Inject constructor(
                                         listSlotDropFail.add(tmpItem)
                                     }
                                 }
+
                                 else -> {
                                     homeRepository.lockSlot(slot.slot)
-                                    indexCheck = listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == result.name }
-                                    if(indexCheck!=-1) {
+                                    indexCheck =
+                                        listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == result.name }
+                                    if (indexCheck != -1) {
                                         listSlotDropFail[indexCheck].inventory++
                                     } else {
                                         val tmpItem = item.copy(
@@ -641,14 +646,17 @@ class HomeViewModel @Inject constructor(
                                         )
                                         listSlotDropFail.add(tmpItem)
                                     }
-                                    val listAnotherSlot = homeRepository.getListAnotherSlot(item.productCode)
+                                    val listAnotherSlot =
+                                        homeRepository.getListAnotherSlot(item.productCode)
                                     logger.debug("listAnotherSlot: $listAnotherSlot")
-                                    if(listAnotherSlot.isNotEmpty()) {
+                                    if (listAnotherSlot.isNotEmpty()) {
                                         for (itemAnother in listAnotherSlot) {
-                                            val anotherSlot = homeRepository.getSlotDrop(item.productCode)
+                                            val anotherSlot =
+                                                homeRepository.getSlotDrop(item.productCode)
                                             if (anotherSlot != null) {
-                                                _statusDropProduct.value = DropSensorResult.INITIALIZATION
-                                                if(_state.value.initSetup!!.dropSensor=="OFF") {
+                                                _statusDropProduct.value =
+                                                    DropSensorResult.INITIALIZATION
+                                                if (_state.value.initSetup!!.dropSensor == "OFF") {
                                                     productDispenseNotSensor(0, anotherSlot.slot)
                                                 } else {
                                                     productDispense(0, anotherSlot.slot)
@@ -658,8 +666,9 @@ class HomeViewModel @Inject constructor(
                                                 }
                                                 if (anotherResult == null) {
                                                     homeRepository.lockSlot(anotherSlot.slot)
-                                                    indexCheck = listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "TIMEOUT_WAITING_FOR_DISPENSE_RESULT" }
-                                                    if(indexCheck!=-1) {
+                                                    indexCheck =
+                                                        listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "TIMEOUT_WAITING_FOR_DISPENSE_RESULT" }
+                                                    if (indexCheck != -1) {
                                                         listAnotherSlotDropFail[indexCheck].inventory++
                                                     } else {
                                                         val tmpItem = item.copy(
@@ -670,7 +679,7 @@ class HomeViewModel @Inject constructor(
                                                         listAnotherSlotDropFail.add(tmpItem)
                                                     }
                                                 }
-                                                if(_state.value.initSetup!!.dropSensor=="OFF"
+                                                if (_state.value.initSetup!!.dropSensor == "OFF"
                                                     && (anotherResult == DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
                                                             || anotherResult == DropSensorResult.SENSOR_HAS_AN_OBSTACLE
                                                             || anotherResult == DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
@@ -680,16 +689,20 @@ class HomeViewModel @Inject constructor(
                                                 }
                                                 when (anotherResult) {
                                                     DropSensorResult.SUCCESS, DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
-                                                        val message = if (anotherResult == DropSensorResult.SUCCESS) {
-                                                            "SUCCESS"
-                                                        } else {
-                                                            "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
-                                                        }
-                                                        indexCheck = listSlotDropSuccess.indexOfFirst { it.slot == anotherSlot.slot }
+                                                        val message =
+                                                            if (anotherResult == DropSensorResult.SUCCESS) {
+                                                                "SUCCESS"
+                                                            } else {
+                                                                "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
+                                                            }
+                                                        indexCheck =
+                                                            listSlotDropSuccess.indexOfFirst { it.slot == anotherSlot.slot }
                                                         if (indexCheck != -1) {
-                                                            listSlotDropSuccess[indexCheck].messDrop = message
+                                                            listSlotDropSuccess[indexCheck].messDrop =
+                                                                message
                                                             listSlotDropSuccess[indexCheck].inventory++
-                                                            listSlotDropSuccess[indexCheck].price = item.price
+                                                            listSlotDropSuccess[indexCheck].price =
+                                                                item.price
                                                         } else {
                                                             slot.inventory = 1
                                                             slot.messDrop = message
@@ -699,9 +712,11 @@ class HomeViewModel @Inject constructor(
                                                         homeRepository.minusInventory(slot.slot)
                                                         break
                                                     }
+
                                                     DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
-                                                        indexCheck = listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "SENSOR_HAS_AN_OBSTACLE" }
-                                                        if(indexCheck!=-1) {
+                                                        indexCheck =
+                                                            listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "SENSOR_HAS_AN_OBSTACLE" }
+                                                        if (indexCheck != -1) {
                                                             listAnotherSlotDropFail[indexCheck].inventory++
                                                         } else {
                                                             val tmpItem = item.copy(
@@ -712,9 +727,11 @@ class HomeViewModel @Inject constructor(
                                                             listAnotherSlotDropFail.add(tmpItem)
                                                         }
                                                     }
+
                                                     else -> {
-                                                        indexCheck = listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == anotherResult!!.name }
-                                                        if(indexCheck!=-1) {
+                                                        indexCheck =
+                                                            listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == anotherResult!!.name }
+                                                        if (indexCheck != -1) {
                                                             listAnotherSlotDropFail[indexCheck].inventory++
                                                         } else {
                                                             val tmpItem = item.copy(
@@ -728,8 +745,9 @@ class HomeViewModel @Inject constructor(
                                                     }
                                                 }
                                             } else {
-                                                indexCheck = listAnotherSlotDropFail.indexOfFirst { it.slot == itemAnother.slot && it.messDrop == "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${itemAnother.productCode.uppercase()}" }
-                                                if(indexCheck!=-1) {
+                                                indexCheck =
+                                                    listAnotherSlotDropFail.indexOfFirst { it.slot == itemAnother.slot && it.messDrop == "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${itemAnother.productCode.uppercase()}" }
+                                                if (indexCheck != -1) {
                                                     listAnotherSlotDropFail[indexCheck].inventory++
                                                 } else {
                                                     val tmpItem = item.copy(
@@ -746,8 +764,9 @@ class HomeViewModel @Inject constructor(
                         }
                     } else {
                         logger.debug("slot not found")
-                        indexCheck = listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${item.productCode.uppercase()}" }
-                        if(indexCheck!=-1) {
+                        indexCheck =
+                            listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${item.productCode.uppercase()}" }
+                        if (indexCheck != -1) {
                             listSlotDropFail[indexCheck].inventory++
                         } else {
                             val tmpItem = item.copy(
@@ -770,7 +789,8 @@ class HomeViewModel @Inject constructor(
                 )!!
                 for (item in listSlot) {
                     if (item.inventory > 0 && item.productCode.isNotEmpty() && !item.isLock && item.productName.isNotEmpty()) {
-                        val index = listSlotShowInHome.indexOfFirst { it.productCode == item.productCode }
+                        val index =
+                            listSlotShowInHome.indexOfFirst { it.productCode == item.productCode }
                         if (index == -1) {
                             listSlotShowInHome.add(item)
                         } else {
@@ -780,46 +800,53 @@ class HomeViewModel @Inject constructor(
                 }
 
                 // Update promotion
-                if(listSlotDropSuccess.size>0) {
-                    if(_state.value.promotion!=null) {
+                if (listSlotDropSuccess.size > 0) {
+                    if (_state.value.promotion != null) {
                         val listCartExtra: ArrayList<CartExtra> = arrayListOf()
-                        for(item in listSlotInCart) {
+                        for (item in listSlotInCart) {
                             val cartExtra = CartExtra(
                                 productCode = item.productCode,
                                 productName = item.productName,
                                 price = item.price,
                                 quantity = item.inventory,
                                 discount = _state.value.promotion!!.totalDiscount ?: 0,
-                                amount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
+                                amount = _state.value.promotion!!.totalAmount
+                                    ?: _state.value.totalAmount,
                             )
                             listCartExtra.add(cartExtra)
                         }
                         val extra = Extra(
                             carts = listCartExtra,
-                            totalAmount = _state.value.promotion!!.totalAmount ?: _state.value.totalAmount,
+                            totalAmount = _state.value.promotion!!.totalAmount
+                                ?: _state.value.totalAmount,
                             totalDiscount = _state.value.promotion!!.totalDiscount ?: 0,
-                            paymentAmount = _state.value.promotion!!.paymentAmount ?: _state.value.totalAmount,
+                            paymentAmount = _state.value.promotion!!.paymentAmount
+                                ?: _state.value.totalAmount,
                             rewardValue = _state.value.promotion!!.rewardValue ?: -1,
                             rewardMaxValue = _state.value.promotion!!.rewardMaxValue ?: "",
                             machineCode = _state.value.initSetup!!.vendCode,
                         )
-                        var listUpdatePromotion: ArrayList<LogUpdatePromotion>? = baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
-                            path = pathFileUpdatePromotion
-                        )
+                        var listUpdatePromotion: ArrayList<LogUpdatePromotion>? =
+                            baseRepository.getDataFromLocal(
+                                type = object : TypeToken<ArrayList<LogUpdatePromotion>>() {}.type,
+                                path = pathFileUpdatePromotion
+                            )
                         val logUpdatePromotion = LogUpdatePromotion(
                             machineCode = _state.value.initSetup!!.vendCode,
                             androidId = _state.value.initSetup!!.androidId,
-                            campaignId = if(_state.value.promotion!=null)  _state.value.promotion!!.campaignId ?: "" else "",
-                            voucherCode = if(_state.value.promotion!=null) _state.value.promotion!!.voucherCode ?: "" else "",
+                            campaignId = if (_state.value.promotion != null) _state.value.promotion!!.campaignId
+                                ?: "" else "",
+                            voucherCode = if (_state.value.promotion != null) _state.value.promotion!!.voucherCode
+                                ?: "" else "",
                             orderCode = _state.value.orderCode,
-                            promotionId = if(_state.value.promotion!=null) _state.value.promotion!!.promotionId ?: "" else "",
+                            promotionId = if (_state.value.promotion != null) _state.value.promotion!!.promotionId
+                                ?: "" else "",
                             status = true,
                             extra = extra.toBase64(),
                             isSent = false,
                         )
-                        
-                        if(listUpdatePromotion.isNullOrEmpty()) {
+
+                        if (listUpdatePromotion.isNullOrEmpty()) {
                             listUpdatePromotion = arrayListOf()
                         }
                         listUpdatePromotion.add(logUpdatePromotion)
@@ -831,15 +858,15 @@ class HomeViewModel @Inject constructor(
                 }
 
                 // Update sync order
-                if(listSlotDropFail.isNotEmpty()) {
-                    for(item in listSlotDropFail) {
+                if (listSlotDropFail.isNotEmpty()) {
+                    for (item in listSlotDropFail) {
                         val tmp = ProductSyncOrderRequest(
                             productCode = item.productCode,
                             productName = item.productName,
                             price = item.price.toString(),
                             quantity = item.inventory,
-                            discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                            amount = (item.inventory*item.price).toString(),
+                            discount = if (_state.value.promotion != null) _state.value.promotion!!.totalDiscount else 0,
+                            amount = (item.inventory * item.price).toString(),
                             deliveryStatus = "failed",
                             slot = item.slot,
                             cabinetCode = "MT01",
@@ -848,15 +875,15 @@ class HomeViewModel @Inject constructor(
                         _state.value.logSyncOrder!!.productDetails.add(tmp)
                     }
                 }
-                if(listAnotherSlotDropFail.isNotEmpty()) {
-                    for(item in listAnotherSlotDropFail) {
+                if (listAnotherSlotDropFail.isNotEmpty()) {
+                    for (item in listAnotherSlotDropFail) {
                         val tmp = ProductSyncOrderRequest(
                             productCode = item.productCode,
                             productName = item.productName,
                             price = item.price.toString(),
                             quantity = item.inventory,
-                            discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                            amount = (item.inventory*item.price).toString(),
+                            discount = if (_state.value.promotion != null) _state.value.promotion!!.totalDiscount else 0,
+                            amount = (item.inventory * item.price).toString(),
                             deliveryStatus = "failed",
                             slot = item.slot,
                             cabinetCode = "MT01",
@@ -865,7 +892,7 @@ class HomeViewModel @Inject constructor(
                         _state.value.logSyncOrder!!.productDetails.add(tmp)
                     }
                 }
-                if(listSlotDropSuccess.isNotEmpty()) {
+                if (listSlotDropSuccess.isNotEmpty()) {
                     val logSyncOrder = LogSyncOrder(
                         machineCode = _state.value.initSetup!!.vendCode,
                         orderCode = _state.value.logSyncOrder!!.orderCode,
@@ -887,14 +914,14 @@ class HomeViewModel @Inject constructor(
                         productDetails = arrayListOf(),
                         isSent = false,
                     )
-                    for(item in listSlotDropSuccess) {
+                    for (item in listSlotDropSuccess) {
                         val tmp = ProductSyncOrderRequest(
                             productCode = item.productCode,
                             productName = item.productName,
                             price = item.price.toString(),
                             quantity = item.inventory,
-                            discount =if(_state.value.promotion!=null) _state.value.promotion!!.totalDiscount else 0,
-                            amount = (item.inventory*item.price).toString(),
+                            discount = if (_state.value.promotion != null) _state.value.promotion!!.totalDiscount else 0,
+                            amount = (item.inventory * item.price).toString(),
                             deliveryStatus = "success",
                             slot = item.slot,
                             cabinetCode = "MT01",
@@ -911,23 +938,27 @@ class HomeViewModel @Inject constructor(
                     type = object : TypeToken<ArrayList<LogSyncOrder>>() {}.type,
                     path = pathFileSyncOrder,
                 )
-                if(listSyncOrder.isNullOrEmpty()) {
+                if (listSyncOrder.isNullOrEmpty()) {
                     listSyncOrder = arrayListOf()
                 }
                 listSyncOrder.add(_state.value.logSyncOrder!!)
                 baseRepository.writeDataToLocal(listSyncOrder, pathFileSyncOrder)
-                baseRepository.writeDataToLocal(listLogSyncOrderTransaction, pathFileSyncOrderTransaction)
+                baseRepository.writeDataToLocal(
+                    listLogSyncOrderTransaction,
+                    pathFileSyncOrderTransaction
+                )
 
                 // Update delivery status
-                if(_state.value.nameMethodPayment != "cash") {
-                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? = baseRepository.getDataFromLocal(
-                        type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
-                        path = pathFileUpdateDeliveryStatus
-                    )
-                    if(listUpdateDeliveryStatus.isNullOrEmpty()) {
+                if (_state.value.nameMethodPayment != "cash") {
+                    var listUpdateDeliveryStatus: ArrayList<LogUpdateDeliveryStatus>? =
+                        baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<LogUpdateDeliveryStatus>>() {}.type,
+                            path = pathFileUpdateDeliveryStatus
+                        )
+                    if (listUpdateDeliveryStatus.isNullOrEmpty()) {
                         listUpdateDeliveryStatus = arrayListOf()
                     }
-                    for(item in listSlotDropFail) {
+                    for (item in listSlotDropFail) {
                         val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
                             machineCode = _state.value.initSetup!!.vendCode,
                             androidId = _state.value.initSetup!!.androidId,
@@ -940,7 +971,7 @@ class HomeViewModel @Inject constructor(
                         )
                         listUpdateDeliveryStatus.add(logUpdateDeliveryStatus)
                     }
-                    for(item in listSlotDropSuccess) {
+                    for (item in listSlotDropSuccess) {
                         val logUpdateDeliveryStatus = LogUpdateDeliveryStatus(
                             machineCode = _state.value.initSetup!!.vendCode,
                             androidId = _state.value.initSetup!!.androidId,
@@ -961,26 +992,28 @@ class HomeViewModel @Inject constructor(
                 var numberProductDropped = 0
                 val initSetup = _state.value.initSetup
                 val promotion = _state.value.promotion
-                for(item in listSlotDropSuccess) {
+                for (item in listSlotDropSuccess) {
                     numberProductDropped += item.inventory
                 }
-                if (listProductDropInCart.size>numberProductDropped) {
+                if (listProductDropInCart.size > numberProductDropped) {
                     var cashDropped = 0
                     var titleWarning = ""
                     val currentCash = initSetup!!.currentCash
-                    for(item in listSlotDropSuccess) {
+                    for (item in listSlotDropSuccess) {
                         cashDropped += item.inventory * item.price
                     }
-                    if(_state.value.nameMethodPayment=="cash") {
+                    if (_state.value.nameMethodPayment == "cash") {
                         initSetup.currentCash = currentCash - cashDropped
                         baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     } else {
 
                     }
-                    if(_state.value.nameMethodPayment=="cash") {
-                        titleWarning="Có ${listProductDropInCart.size-numberProductDropped} sản phẩm rớt không thành công! Vui lòng chọn và mua lại sản phẩm khác hoặc bấm nút \"Hoàn Tiền\". Chi tiết liên hệ 1900.99.99.80"
+                    if (_state.value.nameMethodPayment == "cash") {
+                        titleWarning =
+                            "Có ${listProductDropInCart.size - numberProductDropped} sản phẩm rớt không thành công! Vui lòng chọn và mua lại sản phẩm khác hoặc bấm nút \"Hoàn Tiền\". Chi tiết liên hệ 1900.99.99.80"
                     } else {
-                        titleWarning="Có ${listProductDropInCart.size-numberProductDropped} sản phẩm rớt không thành công! Trong vòng 7 ngày làm việc sẽ tự động hoàn tiền lại tài khoản của quý khách . Chi tiết liên hệ 1900.99.99.80"
+                        titleWarning =
+                            "Có ${listProductDropInCart.size - numberProductDropped} sản phẩm rớt không thành công! Trong vòng 7 ngày làm việc sẽ tự động hoàn tiền lại tài khoản của quý khách . Chi tiết liên hệ 1900.99.99.80"
                     }
                     _state.update {
                         it.copy(
@@ -994,9 +1027,9 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    if(_state.value.nameMethodPayment=="cash") {
+                    if (_state.value.nameMethodPayment == "cash") {
                         val currentCash = initSetup!!.currentCash
-                        if(promotion!= null) {
+                        if (promotion != null) {
                             val currentCashTmp = currentCash - promotion.paymentAmount!!
                             initSetup.currentCash = currentCashTmp
                         } else {
@@ -1028,10 +1061,12 @@ class HomeViewModel @Inject constructor(
                     errorContent = "drop product fail in HomeViewModel/dropProduct(): ${e.message}",
                 )
             } finally {
-                _state.update { it.copy(
-                    isVendingMachineBusy = false,
-                    promotion = null,
-                ) }
+                _state.update {
+                    it.copy(
+                        isVendingMachineBusy = false,
+                        promotion = null,
+                    )
+                }
             }
         }
     }
@@ -1062,7 +1097,7 @@ class HomeViewModel @Inject constructor(
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            if(dataHexString.contains("01,01,03,00,00,")) {
+            if (dataHexString.contains("01,01,03,00,00,")) {
                 _numberRottenBoxBalance.value = -1
                 val byteToBalanceMap = mapOf(
                     0x01.toByte() to 1,
@@ -1106,12 +1141,11 @@ class HomeViewModel @Inject constructor(
                 val numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], 0)
                 // Update the state
                 _numberRottenBoxBalance.value = numberRottenBoxBalance
-            }
-            else if (dataByteArray.size == 19) {
+            } else if (dataByteArray.size == 19) {
                 _isCashBoxNormal.value = true
                 if (dataByteArray[6] == 0x00.toByte()) {
-                    if(dataHexString != _dataTmpCashBox.value) {
-                        if(_state.value.isVendingMachineBusy) {
+                    if (dataHexString != _dataTmpCashBox.value) {
+                        if (_state.value.isVendingMachineBusy) {
                             portConnectionDatasource.sendCommandCashBox(byteArrays.cbReject)
                         } else {
                             _dataTmpCashBox.value = dataHexString
@@ -1354,37 +1388,100 @@ class HomeViewModel @Inject constructor(
                 } catch (e: Exception) {
                     logger.debug("error in push log to server1: ${e.message}")
                 }
-
                 try {
-                    val listUpdateInventory: ArrayList<LogUpdateInventory>? =
-                        baseRepository.getDataFromLocal(
-                            type = object : TypeToken<ArrayList<LogUpdateInventory>>() {}.type,
-                            path = pathFileLogUpdateInventoryServer
-                        )
-                    if (!listUpdateInventory.isNullOrEmpty()) {
-                        for (item in listUpdateInventory) {
+                    logger.debug("11111")
+                    val listLogServerLocal: ArrayList<LogsLocal>? = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
+                        path = pathFileLogServer
+                    )
+                    logger.debug("22222")
+                    if (!listLogServerLocal.isNullOrEmpty()) {
+                        val listLogServer: ArrayList<LogServer> = arrayListOf()
+                        for (item in listLogServerLocal) {
                             if (!item.isSent) {
-                                val logServer = UpdateInventoryRequest(
-                                    machineCode = _state.value.initSetup!!.vendCode,
-                                    androidId = _state.value.initSetup!!.androidId,
-                                    productList = item.productList,
+                                val logServer = LogServer(
+                                    eventId = item.eventId,
+                                    eventType = item.eventType,
+                                    severity = item.severity,
+                                    eventTime = item.eventTime,
+                                    eventData = item.eventData,
                                 )
-                                if (baseRepository.isHaveNetwork(context)) {
-                                    val response = homeRepository.updateInventory(logServer)
-                                    if (response.code == 200) {
-                                        item.isSent = true
-                                        baseRepository.writeDataToLocal(
-                                            listUpdateInventory,
-                                            pathFileLogUpdateInventoryServer
-                                        )
-                                    }
+                                listLogServer.add(logServer)
+                            }
+                        }
+                        var listDataTrackingAds: ArrayList<DataTrackingAds>? = baseRepository.getDataFromLocal(
+                            type = object : TypeToken<ArrayList<DataTrackingAds>>() {}.type,
+                            path = pathFileUpdateTrackingAds()
+                        )
+                        if (!listDataTrackingAds.isNullOrEmpty()) {
+                            for (item in listDataTrackingAds) {
+                                if (item.isSent) {
+                                    val logServer = LogServer(
+                                        eventId = item.eventId,
+                                        eventType = item.eventType,
+                                        severity = item.severity,
+                                        eventTime = item.eventTime,
+                                        eventData = item.data.toBase64(),
+                                    )
+                                    listLogServer.add(logServer)
                                 }
                             }
                         }
+                        if (listLogServer.isNotEmpty()) {
+                            if (baseRepository.isHaveNetwork(context)) {
+                                val response = homeRepository.logMulti(listLogServer)
+                                logger.debug("response: $response")
+
+                                for (itemTmp in listLogServerLocal) {
+                                    if (!itemTmp.isSent) {
+                                        itemTmp.isSent = true
+                                    }
+                                }
+                                baseRepository.writeDataToLocal(
+                                    data = arrayListOf<DataTrackingAds>(),
+                                    path = pathFileUpdateTrackingAds()
+                                )
+                                baseRepository.writeDataToLocal(
+                                    listLogServerLocal,
+                                    pathFileLogServer
+                                )
+                            }
+                        }
                     }
+
                 } catch (e: Exception) {
-                    logger.debug("error in push log to server2: ${e.message}")
+                    logger.debug("error in push log to server0: ${e.message}")
                 }
+//                try {
+//                    val listUpdateInventory: ArrayList<LogUpdateInventory>? =
+//                        baseRepository.getDataFromLocal(
+//                            type = object : TypeToken<ArrayList<LogUpdateInventory>>() {}.type,
+//                            path = pathFileLogUpdateInventoryServer
+//                        )
+//                    if (!listUpdateInventory.isNullOrEmpty()) {
+//                        for (item in listUpdateInventory) {
+//                            if (!item.isSent) {
+//                                val logServer = UpdateInventoryRequest(
+//                                    machineCode = _state.value.initSetup!!.vendCode,
+//                                    androidId = _state.value.initSetup!!.androidId,
+//                                    productList = item.productList,
+//                                )
+//                                if (baseRepository.isHaveNetwork(context)) {
+//                                    val response = homeRepository.updateInventory(logServer)
+//                                    if (response.code == 200) {
+//                                        item.isSent = true
+//                                        baseRepository.writeDataToLocal(
+//                                            listUpdateInventory,
+//                                            pathFileLogUpdateInventoryServer
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                } catch (e: Exception) {
+//                    logger.debug("error in push log to server2: ${e.message}")
+//                }
 
                 try {
                     val listDepositWithdraw: ArrayList<LogDepositWithdraw>? =
@@ -1855,10 +1952,7 @@ class HomeViewModel @Inject constructor(
                     )!!
                 // Get list path ads
                 var listAds = homeRepository.getListVideoAdsFromLocal()
-                if(!baseRepository.isFileExists(pathFileUpdateTrackingAds())){
-                    baseRepository.createFolder(pathFileUpdateTrackingAds())
-//                    baseRepository.writeDataToLocal(pathFileUpdateTrackingAds,)
-                }
+//
                 if (listAds.isEmpty()) {
                     homeRepository.writeVideoAdsFromAssetToLocal(
                         context,
@@ -2083,11 +2177,13 @@ class HomeViewModel @Inject constructor(
 
     fun backInCartPayment() {
         viewModelScope.launch {
-            _state.update { it.copy(
-                isShowCart = false,
-                promotion = null,
-                totalAmount = 0,
-            ) }
+            _state.update {
+                it.copy(
+                    isShowCart = false,
+                    promotion = null,
+                    totalAmount = 0,
+                )
+            }
         }
     }
 
@@ -2199,8 +2295,8 @@ class HomeViewModel @Inject constructor(
                             try {
                                 logger.debug("=================== list state before: ${_state.value.listSlotInCard}")
                                 val newListProductInCart: ArrayList<Slot> = arrayListOf()
-                                for(item in _state.value.listSlotInCard) {
-                                    for(smallItem in 0 until item.inventory) {
+                                for (item in _state.value.listSlotInCard) {
+                                    for (smallItem in 0 until item.inventory) {
                                         val tmpItem = item.copy(inventory = 1)
                                         newListProductInCart.add(tmpItem)
                                     }
@@ -2211,10 +2307,12 @@ class HomeViewModel @Inject constructor(
                                 )
                                 logger.debug("=================== promotion: $promotion")
                                 logger.debug("=================== list state after: ${_state.value.listSlotInCard}")
-                                _state.update { it.copy (
-                                    promotion = promotion,
-                                    totalAmount = promotion.paymentAmount ?: totalAmount,
-                                ) }
+                                _state.update {
+                                    it.copy(
+                                        promotion = promotion,
+                                        totalAmount = promotion.paymentAmount ?: totalAmount,
+                                    )
+                                }
                             } catch (e: Exception) {
                                 logger.debug("error in show payment: ${e.message}")
                                 baseRepository.addNewErrorLogToLocal(
@@ -2262,8 +2360,8 @@ class HomeViewModel @Inject constructor(
                 if (nameMethod != "cash") {
                     _state.update { it.copy(nameMethodPayment = nameMethod) }
                 } else {
-                    if(_state.value.totalAmount <= _state.value.initSetup!!.currentCash) {
-                        _state.update { it.copy (nameMethodPayment = nameMethod) }
+                    if (_state.value.totalAmount <= _state.value.initSetup!!.currentCash) {
+                        _state.update { it.copy(nameMethodPayment = nameMethod) }
                     } else {
 //                        sendEvent(Event.Toast("Số tiền trong máy không đủ để thanh toán bằng tiền mặt!"))
                         sendEvent(Event.Toast("Phương thức thanh toán tiền mặt hiện không khả dung!"))
@@ -2286,6 +2384,7 @@ class HomeViewModel @Inject constructor(
             portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmReadDoor)
         }
     }
+
     fun checkSensor() {
 //        logger.debug("readDoor")
         viewModelScope.launch {
@@ -2685,22 +2784,23 @@ class HomeViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
 //                if(_state.value.initSetup!!.initPromotion == "ON") {
-                    if(baseRepository.isHaveNetwork(context)) {
-                        val newListProductInCart: ArrayList<Slot> = arrayListOf()
-                        for(item in _state.value.listSlotInCard) {
-                            for(smallItem in 0 until item.inventory) {
-                                val tmpItem = item.copy(inventory = 1)
-                                newListProductInCart.add(tmpItem)
-                            }
+                if (baseRepository.isHaveNetwork(context)) {
+                    val newListProductInCart: ArrayList<Slot> = arrayListOf()
+                    for (item in _state.value.listSlotInCard) {
+                        for (smallItem in 0 until item.inventory) {
+                            val tmpItem = item.copy(inventory = 1)
+                            newListProductInCart.add(tmpItem)
                         }
-                        logger.debug("list in state: ${_state.value.listSlotInCard}")
-                        logger.debug("new list: ${newListProductInCart}")
-                        val promotionResponse = homeRepository.getPromotion(
-                            voucherCode = voucherCode,
-                            listSlot = newListProductInCart,
-                        )
-                        logger.debug("promotion response ======= $promotionResponse")
-                        _state.update { it.copy(
+                    }
+                    logger.debug("list in state: ${_state.value.listSlotInCard}")
+                    logger.debug("new list: ${newListProductInCart}")
+                    val promotionResponse = homeRepository.getPromotion(
+                        voucherCode = voucherCode,
+                        listSlot = newListProductInCart,
+                    )
+                    logger.debug("promotion response ======= $promotionResponse")
+                    _state.update {
+                        it.copy(
                             promotion = promotionResponse,
                             totalAmount = promotionResponse.paymentAmount
                                 ?: _state.value.totalAmount,
@@ -3659,19 +3759,27 @@ class HomeViewModel @Inject constructor(
                 type = object : TypeToken<InitSetup>() {}.type,
                 path = pathFileInitSetup
             )!!
-            var dataTrackingAds: DataTrackingAds = baseRepository.getDataFromLocal(
-                type = object : TypeToken<DataTrackingAds>() {}.type,
+            var listDataTrackingAds: ArrayList<DataTrackingAds> = baseRepository.getDataFromLocal(
+                type = object : TypeToken<ArrayList<DataTrackingAds>>() {}.type,
                 path = pathFileUpdateTrackingAds()
-            ) ?: DataTrackingAds()
+            ) ?: arrayListOf()
 
-            if (dataTrackingAds.data.isEmpty()) {
-                dataTrackingAds.data.add(
-                    TrackingAds(
-                        vendCode = initSetup.vendCode,
-                        androidId = initSetup.androidId,
-                        timeStart = date.toddMMyyyyHHmmss(),
-                        timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
-                        listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1))
+            if (listDataTrackingAds.isEmpty()) {
+                listDataTrackingAds.add(
+                    DataTrackingAds(
+                        eventId = "",
+                        eventType = "",
+                        eventTime = "",
+                        severity = "",
+                        isSent = false,
+                        data = TrackingAds(
+                            vendCode = initSetup.vendCode,
+                            androidId = initSetup.androidId,
+                            timeStart = date.toddMMyyyyHHmmss(),
+                            timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
+                            listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1)),
+
+                            )
                     ),
                 )
 
@@ -3679,17 +3787,18 @@ class HomeViewModel @Inject constructor(
 
                 if (isWithinRange(
                         date,
-                        dataTrackingAds.data.last().timeStart.ddMMyyyyHHmmsstoDateTime(),
-                        dataTrackingAds.data.last().timeEnd.ddMMyyyyHHmmsstoDateTime()
+                        listDataTrackingAds.last().data.timeStart.ddMMyyyyHHmmsstoDateTime(),
+                        listDataTrackingAds.last().data.timeEnd.ddMMyyyyHHmmsstoDateTime()
                     )
                 ) {
                     val existingAds =
-                        dataTrackingAds.data.last().listAds.find { it.adsName == nameAds && it.adsType == typeAds}
+                        listDataTrackingAds.last().data.listAds
+                            .find { it.adsName == nameAds && it.adsType == typeAds }
                     if (existingAds != null) {
                         existingAds.impression++
 
                     } else {
-                        dataTrackingAds.data.last().listAds.add(
+                        listDataTrackingAds.last().data.listAds.add(
                             Ads(
                                 adsName = nameAds,
                                 adsType = typeAds,
@@ -3698,25 +3807,39 @@ class HomeViewModel @Inject constructor(
                         )
 
                     }
-                }else{
+                } else {
 
-                    dataTrackingAds.data.add(
-                        TrackingAds(
-                            vendCode = initSetup.vendCode,
-                            androidId = initSetup.androidId,
-                            timeStart = date.toddMMyyyyHHmmss(),
-                            timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
-                            listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1))
+                    listDataTrackingAds.add(
+                        DataTrackingAds(
+                            eventId = "",
+                            eventType = "",
+                            eventTime = "",
+                            severity = "",
+                            isSent = false,
+                            data = TrackingAds(
+                                vendCode = initSetup.vendCode,
+                                androidId = initSetup.androidId,
+                                timeStart = date.toddMMyyyyHHmmss(),
+                                timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
+                                listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1)),
+                            )
                         ),
                     )
                 }
 
             }
+            listDataTrackingAds.last().eventId = LocalDateTime.now().toId()
+            listDataTrackingAds.last().eventType = "ads"
+            listDataTrackingAds.last().severity = "normal"
+            listDataTrackingAds.last().eventTime = LocalDateTime.now().toDateTimeString()
             baseRepository.writeDataToLocal(
-                data = dataTrackingAds,
+                data = listDataTrackingAds,
                 path = pathFileUpdateTrackingAds()
             )
-//            Log.d("checkAds", "$dataTrackingAds")
+            for (item in listDataTrackingAds) {
+
+            }
+            Log.d("checkAds", "$listDataTrackingAds")
         }
     }
 
