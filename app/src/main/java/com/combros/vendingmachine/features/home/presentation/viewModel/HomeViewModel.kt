@@ -1438,7 +1438,7 @@ class HomeViewModel @Inject constructor(
                                     }
                                 }
                                 baseRepository.writeDataToLocal(
-                                    data = arrayListOf<DataTrackingAds>(),
+                                    data = ArrayList<DataTrackingAds>(),
                                     path = pathFileUpdateTrackingAds()
                                 )
                                 baseRepository.writeDataToLocal(
@@ -2142,6 +2142,7 @@ class HomeViewModel @Inject constructor(
 
     fun showBigAds() {
         viewModelScope.launch {
+            logger.debug("jump to big ads neeeeeeeeeeeeeeeeee")
             _state.update { it.copy(isShowBigAds = true) }
         }
     }
@@ -3752,63 +3753,22 @@ class HomeViewModel @Inject constructor(
     }
 
     fun updateDataTrackingAdsLocal(typeAds: String, nameAds: String) {
-
         val date = LocalDateTime.now();
         viewModelScope.launch {
-            val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                type = object : TypeToken<InitSetup>() {}.type,
-                path = pathFileInitSetup
-            )!!
-            var listDataTrackingAds: ArrayList<DataTrackingAds> = baseRepository.getDataFromLocal(
-                type = object : TypeToken<ArrayList<DataTrackingAds>>() {}.type,
-                path = pathFileUpdateTrackingAds()
-            ) ?: arrayListOf()
-
-            if (listDataTrackingAds.isEmpty()) {
-                listDataTrackingAds.add(
-                    DataTrackingAds(
-                        eventId = "",
-                        eventType = "",
-                        eventTime = "",
-                        severity = "",
-                        isSent = false,
-                        data = TrackingAds(
-                            vendCode = initSetup.vendCode,
-                            androidId = initSetup.androidId,
-                            timeStart = date.toddMMyyyyHHmmss(),
-                            timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
-                            listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1)),
-
-                            )
-                    ),
-                )
-
-            } else {
-
-                if (isWithinRange(
-                        date,
-                        listDataTrackingAds.last().data.timeStart.ddMMyyyyHHmmsstoDateTime(),
-                        listDataTrackingAds.last().data.timeEnd.ddMMyyyyHHmmsstoDateTime()
-                    )
-                ) {
-                    val existingAds =
-                        listDataTrackingAds.last().data.listAds
-                            .find { it.adsName == nameAds && it.adsType == typeAds }
-                    if (existingAds != null) {
-                        existingAds.impression++
-
-                    } else {
-                        listDataTrackingAds.last().data.listAds.add(
-                            Ads(
-                                adsName = nameAds,
-                                adsType = typeAds,
-                                1
-                            )
-                        )
-
-                    }
-                } else {
-
+            try {
+                logger.debug("1")
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                logger.debug("2")
+                var listDataTrackingAds: ArrayList<DataTrackingAds> = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<ArrayList<DataTrackingAds>>() {}.type,
+                    path = pathFileUpdateTrackingAds()
+                ) ?: arrayListOf()
+                logger.debug("3")
+                if (listDataTrackingAds.isEmpty()) {
+                    logger.debug("4")
                     listDataTrackingAds.add(
                         DataTrackingAds(
                             eventId = "",
@@ -3825,21 +3785,63 @@ class HomeViewModel @Inject constructor(
                             )
                         ),
                     )
+                } else {
+                    logger.debug("5")
+                    if (
+                        isWithinRange(
+                            date,
+                            listDataTrackingAds.last().data.timeStart.ddMMyyyyHHmmsstoDateTime(),
+                            listDataTrackingAds.last().data.timeEnd.ddMMyyyyHHmmsstoDateTime()
+                        )
+                    ) {
+                        val existingAds =
+                            listDataTrackingAds.last().data.listAds
+                                .find { it.adsName == nameAds && it.adsType == typeAds }
+                        if (existingAds != null) {
+                            existingAds.impression++
+                        } else {
+                            listDataTrackingAds.last().data.listAds.add(
+                                Ads(
+                                    adsName = nameAds,
+                                    adsType = typeAds,
+                                    1
+                                )
+                            )
+                        }
+                    } else {
+                        listDataTrackingAds.add(
+                            DataTrackingAds(
+                                eventId = "",
+                                eventType = "",
+                                eventTime = "",
+                                severity = "",
+                                isSent = false,
+                                data = TrackingAds(
+                                    vendCode = initSetup.vendCode,
+                                    androidId = initSetup.androidId,
+                                    timeStart = date.toddMMyyyyHHmmss(),
+                                    timeEnd = date.plusMinutes(5).toddMMyyyyHHmmss(),
+                                    listAds = arrayListOf(Ads(adsName = nameAds, adsType = typeAds, 1)),
+                                )
+                            ),
+                        )
+                    }
                 }
-
+                listDataTrackingAds.last().eventId = LocalDateTime.now().toId()
+                listDataTrackingAds.last().eventType = "ads"
+                listDataTrackingAds.last().severity = "normal"
+                listDataTrackingAds.last().eventTime = LocalDateTime.now().toDateTimeString()
+                baseRepository.writeDataToLocal(
+                    data = listDataTrackingAds,
+                    path = pathFileUpdateTrackingAds()
+                )
+            } catch (e: Exception) {
+                logger.debug("error: ${e.message}")
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "update tracking ads fail in HomeViewModel/updateDataTrackingAdsLocal(): ${e.message}",
+                )
             }
-            listDataTrackingAds.last().eventId = LocalDateTime.now().toId()
-            listDataTrackingAds.last().eventType = "ads"
-            listDataTrackingAds.last().severity = "normal"
-            listDataTrackingAds.last().eventTime = LocalDateTime.now().toDateTimeString()
-            baseRepository.writeDataToLocal(
-                data = listDataTrackingAds,
-                path = pathFileUpdateTrackingAds()
-            )
-            for (item in listDataTrackingAds) {
-
-            }
-            Log.d("checkAds", "$listDataTrackingAds")
         }
     }
 
