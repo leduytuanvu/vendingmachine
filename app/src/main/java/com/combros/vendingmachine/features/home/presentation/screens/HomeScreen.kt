@@ -204,10 +204,10 @@ fun HomeContent(
                             listAds = state.listAds,
                             onClickHideAds = { viewModel.hideAdsDebounced() },
                             onStartAdsHome = {
-                                viewModel.updateDataTrackingAdsLocal(
-                                    nameAds = it,
-                                    typeAds = TypeAds.HomeAds.name
-                                )
+//                                viewModel.updateDataTrackingAdsLocal(
+//                                    nameAds = it,
+//                                    typeAds = TypeAds.HomeAds.name
+//                                )
                             }
                         )
                     }
@@ -1236,7 +1236,7 @@ fun HomeContent(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(560.dp),
+                            .height(570.dp),
                         shape = RoundedCornerShape(8.dp),
                         color = Color.White,
                     ) {
@@ -1255,9 +1255,10 @@ fun HomeContent(
                                 contentDescription = ""
                             )
                             Text(
-                                "Vui lòng chờ để nhận sản phẩm từ khe bên dưới",
-                                modifier = Modifier.padding(bottom = 10.dp),
-                                fontSize = 21.sp,
+                                state.titleDropProductSuccess,
+                                modifier = Modifier.padding(bottom = 36.dp, start = 22.dp, end = 22.dp),
+                                textAlign = TextAlign.Center,
+                                fontSize = 25.sp,
                             )
                             Text(
                                 "Nước có ga vui lòng mở sau 2 phút",

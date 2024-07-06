@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import kotlin.math.log
 
 @SuppressLint("StaticFieldLeak")
 @HiltViewModel
@@ -54,6 +55,15 @@ class SetupSlotViewModel @Inject constructor(
 
     private val _checkFirst = MutableStateFlow(false)
     val checkFirst: StateFlow<Boolean> = _checkFirst.asStateFlow()
+
+    private val _isSetUpVendingMachine = MutableStateFlow(false)
+    val isSetUpVendingMachine: StateFlow<Boolean> = _isSetUpVendingMachine.asStateFlow()
+
+    private val _isRotate = MutableStateFlow(false)
+    val isRotate: StateFlow<Boolean> = _isRotate.asStateFlow()
+
+    private val _checkSetupVendingMachine = MutableStateFlow(false)
+    val checkSetupVendingMachine: StateFlow<Boolean> = _checkSetupVendingMachine.asStateFlow()
 
     fun loadInitSetupListSlotListProduct() {
         logger.debug("loadInitSetupListSlotListProduct")
@@ -186,21 +196,64 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun resetAllSlot() {
+        logger.debug("resetAllSlot")
         viewModelScope.launch {
             try {
-//                _state.update { it.copy(isLoading = true) }
+                _isSetUpVendingMachine.value = true
+                _state.update { it.copy(
+                    isConfirm = false,
+                    isLoading = true,
+                ) }
+                _checkSetupVendingMachine.value = false
+                sendResetAllSlotToSingle(0)
+                delay(1001)
+                if(_checkSetupVendingMachine.value) {
+                    val listSlot = arrayListOf<Slot>()
+                    // Get init setup in local
+                    val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<InitSetup>() {}.type,
+                        path = pathFileInitSetup
+                    )!!
+                    for(i in 1..initSetup.numberSlot) {
+                        listSlot.add(
+                            Slot(
+                                slot = i,
+                                productCode = "",
+                                productName = "",
+                                inventory = 10,
+                                capacity = 10,
+                                price = 10000,
+                                isCombine = "no",
+                                springType = "lo xo don",
+                                status = 1,
+                                slotCombine = 0,
+                                isLock = false,
+                                isEnable = true,
+                                messDrop = "",
+                            )
+                        )
+                    }
+                    baseRepository.writeDataToLocal(listSlot, pathFileSlot)
+                    sendEvent(Event.Toast("SUCCESS"))
+                    _state.update {
+                        it.copy(
+                            listSlot = listSlot,
+                            isLoading = false,
+                        )
+                    }
+                } else {
+                    sendEvent(Event.Toast("FAIL"))
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                        )
+                    }
+                }
 //                baseRepository.addNewFillLogToLocal(
 //                    machineCode = _state.value.initSetup!!.vendCode,
 //                    fillType = "setup slot",
 //                    content = "reset all slots"
 //                )
-                _state.update {
-                    it.copy(
-//                        titleDialogConfirm = "mess",
-                        isConfirm = false,
-//                        isLoading = false,
-                    )
-                }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -211,6 +264,8 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "reset all slot fail in SetupSlotViewModel/resetAllSlot(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
+            } finally {
+                _isSetUpVendingMachine.value = false
             }
         }
     }
@@ -588,28 +643,43 @@ class SetupSlotViewModel @Inject constructor(
         logger.debug("splitSlot")
         viewModelScope.launch {
             try {
+                _isSetUpVendingMachine.value = true
                 _state.update { it.copy(isLoading = true) }
                 delay(1)
                 val tmpListSlot = _state.value.listSlot
-                for (index in 0..tmpListSlot.size) {
-                    if (tmpListSlot[index].slot == slot.slot) {
-                        tmpListSlot[index].isCombine = "no"
-                        tmpListSlot[index].slotCombine = 0
-                        tmpListSlot[index + 1].status = 1
+                val copiedList = ArrayList(tmpListSlot)
+                for (index in 0..copiedList.size) {
+                    if (copiedList[index].slot == slot.slot) {
+                        _checkSetupVendingMachine.value = false
+                        sendSplitSlot(0,slot.slot)
+                        delay(1001)
+                        if(_checkSetupVendingMachine.value) {
+                            copiedList[index].isCombine = "no"
+                            copiedList[index].slotCombine = 0
+                            copiedList[index + 1].status = 1
+                            baseRepository.addNewFillLogToLocal(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                fillType = "setup slot",
+                                content = "split slot ${slot.slot}",
+                            )
+                            baseRepository.writeDataToLocal(data = copiedList, path = pathFileSlot)
+                            sendEvent(Event.Toast("SUCCESS"))
+                            _state.update {
+                                it.copy(
+                                    listSlot = copiedList,
+                                    isLoading = false,
+                                )
+                            }
+                        } else {
+                            sendEvent(Event.Toast("FAIL"))
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                )
+                            }
+                        }
                         break
                     }
-                }
-                baseRepository.addNewFillLogToLocal(
-                    machineCode = _state.value.initSetup!!.vendCode,
-                    fillType = "setup slot",
-                    content = "split slot ${slot.slot}",
-                )
-                baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
-                _state.update {
-                    it.copy(
-                        listSlot = tmpListSlot,
-                        isLoading = false,
-                    )
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -621,36 +691,98 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "split slot fail in SetupSlotViewModel/splitSlot(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
+            } finally {
+                _isSetUpVendingMachine.value = false
             }
         }
+    }
+
+    public suspend fun sendSplitSlot(numberBoard: Int = 0, startSlot: Int) {
+        val byteNumberBoard: Byte = numberBoard.toByte()
+        val byteStartSlot: Byte = startSlot.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                0xC9.toByte(),
+                0x36,
+                byteStartSlot,
+                (0xFF - startSlot).toByte(),
+            )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
+
+    public suspend fun sendMergeSlot(numberBoard: Int = 0, startSlot: Int) {
+        val byteNumberBoard: Byte = numberBoard.toByte()
+        val byteStartSlot: Byte = startSlot.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                0xCA.toByte(),
+                0x35,
+                byteStartSlot,
+                (0xFF - startSlot).toByte(),
+            )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+    }
+
+    public suspend fun sendResetAllSlotToSingle(numberBoard: Int = 0) {
+        val byteNumberBoard: Byte = numberBoard.toByte()
+        val byteArray: ByteArray =
+            byteArrayOf(
+                byteNumberBoard,
+                (0xFF - numberBoard).toByte(),
+                0xCB.toByte(),
+                0x34,
+                0X55,
+                0XAA.toByte(),
+            )
+        portConnectionDatasource.sendCommandVendingMachine(byteArray)
     }
 
     fun mergeSlot(slot: Slot) {
         logger.debug("mergeSlot")
         viewModelScope.launch {
             try {
+                _isSetUpVendingMachine.value = true
                 _state.update { it.copy(isLoading = true) }
                 delay(1)
                 val tmpListSlot = _state.value.listSlot
-                for (index in 0..tmpListSlot.size) {
-                    if (tmpListSlot[index].slot == slot.slot) {
-                        tmpListSlot[index].isCombine = "yes"
-                        tmpListSlot[index].slotCombine = tmpListSlot[index].slot
-                        tmpListSlot[index + 1].status = 0
+                val copiedList = ArrayList(tmpListSlot)
+                for (index in 0..copiedList.size) {
+                    if (copiedList[index].slot == slot.slot) {
+                        _checkSetupVendingMachine.value = false
+                        sendMergeSlot(0,slot.slot)
+                        delay(1001)
+                        if(_checkSetupVendingMachine.value) {
+                            copiedList[index].isCombine = "yes"
+                            copiedList[index].slotCombine = copiedList[index].slot
+                            copiedList[index + 1].status = 0
+                            baseRepository.addNewFillLogToLocal(
+                                machineCode = _state.value.initSetup!!.vendCode,
+                                fillType = "setup slot",
+                                content = "merge slot ${slot.slot}",
+                            )
+                            baseRepository.writeDataToLocal(data = copiedList, path = pathFileSlot)
+                            sendEvent(Event.Toast("SUCCESS"))
+                            _state.update {
+                                it.copy(
+                                    listSlot = copiedList,
+                                    isLoading = false,
+                                )
+                            }
+                        } else {
+                            logger.debug("merge vô else")
+                            sendEvent(Event.Toast("FAIL"))
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                )
+                            }
+                        }
                         break
                     }
-                }
-                baseRepository.addNewFillLogToLocal(
-                    machineCode = _state.value.initSetup!!.vendCode,
-                    fillType = "setup slot",
-                    content = "merge slot ${slot.slot}",
-                )
-                baseRepository.writeDataToLocal(data = tmpListSlot, path = pathFileSlot)
-                _state.update {
-                    it.copy(
-                        listSlot = tmpListSlot,
-                        isLoading = false,
-                    )
                 }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -662,6 +794,8 @@ class SetupSlotViewModel @Inject constructor(
                     errorContent = "merge slot fail in SetupSlotViewModel/mergeSlot(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
+            } finally {
+                _isSetUpVendingMachine.value = false
             }
         }
     }
@@ -956,32 +1090,44 @@ class SetupSlotViewModel @Inject constructor(
     fun startCollectingData() {
         vendingMachineJob = viewModelScope.launch {
             portConnectionDatasource.dataFromVendingMachine.collect { data ->
-                logger.debug("data: ${baseRepository.byteArrayToHexString(data)}")
+//                logger.debug("data: ${baseRepository.byteArrayToHexString(data)}")
                 processingDataFromVendingMachine(data)
             }
         }
     }
 
     fun processingDataFromVendingMachine(dataByteArray: ByteArray) {
-        if(_checkFirst.value) {
+//        if(_checkFirst.value) {
             val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
-            if(dataHexString!="00,5D,00,00,5D" || dataHexString!="00,5D,01,00,5E" || dataHexString!="00,5C,00,00,5C") {
-                logger.debug("status door")
-            } else {
-                when (dataHexString) {
-                    "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
-                    "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
-                    "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
-                    "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
-                    "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
-                    "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
-                    "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
-                    "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
-                    "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
-                    else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+            if(_isSetUpVendingMachine.value) {
+                if(dataHexString=="00,5D,00,00,5D") {
+                    logger.debug("set up success")
+                    _checkSetupVendingMachine.value = true
                 }
             }
-        }
+            if(_isRotate.value) {
+                logger.debug("data receive from vending machine: $dataHexString")
+                if(dataHexString!="00,5D,00,00,5D" && dataHexString!="00,5D,01,00,5E" && dataHexString!="00,5C,00,00,5C") {
+                    logger.debug("status door")
+                } else {
+                    when (dataHexString) {
+                        "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
+                        "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
+                        "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
+                        "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
+                        "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
+                        "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
+                        "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
+                        "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
+                        "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
+                        else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+                    }
+                }
+                _isRotate.value = false
+            }
+
+
+//        }
 //        if (dataHexString.contains("00,5D,00,00,5D")) {
 //            _statusSlot.value = true
 ////            resultadd(true)
@@ -1030,6 +1176,7 @@ class SetupSlotViewModel @Inject constructor(
         numberBoard: Int = 0,
         slot: Int,
     ) {
+        _isRotate.value = true
         _checkFirst.value = true
         val byteArraySlot: Byte = slot.toByte()
         val byteArrayNumberBoard: Byte = numberBoard.toByte()

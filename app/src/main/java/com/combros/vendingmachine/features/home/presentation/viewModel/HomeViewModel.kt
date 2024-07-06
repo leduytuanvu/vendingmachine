@@ -1007,6 +1007,12 @@ class HomeViewModel @Inject constructor(
                     }
                     _state.update {
                         it.copy (
+                            titleDropProductSuccess = "Mua hàng thành công"
+                        )
+                    }
+                    delay(5000)
+                    _state.update {
+                        it.copy (
                             isShowWaitForDropProduct = false,
                             listSlotInCard = arrayListOf(),
                             listSlotInHome = listSlotShowInHome,
@@ -2745,6 +2751,7 @@ class HomeViewModel @Inject constructor(
                 try {
                     _state.update {
                         it.copy(
+                            titleDropProductSuccess = "Vui lòng chờ để nhận sản phẩm từ khe bên dưới",
                             countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()),
                             isVendingMachineBusy = true,
                         )
