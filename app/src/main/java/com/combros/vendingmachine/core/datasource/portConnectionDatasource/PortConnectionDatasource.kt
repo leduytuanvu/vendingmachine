@@ -188,7 +188,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingUsbVendingMachine(512) { data ->
-                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
                             val receivedText = byteArrayToHexString(data)
