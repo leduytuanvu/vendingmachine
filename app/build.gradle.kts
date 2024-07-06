@@ -53,6 +53,11 @@ android {
         }
     }
 
+//    lintOptions {
+//        checkReleaseBuilds false
+//        abortOnError false
+//    }
+
     signingConfigs {
         create("release") {
             keyAlias = "key0"

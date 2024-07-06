@@ -280,7 +280,7 @@ class PortConnectionDatasource {
 
     // Send command vending machine
     fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
-//        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
+        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
     }
 

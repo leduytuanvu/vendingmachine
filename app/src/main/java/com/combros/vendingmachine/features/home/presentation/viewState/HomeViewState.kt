@@ -25,6 +25,7 @@ data class HomeViewState (
     val temp1: String = "",
     val temp2: String = "",
     val orderCode: String = "",
+    val titleDropProductSuccess: String = "",
     val imageBitmap: ImageBitmap? = null,
     val voucherCode: String = "",
     val countDownPaymentByCash: Long = 0,
