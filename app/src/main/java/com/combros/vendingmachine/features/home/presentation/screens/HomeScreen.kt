@@ -204,10 +204,10 @@ fun HomeContent(
                             listAds = state.listAds,
                             onClickHideAds = { viewModel.hideAdsDebounced() },
                             onStartAdsHome = {
-//                                viewModel.updateDataTrackingAdsLocal(
-//                                    nameAds = it,
-//                                    typeAds = TypeAds.HomeAds.name
-//                                )
+                                viewModel.updateDataTrackingAdsLocal(
+                                    nameAds = it,
+                                    typeAds = TypeAds.HomeAds.name
+                                )
                             }
                         )
                     }
@@ -1225,7 +1225,6 @@ fun HomeContent(
                             typeAds = TypeAds.BigAds.name
                         )
                     }
-
                 )
             }
             if (state.isShowWaitForDropProduct) {
