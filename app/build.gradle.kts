@@ -27,12 +27,12 @@ plugins {
 
 android {
     namespace = "com.combros.vendingmachine"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.combros.vendingmachine"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.0.0"
 
@@ -62,7 +62,7 @@ android {
         create("release") {
             keyAlias = "key0"
             keyPassword = "1234567890"
-            storeFile = file("C:\\leduytuanvu\\develop\\kotlin\\vendingmachine\\keystore\\keystore2.jks")
+            storeFile = file("C:\\leduytuanvu\\develop\\application\\kotlin\\vendingmachine\\keystore\\keystore2.jks")
             storePassword = "1234567890"
         }
     }
@@ -117,7 +117,7 @@ android {
             path("src/main/java/com/combros/vendingmachine/core/native/CMakeLists.txt")
         }
     }
-    buildToolsVersion = "34.0.0"
+    buildToolsVersion = "35.0.0"
     ndkVersion = "25.1.8937393"
 }
 
@@ -155,7 +155,7 @@ dependencies {
     // Dagger Hilt
     implementation(libs.dagger.hilt.android)
     kapt(libs.dagger.hilt.android.compiler)
-//    ksp(libs.dagger.hilt.android.compiler)
+    // ksp(libs.dagger.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
 

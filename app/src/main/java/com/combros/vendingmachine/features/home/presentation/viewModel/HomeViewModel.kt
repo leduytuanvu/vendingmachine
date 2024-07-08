@@ -1943,7 +1943,7 @@ class HomeViewModel @Inject constructor(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                initSetup.currentCash = 50000
+//                initSetup.currentCash = 50000
                 // Get list method payment
                 val listPaymentMethod: ArrayList<PaymentMethodResponse> =
                     baseRepository.getDataFromLocal(
