@@ -322,6 +322,11 @@ class SetupSystemViewModel @Inject constructor(
                     isLoading = false,
                 ) }
             } catch (e: Exception) {
+                if(e.message!=null) {
+                    if(e.message!!.contains("401")) {
+                        sendEvent(Event.Toast("Unauthorized!"))
+                    }
+                }
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,

@@ -4,4 +4,5 @@ data class InitSetupViewState (
     val isLoading: Boolean = false,
     val isWarning: Boolean = false,
     val titleDialogWarning: String = "",
+    val androidId: String = "",
 )
