@@ -339,8 +339,7 @@ fun HomeContent(
                 }
                 if (state.initSetup != null) {
                     Box(modifier = Modifier.fillMaxHeight()) {
-                        val chunks =
-                            state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
+                        val chunks = state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
                         Column(
                             modifier = Modifier
                                 .padding(start = 20.dp, end = 20.dp)
@@ -353,8 +352,6 @@ fun HomeContent(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     rowItems.forEach { slot ->
-//                                    var isChoose by remember { mutableStateOf(false) }
-//                                    var numberProduct by remember { mutableIntStateOf(0) }
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
@@ -410,7 +407,6 @@ fun HomeContent(
                                                     overflow = TextOverflow.Ellipsis,
                                                     fontSize = 17.sp,
                                                 )
-
                                                 BodyTextComposable(
                                                     title = slot.price.toVietNamDong(),
                                                     fontSize = 19.sp,
@@ -444,9 +440,7 @@ fun HomeContent(
                                                                     .height(30.dp)
                                                                     .width(30.dp)
                                                                     .clickable {
-                                                                        viewModel.minusProductDebounced(
-                                                                            slot
-                                                                        )
+                                                                        viewModel.minusProductDebounced(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
                                                                 painter = painterResource(id = R.drawable.image_minus),
@@ -465,9 +459,7 @@ fun HomeContent(
                                                                     .height(30.dp)
                                                                     .width(30.dp)
                                                                     .clickable {
-                                                                        viewModel.plusProductDebounced(
-                                                                            slot
-                                                                        )
+                                                                        viewModel.plusProductDebounced(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
                                                                 painter = painterResource(id = R.drawable.image_plus),
@@ -519,13 +511,12 @@ fun HomeContent(
                                     }
 
                                     // Add empty slots to fill the row if the row is not complete
-                                    repeat(3 - rowItems.size) {
+                                    repeat(state.initSetup.layoutHomeScreen.toInt() - rowItems.size) {
                                         Spacer(modifier = Modifier.weight(1f))
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
-
                             Spacer(modifier = Modifier.height(120.dp))
                         }
                         Row {
