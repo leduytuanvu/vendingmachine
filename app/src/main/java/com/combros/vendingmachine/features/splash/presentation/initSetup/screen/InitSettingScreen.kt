@@ -1,11 +1,7 @@
 package com.combros.vendingmachine.features.splash.presentation.initSetup.screen
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,13 +17,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.combros.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
-import com.combros.vendingmachine.common.base.presentation.composables.TitleTextComposable
+import com.combros.vendingmachine.common.base.presentation.composables.*
 import com.combros.vendingmachine.features.auth.data.model.request.LoginRequest
-import com.combros.vendingmachine.common.base.presentation.composables.CustomButtonComposable
-import com.combros.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
-import com.combros.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
-import com.combros.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.combros.vendingmachine.core.util.itemsPort
 import com.combros.vendingmachine.core.util.itemsTypeVendingMachine
 import com.combros.vendingmachine.features.splash.presentation.initSetup.viewModel.InitSetupViewModel
@@ -59,7 +50,7 @@ fun InitSetupContent(
     var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
     var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS2")) }
     var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("ttyS1")) }
-
+    viewModel.getAndroidId()
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
         isWarning = state.isWarning,
@@ -73,6 +64,9 @@ fun InitSetupContent(
                 .fillMaxWidth(),
             content = {
                 TitleTextComposable(title = "INIT SETUP FOR VENDING MACHINE")
+                Spacer(modifier = Modifier.height(10.dp))
+                BodyTextComposable(title = "Android id: ${state.androidId}")
+                Spacer(modifier = Modifier.height(14.dp))
                 TitleAndEditTextComposable(title = "Enter vending machine code") {
                     inputVendingMachineCode = it
                 }

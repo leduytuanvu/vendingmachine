@@ -71,6 +71,17 @@ class InitSetupViewModel @Inject constructor(
         }
     }
 
+    fun getAndroidId() {
+        viewModelScope.launch {
+            try {
+                val androidId = baseRepository.getAndroidId()
+                _state.update { it.copy(androidId = androidId) }
+            } catch(e: Exception) {
+                logger.error("${e.message}")
+            }
+        }
+    }
+
     fun hideDialogWarning() {
         viewModelScope.launch {
             _state.update {
@@ -157,11 +168,12 @@ class InitSetupViewModel @Inject constructor(
                                 role = ""
                             )
                             baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
-                            val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
-                            if(responseGetListAccount.code == 200) {
-                                val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
-                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
-                                    initSetup.role = responseGetListAccount.data[index].role!!
+//                            val responseGetListAccount = authRepository.getListAccount(inputVendingMachineCode)
+//                            if(responseGetListAccount.code == 200) {
+//                                val index = responseGetListAccount.data.indexOfFirst { it.username == loginRequest.username }
+//                                if(index != -1 && !responseGetListAccount.data[index].role.isNullOrEmpty()) {
+//                                    initSetup.role = responseGetListAccount.data[index].role!!
+                                    initSetup.role = "admin"
                                     baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
                                     val activateTheMachineRequest = ActivateTheMachineRequest(
                                         machineCode = inputVendingMachineCode,
@@ -266,28 +278,28 @@ class InitSetupViewModel @Inject constructor(
 //                                            errorContent = "call api activate the machine fail in InitSetupViewModel/writeInitSetupToLocal(): ${responseActivateTheMachine.message}",
 //                                        )
                                     }
-                                } else {
+//                                } else {
+////                                    baseRepository.deleteFile(pathFileInitSetup)
+//                                    if(baseRepository.isFileExists(pathFileInitSetup)) {
+//                                        baseRepository.deleteFile(pathFileInitSetup)
+//                                    }
+//                                    sendEvent(Event.Toast("Not found account or role is null/empty!"))
+////                                    baseRepository.addNewErrorLogToLocal(
+////                                        machineCode = initSetup.vendCode,
+////                                        errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
+////                                    )
+//                                }
+//                            } else {
+////                                baseRepository.deleteFile(pathFileInitSetup)
+//                                if(baseRepository.isFileExists(pathFileInitSetup)) {
 //                                    baseRepository.deleteFile(pathFileInitSetup)
-                                    if(baseRepository.isFileExists(pathFileInitSetup)) {
-                                        baseRepository.deleteFile(pathFileInitSetup)
-                                    }
-                                    sendEvent(Event.Toast("Not found account or role is null/empty!"))
-//                                    baseRepository.addNewErrorLogToLocal(
-//                                        machineCode = initSetup.vendCode,
-//                                        errorContent = "not found account or role is null/empty in get list account from server in InitSetupViewModel/writeInitSetupToLocal()",
-//                                    )
-                                }
-                            } else {
-//                                baseRepository.deleteFile(pathFileInitSetup)
-                                if(baseRepository.isFileExists(pathFileInitSetup)) {
-                                    baseRepository.deleteFile(pathFileInitSetup)
-                                }
-                                sendEvent(Event.Toast("Get list account from server fail: ${responseGetListAccount.message}"))
-//                                baseRepository.addNewErrorLogToLocal(
-//                                    machineCode = initSetup.vendCode,
-//                                    errorContent = "get list account from server fail in InitSetupViewModel/writeInitSetupToLocal()",
-//                                )
-                            }
+//                                }
+//                                sendEvent(Event.Toast("Get list account from server fail: ${responseGetListAccount.message}"))
+////                                baseRepository.addNewErrorLogToLocal(
+////                                    machineCode = initSetup.vendCode,
+////                                    errorContent = "get list account from server fail in InitSetupViewModel/writeInitSetupToLocal()",
+////                                )
+//                            }
                         } else {
                             sendEvent(Event.Toast("Login fail, please check your username, password and vending machine code!"))
                         }
