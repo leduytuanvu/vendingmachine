@@ -73,16 +73,18 @@ class TransactionViewModel @Inject constructor (
                     if(initSetup.timeClosingSession=="Never ended a session before") {
                         for(item in listSyncOrder) {
                             if(item.paymentMethodId=="cash") {
-                                countTransactionByCash+=1
+//                                countTransactionByCash+=1
                                 for(itemTmp in item.productDetails) {
                                     if(itemTmp.deliveryStatus == "success") {
+                                        countTransactionByCash+=itemTmp.quantity!!
                                         amountTransactionByCash+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
                                     }
                                 }
                             } else {
-                                countTransactionByOnline+=1
                                 for(itemTmp in item.productDetails) {
+//                                    countTransactionByOnline+=1
                                     if(itemTmp.deliveryStatus == "success") {
+                                        countTransactionByOnline+=itemTmp.quantity!!
                                         amountTransactionByOnline+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
                                     }
                                 }
@@ -104,16 +106,18 @@ class TransactionViewModel @Inject constructor (
                             if(comparisonResult>0) {
                                 logger.debug("ifffff")
                                 if(item.paymentMethodId=="cash") {
-                                    countTransactionByCash+=1
+//                                    countTransactionByCash+=1
                                     for(itemTmp in item.productDetails) {
                                         if(itemTmp.deliveryStatus == "success") {
+                                            countTransactionByCash+=itemTmp.quantity!!
                                             amountTransactionByCash+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
                                         }
                                     }
                                 } else {
-                                    countTransactionByOnline+=1
+//                                    countTransactionByOnline+=1
                                     for(itemTmp in item.productDetails) {
                                         if(itemTmp.deliveryStatus == "success") {
+                                            countTransactionByOnline+=itemTmp.quantity!!
                                             amountTransactionByOnline+=(itemTmp.quantity!!*itemTmp.price!!.toInt())
                                         }
                                     }
