@@ -645,9 +645,12 @@ fun SetupSlotContent(
                                                     cornerRadius = 4.dp,
                                                     height = 60.dp,
                                                     function = {
+//                                                        onClick()
                                                         onClick()
-                                                        isLock = false
-                                                        viewModel.unlockSlot(slot)
+//                                                        isLock = false
+                                                        viewModel.unlockSlot(slot) {
+                                                            isLock = false
+                                                        }
                                                     },
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -676,8 +679,10 @@ fun SetupSlotContent(
                                                     height = 60.dp,
                                                     function = {
                                                         onClick()
-                                                        isLock = false
-                                                        viewModel.unlockSlot(slot)
+//                                                        isLock = false
+                                                        viewModel.unlockSlot(slot) {
+                                                            isLock = false
+                                                        }
                                                     },
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -696,24 +701,6 @@ fun SetupSlotContent(
                                                     || slot.slot == 100
                                                     || slot.slot == 110
                                                     || slot.slot == 120
-                                                    || slot.slot == 130
-                                                    || slot.slot == 140
-                                                    || slot.slot == 150
-                                                    || slot.slot == 160
-                                                    || slot.slot == 170
-                                                    || slot.slot == 180
-                                                    || slot.slot == 190
-                                                    || slot.slot == 200
-                                                    || slot.slot == 210
-                                                    || slot.slot == 220
-                                                    || slot.slot == 230
-                                                    || slot.slot == 240
-                                                    || slot.slot == 250
-                                                    || slot.slot == 260
-                                                    || slot.slot == 270
-                                                    || slot.slot == 280
-                                                    || slot.slot == 290
-                                                    || slot.slot == 300
                                                     ) {
                                                     CustomButtonComposable(
                                                         title = "ROTATE",

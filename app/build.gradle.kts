@@ -72,7 +72,7 @@ android {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
-            buildConfigField("String", "API_URL", "\"https://api.avf.vn\"")
+            buildConfigField("String", "API_URL", "\"https://dev-api.avf.vn\"")
         }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")

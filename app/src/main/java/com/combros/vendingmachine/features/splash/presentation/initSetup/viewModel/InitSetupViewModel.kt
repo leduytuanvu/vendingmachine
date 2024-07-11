@@ -152,7 +152,7 @@ class InitSetupViewModel @Inject constructor(
                                 dropSensor = "ON",
                                 inchingMode = "0",
                                 timeoutJumpToBigAdsScreen = "60",
-                                glassHeatingMode = "ON",
+                                glassHeatingMode = "OFF",
                                 highestTempWarning = "25",
                                 lowestTempWarning = "0",
                                 temperature = "25",

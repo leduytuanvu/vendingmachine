@@ -76,10 +76,7 @@ import com.combros.vendingmachine.common.base.presentation.composables.CustomBut
 import com.combros.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.combros.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.combros.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
-import com.combros.vendingmachine.core.util.pathFolderImagePayment
-import com.combros.vendingmachine.core.util.pathFolderImageProduct
-import com.combros.vendingmachine.core.util.pathFileUpdateTrackingAds
-import com.combros.vendingmachine.core.util.toVietNamDong
+import com.combros.vendingmachine.core.util.*
 import com.combros.vendingmachine.features.home.domain.model.TypeAds
 import com.combros.vendingmachine.features.home.presentation.composables.AdsHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.BackgroundHomeComposable
@@ -105,6 +102,13 @@ internal fun HomeScreen(
         while (true) {
             delay(1000)
             viewModel.pollStatus()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(3500)
+            viewModel.getBillType()
         }
     }
 
@@ -376,6 +380,15 @@ fun HomeContent(
                                                 val imageModifier = Modifier
                                                     .width(150.dp)
                                                     .height(150.dp)
+                                                    .clickable(
+                                                        onClick = {
+                                                            val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
+                                                            if(indexCheck == -1) {
+                                                                viewModel.addProduct(slot)
+                                                                Logger.debug("${state.listSlotInCard}")
+                                                            }
+                                                        }
+                                                    )
                                                 val imagePainter =
                                                     if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                             pathFolderImageProduct + "/${slot.productCode}.png"
@@ -392,7 +405,7 @@ fun HomeContent(
                                                 Image(
                                                     modifier = imageModifier,
                                                     painter = imagePainter,
-                                                    contentDescription = ""
+                                                    contentDescription = "",
                                                 )
 
                                                 Spacer(modifier = Modifier.height(20.dp))

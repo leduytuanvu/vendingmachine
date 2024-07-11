@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.google.gson.reflect.TypeToken
 import com.combros.vendingmachine.common.base.domain.model.InitSetup
@@ -20,6 +21,7 @@ import com.combros.vendingmachine.core.util.pathFileSlot
 import com.combros.vendingmachine.core.util.sendEvent
 
 import com.combros.vendingmachine.features.home.data.model.request.ItemProductInventoryRequest
+import com.combros.vendingmachine.features.home.presentation.viewModel.DropSensorResult
 
 import com.combros.vendingmachine.features.settings.domain.model.Product
 import com.combros.vendingmachine.features.settings.domain.model.Slot
@@ -27,10 +29,7 @@ import com.combros.vendingmachine.features.settings.domain.repository.SettingsRe
 import com.combros.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import kotlin.math.log
 
@@ -53,6 +52,9 @@ class SetupSlotViewModel @Inject constructor(
     private val _statusSlot = MutableStateFlow(false)
     val statusSlot: StateFlow<Boolean> = _statusSlot.asStateFlow()
 
+//    private val _isRotate = MutableStateFlow(false)
+//    val isRotate: StateFlow<Boolean> = _isRotate.asStateFlow()
+
     private val _checkFirst = MutableStateFlow(false)
     val checkFirst: StateFlow<Boolean> = _checkFirst.asStateFlow()
 
@@ -64,6 +66,9 @@ class SetupSlotViewModel @Inject constructor(
 
     private val _checkSetupVendingMachine = MutableStateFlow(false)
     val checkSetupVendingMachine: StateFlow<Boolean> = _checkSetupVendingMachine.asStateFlow()
+
+    private val _statusDropProduct = MutableStateFlow(DropSensorResult.ANOTHER)
+    val statusDropProduct: StateFlow<DropSensorResult> = _statusDropProduct.asStateFlow()
 
     fun loadInitSetupListSlotListProduct() {
         logger.debug("loadInitSetupListSlotListProduct")
@@ -360,20 +365,45 @@ class SetupSlotViewModel @Inject constructor(
         }
     }
 
-    fun unlockSlot(slot: Slot) {
+    fun unlockSlot(slot: Slot, onSuccess: () -> Unit) {
         logger.debug("unlockSlot")
         viewModelScope.launch {
             try {
-                val listSlot = _state.value.listSlot
-                val index = listSlot.indexOfFirst { it.slot == slot.slot }
-                listSlot[index].isLock = false
-                baseRepository.writeDataToLocal(listSlot, pathFileSlot)
-                baseRepository.addNewFillLogToLocal(
-                    machineCode = _state.value.initSetup!!.vendCode,
-                    fillType = "setup slot",
-                    content = "unlock slot ${slot.slot}"
+                _state.update { it.copy(isLoading = true) }
+                _isRotate.value = true
+                _checkFirst.value = true
+                val byteArraySlot: Byte = slot.slot.toByte()
+                val byteArrayNumberBoard: Byte = 0.toByte()
+                val byteArray: ByteArray = byteArrayOf(
+                    byteArrayNumberBoard,
+                    (0xFF - 0).toByte(),
+                    byteArraySlot,
+                    (0xFF - slot.slot).toByte(),
+                    0xAA.toByte(),
+                    0x55,
                 )
-                _state.update { it.copy(listSlot = listSlot) }
+                _statusDropProduct.value =
+                    DropSensorResult.INITIALIZATION
+                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                var result = withTimeoutOrNull(20000L) {
+                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
+                }
+                if(result == null) {
+                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
+                } else {
+                    val listSlot = _state.value.listSlot
+                    val index = listSlot.indexOfFirst { it.slot == slot.slot }
+                    listSlot[index].isLock = false
+                    baseRepository.writeDataToLocal(listSlot, pathFileSlot)
+                    baseRepository.addNewFillLogToLocal(
+                        machineCode = _state.value.initSetup!!.vendCode,
+                        fillType = "setup slot",
+                        content = "unlock slot ${slot.slot}"
+                    )
+                    onSuccess()
+                    _state.update { it.copy(listSlot = listSlot) }
+                }
+                _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -801,7 +831,8 @@ class SetupSlotViewModel @Inject constructor(
     }
 
     fun addSlotToLocalListSlot(product: Product) {
-        logger.debug("addSlotToLocalListSlot")
+        logger.debug("addSlotToLocalListSlot: product: ${product}")
+        logger.debug("listSlot: ${_state.value.listSlot}")
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
@@ -809,14 +840,15 @@ class SetupSlotViewModel @Inject constructor(
                     if (item.slot == _state.value.slot!!.slot) {
                         item.inventory = 10
                         item.capacity = 10
-                        item.productCode = product.productCode
-                        item.productName = product.productName
                         val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
+                        logger.debug("index: ${indexCheck}")
                         if(indexCheck!=-1) {
                             item.price = _state.value.listSlot[indexCheck].price
                         } else {
                             item.price = product.price
                         }
+                        item.productCode = product.productCode
+                        item.productName = product.productName
                         var slot: Slot? = null
                         for (itemAdd in _state.value.listSlotAddMore) {
                             if (itemAdd.slot == _state.value.slot!!.slot) {
@@ -874,9 +906,9 @@ class SetupSlotViewModel @Inject constructor(
                             if (item.slot == itemAdd.slot) {
                                 item.inventory = 10
                                 item.capacity = 10
+                                val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
                                 item.productCode = product.productCode
                                 item.productName = product.productName
-                                val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
                                 if(indexCheck!=-1) {
                                     item.price = _state.value.listSlot[indexCheck].price
                                 } else {
@@ -1110,18 +1142,37 @@ class SetupSlotViewModel @Inject constructor(
                 if(dataHexString!="00,5D,00,00,5D" && dataHexString!="00,5D,01,00,5E" && dataHexString!="00,5C,00,00,5C") {
                     logger.debug("status door")
                 } else {
-                    when (dataHexString) {
-                        "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
-                        "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
-                        "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
-                        "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
-                        "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
-                        "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
-                        "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
-                        "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
-                        "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
-                        else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+                    val result = when (dataHexString) {
+                        "00,5D,00,00,5D" -> DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
+                        "00,5D,00,AA,07" -> DropSensorResult.SUCCESS
+                        "00,5C,40,00,9C" -> DropSensorResult.NOT_ROTATED
+                        "00,5C,02,00,5E" -> DropSensorResult.NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM
+                        "00,5D,00,CC,29" -> DropSensorResult.ROTATED_BUT_INSUFFICIENT_ROTATION
+                        "00,5D,00,33,90" -> DropSensorResult.ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED
+                        "00,5C,03,00,5F" -> DropSensorResult.SENSOR_HAS_AN_OBSTACLE
+                        "00,5C,50,00,AC" -> DropSensorResult.ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL
+                        "00,5C,50,AA,56" -> DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL
+                        else -> DropSensorResult.INITIALIZATION
                     }
+                    if (result != DropSensorResult.INITIALIZATION) {
+                        _statusDropProduct.tryEmit(result)
+                        logger.debug("Result emitted to dispenseResults: $result")
+                        sendEvent(Event.Toast(result.name))
+                    }
+
+//                    when (dataHexString) {
+//                        "00,5D,00,00,5D" -> sendEvent(Event.Toast("ROTATED_BUT_PRODUCT_NOT_FALL"))
+//                        "00,5D,00,AA,07" -> sendEvent(Event.Toast("SUCCESS"))
+//                        "00,5C,40,00,9C" -> sendEvent(Event.Toast("NOT_ROTATED"))
+//                        "00,5C,02,00,5E" -> sendEvent(Event.Toast("NOT_ROTATED_AND_DROP_SENSOR_HAVE_PROBLEM"))
+//                        "00,5D,00,CC,29" -> sendEvent(Event.Toast("ROTATED_BUT_INSUFFICIENT_ROTATION"))
+//                        "00,5D,00,33,90" -> sendEvent(Event.Toast("ROTATED_BUT_NO_SHORTAGES_OR_VIBRATIONS_WERE_DETECTED"))
+//                        "00,5C,03,00,5F" -> sendEvent(Event.Toast("SENSOR_HAS_AN_OBSTACLE"))
+//                        "00,5C,50,00,AC" -> sendEvent(Event.Toast("ERROR_00_5C_50_00_AC_PRODUCT_NOT_FALL"))
+//                        "00,5C,50,AA,56" -> sendEvent(Event.Toast("ERROR_00_5C_50_AA_56_PRODUCT_FALL"))
+//                        else -> sendEvent(Event.Toast("UNKNOWN_ERROR_${dataHexString}"))
+//                    }
+//                    _statusDropProduct.tryEmit("result")
                 }
                 _isRotate.value = false
             }
@@ -1176,19 +1227,38 @@ class SetupSlotViewModel @Inject constructor(
         numberBoard: Int = 0,
         slot: Int,
     ) {
-        _isRotate.value = true
-        _checkFirst.value = true
-        val byteArraySlot: Byte = slot.toByte()
-        val byteArrayNumberBoard: Byte = numberBoard.toByte()
-        val byteArray: ByteArray = byteArrayOf(
-            byteArrayNumberBoard,
-            (0xFF - numberBoard).toByte(),
-            byteArraySlot,
-            (0xFF - slot).toByte(),
-            0xAA.toByte(),
-            0x55,
-        )
-        portConnectionDatasource.sendCommandVendingMachine(byteArray)
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                _isRotate.value = true
+                _checkFirst.value = true
+                val byteArraySlot: Byte = slot.toByte()
+                val byteArrayNumberBoard: Byte = numberBoard.toByte()
+                val byteArray: ByteArray = byteArrayOf(
+                    byteArrayNumberBoard,
+                    (0xFF - numberBoard).toByte(),
+                    byteArraySlot,
+                    (0xFF - slot).toByte(),
+                    0xAA.toByte(),
+                    0x55,
+                )
+                _statusDropProduct.value =
+                    DropSensorResult.INITIALIZATION
+                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+                logger.debug("1")
+                var result = withTimeoutOrNull(20000L) {
+                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
+                }
+                logger.debug("2")
+                if(result == null) {
+                    logger.debug("3")
+                    sendEvent(Event.Toast("TIME_OUT"))
+                }
+                _state.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                sendEvent(Event.Toast("ERROR"))
+            }
+        }
     }
 
 

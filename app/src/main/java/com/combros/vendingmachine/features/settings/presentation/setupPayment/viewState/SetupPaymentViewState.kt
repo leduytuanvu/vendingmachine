@@ -12,4 +12,5 @@ data class SetupPaymentViewState (
     val vendingMachineData: String = "",
     val titleDialogWarning: String = "",
     val listPaymentMethod: ArrayList<PaymentMethodResponse> = arrayListOf(),
+    val putMoneyInTheRottenBox: Boolean = false,
 )

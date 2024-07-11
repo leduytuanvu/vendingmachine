@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -55,6 +56,15 @@ class SetupPaymentViewModel @Inject constructor(
 
     private var cashBoxJob: Job? = null
     private var vendingMachineJob: Job? = null
+
+    private val _processCashBoxSuccess = MutableStateFlow(false)
+    val processCashBoxSuccess: StateFlow<Boolean> = _processCashBoxSuccess.asStateFlow()
+
+//    private val _returnMoneySuccess = MutableStateFlow(false)
+//    val returnMoneySuccess: StateFlow<Boolean> = _returnMoneySuccess.asStateFlow()
+
+    private val _dispensedBill = MutableStateFlow(false)
+    val dispensedBill: StateFlow<Boolean> = _dispensedBill.asStateFlow()
 
     fun loadInitData() {
         viewModelScope.launch {
@@ -98,6 +108,27 @@ class SetupPaymentViewModel @Inject constructor(
                     errorContent = "load init data fail in HomeViewModel/loadInitData(): ${e.message}",
                 )
                 _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun turnOnPutMoneyInTheRottenBox() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(putMoneyInTheRottenBox = true) }
+            } catch (e: Exception) {
+                logger.debug("turn on fail")
+            }
+        }
+    }
+
+    fun turnOffPutMoneyInTheRottenBox(callback: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(putMoneyInTheRottenBox = false) }
+                callback()
+            } catch (e: Exception) {
+                logger.debug("turn on fail")
             }
         }
     }
@@ -355,54 +386,104 @@ class SetupPaymentViewModel @Inject constructor(
         }
     }
 
+    private fun processingCash(cash: Int) {
+        viewModelScope.launch {
+            try {
+                if(cash == 10000) {
+                    portConnectionDatasource.sendCommandCashBox(ByteArrays().cbStack)
+                } else {
+                    portConnectionDatasource.sendCommandCashBox(ByteArrays().cbReject)
+                }
+            } catch (e: Exception) {
+                logger.debug("error: ${e.message}")
+            }
+        }
+
+    }
+
+    fun pollStatus() {
+//        logger.debug("pollStatus")
+        viewModelScope.launch {
+            portConnectionDatasource.sendCommandCashBox(ByteArrays().cbPollStatus)
+        }
+    }
+
     fun processingDataFromCashBox(dataByteArray: ByteArray) {
         try {
-            val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
-            logger.debug(dataHexString)
-            if(dataHexString.contains("01,01,03,00,00,")) {
-                // Define the byte to balance map
-                val byteToBalanceMap = mapOf(
-                    0x01.toByte() to 1,
-                    0x02.toByte() to 2,
-                    0x03.toByte() to 3,
-                    0x04.toByte() to 4,
-                    0x05.toByte() to 5,
-                    0x06.toByte() to 6,
-                    0x07.toByte() to 7,
-                    0x08.toByte() to 8,
-                    0x09.toByte() to 9,
-                    0x0A.toByte() to 10,
-                    0x0B.toByte() to 11,
-                    0x0C.toByte() to 12,
-                    0x0D.toByte() to 13,
-                    0x0E.toByte() to 14,
-                    0x0F.toByte() to 15,
-                    0x10.toByte() to 16,
-                    0x11.toByte() to 17,
-                    0x12.toByte() to 18,
-                    0x13.toByte() to 19,
-                    0x14.toByte() to 20,
-                    0x15.toByte() to 21,
-                    0x16.toByte() to 22,
-                    0x17.toByte() to 23,
-                    0x18.toByte() to 23,
-                    0x19.toByte() to 24,
-                    0x1A.toByte() to 25,
-                    0x1B.toByte() to 26,
-                    0x1C.toByte() to 27,
-                    0x1D.toByte() to 28,
-                    0x1E.toByte() to 29,
-                    0x1F.toByte() to 30,
-                    0x20.toByte() to 31,
-                    0x21.toByte() to 32,
-                    0x22.toByte() to 33,
-                    0x23.toByte() to 34
-                )
-                val byteArray = hexStringToByteArray(dataHexString)
-                // Get the value from the map or default to 0 if not found
-                val numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], 0)
-                // Update the state
-                _state.update { it.copy(numberRottenBoxBalance = numberRottenBoxBalance) }
+            if(dataByteArray.isNotEmpty()) {
+                val dataHexString = dataByteArray.joinToString(",") { "%02X".format(it) }
+                logger.debug("data from cash box ======== "+dataHexString)
+//                if(dataHexString == "01,00,03,00,01,03") {
+//                    _returnMoneySuccess.value = true
+//                }
+                if(_dispensedBill.value) {
+                    if(dataHexString == "01,00,03,00,02,00") {
+                        sendEvent(Event.Toast("Rotten box balance is 0"))
+                    }
+                }
+
+                if (dataByteArray.size == 19){
+                    if (dataByteArray[6] == 0x00.toByte()) {
+                        when (dataByteArray[7]) {
+                            0x04.toByte() -> {
+                                processingCash(10000)
+                            }
+                            0x03.toByte(), 0x02.toByte(), 0x01.toByte(), 0x05.toByte(), 0x06.toByte(), 0x07.toByte(), 0x08.toByte(), 0x09.toByte() -> {
+                                processingCash(0)
+                            }
+                            else -> {
+                                logger.debug("data from cash box ======== "+dataHexString)
+                            }
+                        }
+                    }
+                }
+                if(dataHexString.contains("01,01,03,00,00,")) {
+                    // Define the byte to balance map
+                    val byteToBalanceMap = mapOf(
+                        0x01.toByte() to 1,
+                        0x02.toByte() to 2,
+                        0x03.toByte() to 3,
+                        0x04.toByte() to 4,
+                        0x05.toByte() to 5,
+                        0x06.toByte() to 6,
+                        0x07.toByte() to 7,
+                        0x08.toByte() to 8,
+                        0x09.toByte() to 9,
+                        0x0A.toByte() to 10,
+                        0x0B.toByte() to 11,
+                        0x0C.toByte() to 12,
+                        0x0D.toByte() to 13,
+                        0x0E.toByte() to 14,
+                        0x0F.toByte() to 15,
+                        0x10.toByte() to 16,
+                        0x11.toByte() to 17,
+                        0x12.toByte() to 18,
+                        0x13.toByte() to 19,
+                        0x14.toByte() to 20,
+                        0x15.toByte() to 21,
+                        0x16.toByte() to 22,
+                        0x17.toByte() to 23,
+                        0x18.toByte() to 23,
+                        0x19.toByte() to 24,
+                        0x1A.toByte() to 25,
+                        0x1B.toByte() to 26,
+                        0x1C.toByte() to 27,
+                        0x1D.toByte() to 28,
+                        0x1E.toByte() to 29,
+                        0x1F.toByte() to 30,
+                        0x20.toByte() to 31,
+                        0x21.toByte() to 32,
+                        0x22.toByte() to 33,
+                        0x23.toByte() to 34
+                    )
+                    val byteArray = hexStringToByteArray(dataHexString)
+                    // Get the value from the map or default to 0 if not found
+                    val numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], 0)
+                    // Update the state
+                    logger.debug("numberRottenBoxBalance: $numberRottenBoxBalance")
+                    _state.update { it.copy(numberRottenBoxBalance = numberRottenBoxBalance) }
+                    _processCashBoxSuccess.value = true
+                }
             }
         } catch (e: Exception) {
             throw e
@@ -435,9 +516,105 @@ class SetupPaymentViewModel @Inject constructor(
         portConnectionDatasource.sendCommandVendingMachine(byteArray)
     }
 
-    fun dispensed() {
-        portConnectionDatasource.sendCommandCashBox(ByteArrays().cbDispenseBill1)
+    fun dispensedOne() {
+        viewModelScope.launch {
+            try {
+                _dispensedBill.value = true
+//                _state.update { it.copy(isLoading = true) }
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbDispenseBill1)
+                delay(300)
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+                delay(300)
+                _dispensedBill.value = false
+//                delay(300)
+//                _state.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                logger.error("dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}")
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = _state.value.initSetup!!.vendCode,
+//                    errorContent = "dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}",
+//                )
+            }
+        }
     }
+
+    fun transferToCashBox() {
+        viewModelScope.launch {
+            try {
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbPollStatus)
+                delay(300)
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbTransferToCashBox)
+                delay(10000)
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbPollStatus)
+            } catch (e: Exception) {
+                logger.error("dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}")
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = _state.value.initSetup!!.vendCode,
+//                    errorContent = "dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}",
+//                )
+            }
+        }
+    }
+
+    fun stack() {
+        viewModelScope.launch {
+            try {
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbStack)
+//                delay(300)
+//                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+            } catch (e: Exception) {
+                logger.error("stack fail in HomeViewModel/stack(): ${e.message}")
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = _state.value.initSetup!!.vendCode,
+//                    errorContent = "dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}",
+//                )
+            }
+        }
+    }
+
+    fun getCreateByteArrayDispenseBill(number: Int): ByteArray {
+        require(number in 1..35) { "Input must be between 1 and 35" }
+
+        val byte1 = 0x03.toByte()
+        val byte2 = 0x01.toByte()
+        val byte3 = 0x01.toByte()
+        val byte4 = 0x00.toByte()
+        val byte5 = 0x1C.toByte()
+        val byte6 = number.toByte()
+
+        // Calculate checksum (byte7) as per the given pattern
+        val checksum = (0x1E - (number - 1)).toByte()
+
+        return byteArrayOf(byte1, byte2, byte3, byte4, byte5, byte6, checksum)
+    }
+
+
+    fun dispensedAll() {
+        viewModelScope.launch {
+            try {
+                _dispensedBill.value = true
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+//                _processCashBoxSuccess.value = false
+                delay(300)
+                logger.debug("numberRottenBoxBalance: ${_state.value.numberRottenBoxBalance}")
+                if(_state.value.numberRottenBoxBalance <= 0) {
+                    sendEvent(Event.Toast("Rotten box balance is 0"))
+                } else {
+                    portConnectionDatasource.sendCommandCashBox(getCreateByteArrayDispenseBill(_state.value.numberRottenBoxBalance))
+                    delay(300)
+//                    portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetNumberRottenBoxBalance)
+                }
+                _dispensedBill.value = false
+            } catch (e: Exception) {
+                logger.error("dispensed all fail in HomeViewModel/dispensedAll(): ${e.message}")
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = _state.value.initSetup!!.vendCode,
+//                    errorContent = "dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}",
+//                )
+            }
+        }
+    }
+
     fun resetCashBox() {
         portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
     }
