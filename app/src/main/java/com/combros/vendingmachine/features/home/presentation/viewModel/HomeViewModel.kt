@@ -131,6 +131,9 @@ class HomeViewModel @Inject constructor(
     private val _setupCashBox = MutableStateFlow(false)
     val setupCashBox: StateFlow<Boolean> = _setupCashBox.asStateFlow()
 
+    private val _returnMoneySuccess = MutableStateFlow(false)
+    val returnMoneySuccess: StateFlow<Boolean> = _returnMoneySuccess.asStateFlow()
+
     private val _dataTmpCashBox = MutableStateFlow("")
     val dataTmpCashBox: StateFlow<String> = _dataTmpCashBox.asStateFlow()
 
@@ -1188,6 +1191,11 @@ class HomeViewModel @Inject constructor(
                 if (dataHexString == "01,00,03,00,01,03") {
                     _setupCashBox.value = true
                 }
+            } else if (dataByteArray.size == 8) {
+                _setupCashBox.value = false
+                if (dataHexString == "01,02,03,00,00,00,00,00") {
+                    sendCommandCashBox(byteArrays.cbEnableType3456789)
+                }
             } else {
 //                logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
             }
@@ -2028,6 +2036,7 @@ class HomeViewModel @Inject constructor(
                 observePortData()
                 _setupCashBox.value = false
                 sendCommandCashBox(byteArrays.cbEnableType3456789)
+//                sendCommandCashBox(byteArrays.cbDisable)
                 delay(300)
                 if (_setupCashBox.value) {
                     logger.debug("set cbEnableType3456789 success")
@@ -2376,6 +2385,13 @@ class HomeViewModel @Inject constructor(
 //        logger.debug("pollStatus")
         viewModelScope.launch {
             portConnectionDatasource.sendCommandCashBox(ByteArrays().cbPollStatus)
+        }
+    }
+
+    fun getBillType() {
+//        logger.debug("pollStatus")
+        viewModelScope.launch {
+            portConnectionDatasource.sendCommandCashBox(ByteArrays().cbGetBillType)
         }
     }
 
@@ -3162,27 +3178,37 @@ class HomeViewModel @Inject constructor(
                     } else {
                         0
                     }
-
                     if (numberCashNeedReturn > 0) {
                         sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
                         delay(300)
                         if (_numberRottenBoxBalance.value != -1) {
                             if (_numberRottenBoxBalance.value >= numberCashNeedReturn) {
+                                _returnMoneySuccess.value = false
                                 sendCommandCashBox(
                                     getCreateByteArrayDispenseBill(
                                         numberCashNeedReturn
                                     )
                                 )
-                                initSetup.currentCash = currentCash - (numberCashNeedReturn * 10000)
-                                _state.update { it.copy(initSetup = initSetup) }
-                                baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                                baseRepository.addNewDepositWithdrawLogToLocal(
-                                    machineCode = _state.value.initSetup!!.vendCode,
-                                    transactionType = "deposit",
-                                    denominationType = 10000,
-                                    quantity = numberCashNeedReturn,
-                                    currentBalance = currentCash,
-                                )
+                                delay(300)
+                                if(_returnMoneySuccess.value) {
+                                    initSetup.currentCash = currentCash - (numberCashNeedReturn * 10000)
+                                    _state.update { it.copy(initSetup = initSetup) }
+                                    baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                                    baseRepository.addNewDepositWithdrawLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        transactionType = "widthdraw",
+                                        denominationType = 10000,
+                                        quantity = numberCashNeedReturn,
+                                        currentBalance = currentCash,
+                                    )
+                                } else {
+                                    showDialogWarning("Thối tiền không thành công, xin vui lòng thử lại sau!")
+                                    baseRepository.addNewErrorLogToLocal(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney()",
+                                    )
+                                }
+
 //                                delay(300)
 //                                if(_setupCashBox.value) {
 //                                    logger.debug("Ok")

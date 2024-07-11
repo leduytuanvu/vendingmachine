@@ -52,6 +52,7 @@ import com.combros.vendingmachine.common.base.presentation.composables.LoadingDi
 import com.combros.vendingmachine.common.base.presentation.composables.TitleAndDropdownComposable
 import com.combros.vendingmachine.common.base.presentation.composables.WarningDialogComposable
 import com.combros.vendingmachine.core.datasource.localStorageDatasource.LocalStorageDatasource
+import com.combros.vendingmachine.core.util.Logger
 import com.combros.vendingmachine.core.util.Screens
 import com.combros.vendingmachine.core.util.pathFolderImagePayment
 import com.combros.vendingmachine.core.util.toVietNamDong
@@ -65,6 +66,7 @@ internal fun SetupPaymentScreen(
     viewModel: SetupPaymentViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
     }
@@ -77,21 +79,29 @@ internal fun SetupPaymentScreen(
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
 
     // Launch a coroutine that checks for inactivity
-    LaunchedEffect(lastInteractionTime) {
-        while (true) {
-            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
-                navController.navigate(Screens.HomeScreenRoute.route) {
-                    popUpTo(Screens.SetupPaymentScreenRoute.route) {
-                        inclusive = true
+    if(!state.putMoneyInTheRottenBox) {
+        Logger.debug("state.putMoneyInTheRottenBox: ${state.putMoneyInTheRottenBox}")
+//        lastInteractionTime = System.currentTimeMillis()
+        LaunchedEffect(lastInteractionTime) {
+            while (true) {
+//                Logger.debug("lastInteractionTime: ${System.currentTimeMillis() - lastInteractionTime}")
+                if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                    navController.navigate(Screens.HomeScreenRoute.route) {
+                        popUpTo(Screens.SetupPaymentScreenRoute.route) {
+                            inclusive = true
+                        }
+                        popUpTo(Screens.SettingScreenRoute.route) {
+                            inclusive = true
+                        }
                     }
-                    popUpTo(Screens.SettingScreenRoute.route) {
-                        inclusive = true
-                    }
+                    return@LaunchedEffect
                 }
-                return@LaunchedEffect
+                delay(1000)
             }
-            delay(1000)
         }
+    } else {
+        Logger.debug("else")
+        lastInteractionTime = System.currentTimeMillis()
     }
     val nestedScrollConnection = remember {
         object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
@@ -163,13 +173,20 @@ fun SetupPaymentContent(
 //    var hourReset by remember { mutableIntStateOf(partsReset[0].toIntOrNull() ?: 0) }
 //    var minuteReset by remember { mutableIntStateOf(partsReset.getOrNull(1)?.toIntOrNull() ?: 0) }
 
+    if(state.putMoneyInTheRottenBox) {
+        LaunchedEffect(Unit) {
+            Logger.debug("state.putMoneyInTheRottenBox: ${state.putMoneyInTheRottenBox}")
+            while (true) {
+                delay(1000)
+                viewModel.pollStatus()
+            }
+        }
+    }
+
     LaunchedEffect(state.initSetup) {
         selectedItemDefaultPromotion = AnnotatedString(state.initSetup?.initPromotion ?: "ON")
         selectedItemTimeOutPaymentQrCode = AnnotatedString(if(state.initSetup?.timeoutPaymentByQrCode != null) "${state.initSetup.timeoutPaymentByQrCode}s" else "30s")
         selectedItemTimeOutPaymentCash = AnnotatedString(if(state.initSetup?.timeoutPaymentByCash != null) "${state.initSetup.timeoutPaymentByCash}s" else "30s")
-//        partsReset = if (state.initSetup?.timeResetOnEveryDay != null) state.initSetup.timeResetOnEveryDay.split(":") else listOf("0", "0")
-//        hourReset = partsReset[0].toIntOrNull() ?: 0
-//        minuteReset = partsReset.getOrNull(1)?.toIntOrNull() ?: 0
     }
     LoadingDialogComposable(isLoading = state.isLoading)
     WarningDialogComposable(
@@ -219,7 +236,10 @@ fun SetupPaymentContent(
                     viewModel.refreshCurrentCash()
                 }
 
-                BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                if(state.numberRottenBoxBalance>=0) {
+                    BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                }
+//                BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 CustomButtonComposable(
                     title = "REFRESH",
                     wrap = true,
@@ -482,18 +502,69 @@ fun SetupPaymentContent(
 //                ) {
 //                    viewModel.productDispenseNotSensor(0,2)
 //                }
+                CustomButtonComposable(
+                    title = "TURN ON PUT MONEY IN THE ROTTEN BOX",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                    enable = !state.putMoneyInTheRottenBox,
+                ) {
+                    viewModel.turnOnPutMoneyInTheRottenBox()
+                }
 
-//                CustomButtonComposable(
-//                    title = "DISPENDED",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.dispensed()
-//                }
+                CustomButtonComposable(
+                    title = "TURN OFF PUT MONEY IN THE ROTTEN BOX",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                    enable = state.putMoneyInTheRottenBox,
+                ) {
+                    viewModel.turnOffPutMoneyInTheRottenBox() {
+                        onClick()
+                    }
+                }
+
+                CustomButtonComposable(
+                    title = "DISPENSED ONE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.dispensedOne()
+                }
+
+                CustomButtonComposable(
+                    title = "DISPENSED ALL",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    viewModel.dispensedAll()
+                }
+
+                CustomButtonComposable(
+                    title = "TRANSFER TO CASH BOX",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.transferToCashBox()
+                }
 
 //                CustomButtonComposable(
 //                    title = "on",

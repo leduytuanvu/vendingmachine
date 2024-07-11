@@ -27,6 +27,7 @@ fun CustomButtonComposable(
     titleAlignment: TextAlign = TextAlign.Start,
     cornerRadius: Dp = 0.dp,
     wrap: Boolean = false,
+    enable: Boolean = true,
     height: Dp = 48.dp,
     width: Dp = 0.dp,
     paddingTop: Dp = 0.dp,
@@ -35,7 +36,7 @@ fun CustomButtonComposable(
     paddingEnd: Dp = 0.dp,
     fontSize: TextUnit = 16.sp,
     fontWeight: FontWeight = FontWeight.Normal,
-    function: () -> Unit
+    function: () -> Unit,
 ) {
     Button(
         onClick = function,
@@ -56,7 +57,8 @@ fun CustomButtonComposable(
             backgroundColor,
             contentColor = Color.Black
         ),
-        shape = RoundedCornerShape(cornerRadius)
+        shape = RoundedCornerShape(cornerRadius),
+        enabled = enable,
     ) {
         Text(
             text = title,

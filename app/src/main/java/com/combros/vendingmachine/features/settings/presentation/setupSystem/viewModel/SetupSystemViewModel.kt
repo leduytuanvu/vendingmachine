@@ -1022,12 +1022,20 @@ class SetupSystemViewModel @Inject constructor(
                 )!!
                 _nameFun.value = "updateTemperatureInLocal"
                 _statusVendingMachine.value = false
-                val byteArray1 = byteArrayOf(0x00, 0xFF.toByte(), 0xCC.toByte(), 0x33.toByte(), 0x00.toByte(), 0xFF.toByte())
+
+                val delayTempByteArray = byteArrayOf(0x00, 0xFF.toByte(), 0xCF.toByte(), 0x30.toByte(), 0x02.toByte(), 0xFD.toByte())
+                portConnectionDatasource.sendCommandVendingMachine(delayTempByteArray)
+                delay(1001)
+                val compensationTempByteArray = byteArrayOf(0x00, 0xFF.toByte(), 0xD0.toByte(), 0x2F.toByte(), 0x01.toByte(), 0xFE.toByte())
+                portConnectionDatasource.sendCommandVendingMachine(compensationTempByteArray)
+                delay(1001)
+
+                val byteArray1 = byteArrayOf(0x00, 0xFF.toByte(), 0xCC.toByte(), 0x33.toByte(), 0x01.toByte(), 0xFE.toByte())
                 portConnectionDatasource.sendCommandVendingMachine(byteArray1)
                 delay(1001)
                 if(_statusVendingMachine.value) {
                     _statusVendingMachine.value = false
-                    if(initSetup.glassHeatingMode == "ON") {
+                    if(initSetup.glassHeatingMode == "ON" || initSetup.glassHeatingMode == "OFF") {
                         val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x00.toByte(), 0xFF.toByte())
                         portConnectionDatasource.sendCommandVendingMachine(byteArray2)
                     } else {

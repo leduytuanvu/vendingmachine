@@ -614,14 +614,14 @@ fun SetupSystemMainContentComposable(
 
                 BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
                 if(state.initSetup!=null){
-                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
+//                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
                     TimePickerWrapperComposable(
                         defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
                         defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
                         onTimeSelected = onTimeSelectedReset
                     )
                 } else {
-                    Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
+//                    Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
                     TimePickerWrapperComposable(
                         defaultHour = 0,
                         defaultMinute = 0,
@@ -792,7 +792,7 @@ fun SetupSystemMainContentComposable(
                             }
                         )
                     }) {
-                        BodyTextComposable(title = "Lowest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                        BodyTextComposable(title = "Temperature delay setting", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                         if(state.initSetup!=null) {
                             EditTextComposable(initText = state.initSetup.lowestTempWarning, keyboardTypeNumber = true) {
                                 onClick()
@@ -813,7 +813,7 @@ fun SetupSystemMainContentComposable(
                             }
                         )
                     }) {
-                        BodyTextComposable(title = "Highest temperature warning", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                        BodyTextComposable(title = "Set temperature compensation", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                         if(state.initSetup!=null) {
                             EditTextComposable(initText = state.initSetup.highestTempWarning, keyboardTypeNumber = true) {
                                 onClick()

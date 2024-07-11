@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
                         EventBus.events.collect { event ->
                             when (event) {
                                 is Event.Toast -> {
-                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
                                 }
                                 is Event.NavigateToHomeScreen -> {
                                     navController.navigate(Screens.SettingScreenRoute.route)
