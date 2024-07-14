@@ -56,6 +56,7 @@ import com.combros.vendingmachine.core.util.Logger
 import com.combros.vendingmachine.core.util.Screens
 import com.combros.vendingmachine.core.util.pathFolderImagePayment
 import com.combros.vendingmachine.core.util.toVietNamDong
+import com.combros.vendingmachine.features.settings.presentation.settings.screen.ButtonSettingsComposable
 import com.combros.vendingmachine.features.settings.presentation.setupPayment.viewModel.SetupPaymentViewModel
 import com.combros.vendingmachine.features.settings.presentation.setupPayment.viewState.SetupPaymentViewState
 import kotlinx.coroutines.delay
@@ -85,7 +86,7 @@ internal fun SetupPaymentScreen(
         LaunchedEffect(lastInteractionTime) {
             while (true) {
 //                Logger.debug("lastInteractionTime: ${System.currentTimeMillis() - lastInteractionTime}")
-                if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+                if (System.currentTimeMillis() - lastInteractionTime > 600000) { // 60 seconds
                     navController.navigate(Screens.HomeScreenRoute.route) {
                         popUpTo(Screens.SetupPaymentScreenRoute.route) {
                             inclusive = true
@@ -218,39 +219,42 @@ fun SetupPaymentContent(
             content = {
                 Spacer(modifier = Modifier.height(50.dp))
 
-                BodyTextComposable(
-                    title = "Current cash: ${if(state.initSetup == null) 0.toVietNamDong() else state.initSetup.currentCash.toVietNamDong()}",
-                    fontWeight = FontWeight.Bold,
-                    paddingBottom = 8.dp,
-                )
-                CustomButtonComposable(
-                    title = "REFRESH",
-                    wrap = true,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 50.dp,
-                ) {
-                    onClick()
-                    viewModel.refreshCurrentCash()
-                }
-
-                if(state.numberRottenBoxBalance>=0) {
-                    BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-                }
+                if(state.initSetup!=null) {
+                    if(state.initSetup.role == "admin") {
+                        BodyTextComposable(
+                            title = "Current cash: ${if(state.initSetup == null) 0.toVietNamDong() else state.initSetup.currentCash.toVietNamDong()}",
+                            fontWeight = FontWeight.Bold,
+                            paddingBottom = 8.dp,
+                        )
+                        CustomButtonComposable(
+                            title = "REFRESH",
+                            wrap = true,
+                            cornerRadius = 4.dp,
+                            height = 60.dp,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            paddingBottom = 50.dp,
+                        ) {
+                            onClick()
+                            viewModel.refreshCurrentCash()
+                        }
+                        if(state.numberRottenBoxBalance>=0) {
+                            BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                        }
 //                BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-                CustomButtonComposable(
-                    title = "REFRESH",
-                    wrap = true,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 50.dp,
-                ) {
-                    onClick()
-                    viewModel.refreshRottenBoxBalance()
+                        CustomButtonComposable(
+                            title = "REFRESH",
+                            wrap = true,
+                            cornerRadius = 4.dp,
+                            height = 60.dp,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            paddingBottom = 50.dp,
+                        ) {
+                            onClick()
+                            viewModel.refreshRottenBoxBalance()
+                        }
+                    }
                 }
 
                 BodyTextComposable(title = "Default promotion", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
@@ -376,132 +380,6 @@ fun SetupPaymentContent(
                     viewModel.downloadListMethodPayment()
                 }
 
-//                BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
-//                if(state.initSetup!=null){
-//                    TimePickerWrapperComposable(
-//                        defaultHour = hourReset,
-//                        defaultMinute = minuteReset,
-//                        onTimeSelected = onTimeSelectedReset
-//                    )
-//                } else {
-//                    TimePickerWrapperComposable(
-//                        defaultHour = 0,
-//                        defaultMinute = 0,
-//                        onTimeSelected = onTimeSelectedReset
-//                    )
-//                }
-//                CustomButtonComposable(
-//                    title = "SAVE",
-//                    cornerRadius = 4.dp,
-//                    titleAlignment = TextAlign.Center,
-//                    height = 60.dp,
-//                    paddingTop = 18.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 30.dp,
-//                ) {
-//                    onClick()
-//                    viewModel.saveSetTimeResetOnEveryDay(
-//                        hour = selectedTimeReset.value.first,
-//                        minute = selectedTimeReset.value.second,
-//                    )
-//                }
-
-//                CustomButtonComposable(
-//                    title = "TURN ON LIGHT",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.turnOnLight()
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "TURN OFF LIGHT",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.turnOffLight()
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "TURN OFF LIGHT",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.drop1()
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "SET 2",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.setDrop(2)
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "SET 3",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.setDrop(3)
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "SET 5",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.setDrop(5)
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "DROP 1",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.productDispense(0,1)
-//                }
-//
-//                CustomButtonComposable(
-//                    title = "DROP 2",
-//                    wrap = true,
-//                    cornerRadius = 4.dp,
-//                    height = 60.dp,
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 20.sp,
-//                    paddingBottom = 10.dp,
-//                ) {
-//                    viewModel.productDispenseNotSensor(0,2)
-//                }
                 CustomButtonComposable(
                     title = "TURN ON PUT MONEY IN THE ROTTEN BOX",
                     wrap = true,

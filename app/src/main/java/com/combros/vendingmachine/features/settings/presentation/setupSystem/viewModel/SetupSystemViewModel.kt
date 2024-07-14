@@ -101,13 +101,21 @@ class SetupSystemViewModel @Inject constructor(
                     byteArrays.vmReadTemp,
                 )
                 if (baseRepository.isHaveNetwork(context)) {
-                    val informationOfMachine = settingsRepository.getInformationOfMachine()
-                    _state.update { it.copy(
-                        initSetup = initSetup,
-                        serialSimId = serialSimId,
-                        informationOfMachine = informationOfMachine,
-                        isLoading = false,
-                    ) }
+                    try {
+                        val informationOfMachine = settingsRepository.getInformationOfMachine()
+                        _state.update { it.copy(
+                            initSetup = initSetup,
+                            serialSimId = serialSimId,
+                            informationOfMachine = informationOfMachine,
+                            isLoading = false,
+                        ) }
+                    } catch (e: Exception) {
+                        _state.update { it.copy(
+                            initSetup = initSetup,
+                            serialSimId = serialSimId,
+                            isLoading = false,
+                        ) }
+                    }
                 } else {
                     _state.update { it.copy(
                         initSetup = initSetup,

@@ -79,7 +79,7 @@ internal fun SetupSystemScreen(
     // Launch a coroutine that checks for inactivity
     LaunchedEffect(lastInteractionTime) {
         while (true) {
-            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+            if (System.currentTimeMillis() - lastInteractionTime > 600000) { // 60 seconds
                 navController.navigate(Screens.HomeScreenRoute.route) {
                     popUpTo(Screens.SetupSystemScreenRoute.route) {
                         inclusive = true

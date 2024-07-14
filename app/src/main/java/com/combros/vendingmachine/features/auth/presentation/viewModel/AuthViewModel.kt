@@ -34,6 +34,30 @@ class AuthViewModel @Inject constructor (
     private val _state = MutableStateFlow(AuthViewState())
     val state = _state.asStateFlow()
 
+    fun loadInitData() {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                _state.update { it.copy(initSetup = initSetup) }
+            } catch (e: Exception) {
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    errorContent = "load init data fail AuthViewModel/loadInitData(): ${e.message}",
+                )
+            } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     fun login(
         context: Context,
         username: String,
@@ -43,49 +67,53 @@ class AuthViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
-                val initSetup: InitSetup = baseRepository.getDataFromLocal(
-                    type = object : TypeToken<InitSetup>() {}.type,
-                    path = pathFileInitSetup
-                )!!
-                if(baseRepository.isHaveNetwork(context)) {
-                    val loginRequestHaveNetwork = LoginRequest(
-                        username,
-                        password,
-                    )
-                    val response = authRepository.login(initSetup.vendCode, loginRequestHaveNetwork)
-                    if(response.accessToken.isNullOrEmpty()) {
-                        sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
-                    } else {
-                        Logger.debug("accessToken: ${response.accessToken}")
-                        baseRepository.addNewAuthyLogToLocal(
-                            machineCode = initSetup.vendCode,
-                            authyType = "login",
-                            username = loginRequestHaveNetwork.username,
+                if(username.isEmpty() || password.isEmpty()) {
+                    sendEvent(Event.Toast("Username, password must not empty!"))
+                } else {
+                    val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                        type = object : TypeToken<InitSetup>() {}.type,
+                        path = pathFileInitSetup
+                    )!!
+                    if(baseRepository.isHaveNetwork(context)) {
+                        val loginRequestHaveNetwork = LoginRequest(
+                            username,
+                            password,
                         )
-                        navController.navigate(Screens.SettingScreenRoute.route) {
-                            popUpTo(Screens.LoginScreenRoute.route) {
-                                inclusive = true
-                            }
-                            popUpTo(Screens.HomeScreenRoute
-                                .route) {
-                                inclusive = true
+                        val response = authRepository.login(initSetup.vendCode, loginRequestHaveNetwork)
+                        if(response.accessToken.isNullOrEmpty()) {
+                            sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
+                        } else {
+                            Logger.debug("accessToken: ${response.accessToken}")
+                            baseRepository.addNewAuthyLogToLocal(
+                                machineCode = initSetup.vendCode,
+                                authyType = "login",
+                                username = loginRequestHaveNetwork.username,
+                            )
+                            navController.navigate(Screens.SettingScreenRoute.route) {
+                                popUpTo(Screens.LoginScreenRoute.route) {
+                                    inclusive = true
+                                }
+                                popUpTo(Screens.HomeScreenRoute
+                                    .route) {
+                                    inclusive = true
+                                }
                             }
                         }
-                    }
-                } else {
-                    val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
-                    val realPassword = String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE")
-                    if(username==initSetup.username && password==realPassword) {
-                        baseRepository.addNewAuthyLogToLocal(
-                            machineCode = initSetup.vendCode,
-                            authyType = "login",
-                            username = initSetup.username,
-                        )
-                        navController.popBackStack()
-                        navController.popBackStack()
-                        navController.navigate(Screens.SettingScreenRoute.route)
                     } else {
-                        sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
+                        val dataPassword = Base64.decode(initSetup.password, Base64.DEFAULT)
+                        val realPassword = String(dataPassword, Charsets.UTF_8).substringBefore("567890VENDINGMACHINE")
+                        if(username==initSetup.username && password==realPassword) {
+                            baseRepository.addNewAuthyLogToLocal(
+                                machineCode = initSetup.vendCode,
+                                authyType = "login",
+                                username = initSetup.username,
+                            )
+                            navController.popBackStack()
+                            navController.popBackStack()
+                            navController.navigate(Screens.SettingScreenRoute.route)
+                        } else {
+                            sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
+                        }
                     }
                 }
             } catch (e: Exception) {

@@ -45,7 +45,7 @@ internal fun SettingsScreen(
     // Launch a coroutine that checks for inactivity
     LaunchedEffect(lastInteractionTime) {
         while (true) {
-            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+            if (System.currentTimeMillis() - lastInteractionTime > 600000) { // 60 seconds
                 navController.navigate(Screens.HomeScreenRoute.route) {
                     popUpTo(Screens.SettingScreenRoute.route) {
                         inclusive = true
@@ -130,13 +130,13 @@ fun SettingsContent(
 //                        })
 //                    }
 //                }
-                if(state.initSetup!=null) {
-                    if(state.initSetup.role == "admin") {
+//                if(state.initSetup!=null) {
+//                    if(state.initSetup.role == "admin") {
                         ButtonSettingsComposable("SET UP PAYMENT", function = {
                             navController.navigate(Screens.SetupPaymentScreenRoute.route)
                         })
-                    }
-                }
+//                    }
+//                }
                 ButtonSettingsComposable("VIEW TRANSACTIONS IN THE LAST 7 DAYS", function = {
                     navController.navigate(Screens.TransactionScreenRoute.route)
                 })

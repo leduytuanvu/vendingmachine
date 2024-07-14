@@ -11,7 +11,6 @@ import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.CountDownTimer
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
@@ -131,6 +130,14 @@ class HomeViewModel @Inject constructor(
     private val _setupCashBox = MutableStateFlow(false)
     val setupCashBox: StateFlow<Boolean> = _setupCashBox.asStateFlow()
 
+    private var isSetupCashBoxEnableSuccess = false
+    private var isSetupCashBoxRecyclingBillType4Success = false
+    private var isSetupCashBoxEscrowOnSuccess = false
+    private var isSetupCashBoxNumberRecycleBill35Success = false
+    private var isSetupCashBoxReturnMoneySuccess = false
+    private var numberRottenBoxBalance = -1
+
+
     private val _returnMoneySuccess = MutableStateFlow(false)
     val returnMoneySuccess: StateFlow<Boolean> = _returnMoneySuccess.asStateFlow()
 
@@ -144,7 +151,6 @@ class HomeViewModel @Inject constructor(
     val isCashBoxNormal: StateFlow<Boolean> = _isCashBoxNormal.asStateFlow()
 
     private val _numberRottenBoxBalance = MutableStateFlow(-1)
-    val numberRottenBoxBalance: StateFlow<Int> = _numberRottenBoxBalance.asStateFlow()
 
     private val _statusDropProduct = MutableStateFlow(DropSensorResult.ANOTHER)
     val statusDropProduct: StateFlow<DropSensorResult> = _statusDropProduct.asStateFlow()
@@ -492,6 +498,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isVendingMachineBusy = true) }
+                var initSetupTmp = _state.value.initSetup
                 // Stop countdown timer
                 if (countdownTimer != null) {
                     countdownTimer!!.cancel()
@@ -1006,8 +1013,8 @@ class HomeViewModel @Inject constructor(
                         cashDropped += item.inventory * item.price
                     }
                     if (_state.value.nameMethodPayment == "cash") {
-                        initSetup.currentCash = currentCash - cashDropped
-                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+//                        initSetup.currentCash = currentCash - cashDropped
+//                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     } else {
 
                     }
@@ -1034,10 +1041,10 @@ class HomeViewModel @Inject constructor(
                         val currentCash = initSetup!!.currentCash
                         if (promotion != null) {
                             val currentCashTmp = currentCash - promotion.paymentAmount!!
-                            initSetup.currentCash = currentCashTmp
+//                            initSetup.currentCash = currentCashTmp
                         } else {
                             val currentCashTmp = currentCash - _state.value.totalAmount
-                            initSetup.currentCash = currentCashTmp
+//                            initSetup.currentCash = currentCashTmp
                         }
                         baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     }
@@ -1100,7 +1107,12 @@ class HomeViewModel @Inject constructor(
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            if (dataHexString.contains("01,01,03,00,00,")) {
+            if (dataByteArray.size == 8) {
+                // Enable cash box
+                if (dataHexString == "01,02,03,00,00,00,00,00") {
+                    processingWhenCashBoxDisable(dataHexString)
+                }
+            } else if (dataHexString.contains("01,01,03,00,00,")) {
                 _numberRottenBoxBalance.value = -1
                 val byteToBalanceMap = mapOf(
                     0x01.toByte() to 1,
@@ -1126,22 +1138,22 @@ class HomeViewModel @Inject constructor(
                     0x15.toByte() to 21,
                     0x16.toByte() to 22,
                     0x17.toByte() to 23,
-                    0x18.toByte() to 23,
-                    0x19.toByte() to 24,
-                    0x1A.toByte() to 25,
-                    0x1B.toByte() to 26,
-                    0x1C.toByte() to 27,
-                    0x1D.toByte() to 28,
-                    0x1E.toByte() to 29,
-                    0x1F.toByte() to 30,
-                    0x20.toByte() to 31,
-                    0x21.toByte() to 32,
-                    0x22.toByte() to 33,
-                    0x23.toByte() to 34
+                    0x18.toByte() to 24,
+                    0x19.toByte() to 25,
+                    0x1A.toByte() to 26,
+                    0x1B.toByte() to 27,
+                    0x1C.toByte() to 28,
+                    0x1D.toByte() to 29,
+                    0x1E.toByte() to 30,
+                    0x1F.toByte() to 31,
+                    0x20.toByte() to 32,
+                    0x21.toByte() to 33,
+                    0x22.toByte() to 34,
+                    0x23.toByte() to 35,
                 )
                 val byteArray = hexStringToByteArray(dataHexString)
                 // Get the value from the map or default to 0 if not found
-                val numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], 0)
+                numberRottenBoxBalance = byteToBalanceMap.getOrDefault(byteArray[5], -1)
                 // Update the state
                 _numberRottenBoxBalance.value = numberRottenBoxBalance
             } else if (dataByteArray.size == 19) {
@@ -1189,25 +1201,80 @@ class HomeViewModel @Inject constructor(
             } else if (dataByteArray.size == 6) {
                 _setupCashBox.value = false
                 if (dataHexString == "01,00,03,00,01,03") {
+                    isSetupCashBoxEnableSuccess = true
+                    isSetupCashBoxReturnMoneySuccess = true
                     _setupCashBox.value = true
-                }
-            } else if (dataByteArray.size == 8) {
-                _setupCashBox.value = false
-                if (dataHexString == "01,02,03,00,00,00,00,00") {
-                    sendCommandCashBox(byteArrays.cbEnableType3456789)
                 }
             } else {
 //                logger.debug("xcbndtỷtyutrygjytj: $dataHexString")
             }
-
-
-            // Update the state
-//            _state.update { currentState ->
-//                currentState.copy(cashBoxData = byteArrayData)
-//            }
-
         } catch (e: Exception) {
             Logger.error("Error processing cash box data: ${e.message}", e)
+        }
+    }
+
+    private fun processingWhenCashBoxDisable(message: String) {
+        viewModelScope.launch {
+            isSetupCashBoxEnableSuccess = false
+            sendCommandCashBox(byteArrays.cbEnableType3456789)
+            delay(300)
+            if (isSetupCashBoxEnableSuccess) {
+                logger.debug("set cbEnableType3456789 success")
+            } else {
+                sendCommandCashBox(byteArrays.cbEnableType3456789)
+                delay(300)
+                if (isSetupCashBoxEnableSuccess) {
+                    logger.debug("set cbEnableType3456789 success")
+                } else {
+                    sendCommandCashBox(byteArrays.cbEnableType3456789)
+                    delay(300)
+                }
+            }
+            isSetupCashBoxRecyclingBillType4Success = false
+            sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
+            delay(300)
+            if (isSetupCashBoxRecyclingBillType4Success) {
+                logger.debug("set cbSetRecyclingBillType4 success")
+            } else {
+                sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
+                delay(300)
+                if (isSetupCashBoxRecyclingBillType4Success) {
+                    logger.debug("set cbSetRecyclingBillType4 success")
+                } else {
+                    sendCommandCashBox(byteArrays.cbSetRecyclingBillType4)
+                    delay(300)
+                }
+            }
+            isSetupCashBoxEscrowOnSuccess = false
+            sendCommandCashBox(byteArrays.cbEscrowOn)
+            delay(300)
+            if (isSetupCashBoxEscrowOnSuccess) {
+                logger.debug("set cbEscrowOn success")
+            } else {
+                sendCommandCashBox(byteArrays.cbEscrowOn)
+                delay(300)
+                if (isSetupCashBoxEscrowOnSuccess) {
+                    logger.debug("set cbEscrowOn success")
+                } else {
+                    sendCommandCashBox(byteArrays.cbEscrowOn)
+                    delay(300)
+                }
+            }
+            isSetupCashBoxNumberRecycleBill35Success = false
+            sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+            delay(300)
+            if (isSetupCashBoxNumberRecycleBill35Success) {
+                logger.debug("set cbSetNumberRecycleBill35 success")
+            } else {
+                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                delay(300)
+                if (isSetupCashBoxNumberRecycleBill35Success) {
+                    logger.debug("set cbSetNumberRecycleBill35 success")
+                } else {
+                    sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                    delay(300)
+                }
+            }
         }
     }
 
@@ -1951,7 +2018,6 @@ class HomeViewModel @Inject constructor(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-//                initSetup.currentCash = 50000
                 // Get list method payment
                 val listPaymentMethod: ArrayList<PaymentMethodResponse> =
                     baseRepository.getDataFromLocal(
@@ -1960,7 +2026,6 @@ class HomeViewModel @Inject constructor(
                     )!!
                 // Get list path ads
                 var listAds = homeRepository.getListVideoAdsFromLocal()
-//
                 if (listAds.isEmpty()) {
                     homeRepository.writeVideoAdsFromAssetToLocal(
                         context,
@@ -1968,18 +2033,6 @@ class HomeViewModel @Inject constructor(
                         "ads1.mp4",
                         pathFolderAds,
                     )
-//                    homeRepository.writeVideoAdsFromAssetToLocal(
-//                        context,
-//                        R.raw.ads2,
-//                        "ads2.mp4",
-//                        pathFolderAds,
-//                    )
-//                    homeRepository.writeVideoAdsFromAssetToLocal(
-//                        context,
-//                        R.raw.ads3,
-//                        "ads3.mp4",
-//                        pathFolderAds,
-//                    )
                     listAds = homeRepository.getListVideoAdsFromLocal()
                 }
                 // Get list path ads
@@ -2011,6 +2064,8 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
+
+//                initSetup.currentCash = 350000
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -2036,7 +2091,6 @@ class HomeViewModel @Inject constructor(
                 observePortData()
                 _setupCashBox.value = false
                 sendCommandCashBox(byteArrays.cbEnableType3456789)
-//                sendCommandCashBox(byteArrays.cbDisable)
                 delay(300)
                 if (_setupCashBox.value) {
                     logger.debug("set cbEnableType3456789 success")
@@ -2058,6 +2112,14 @@ class HomeViewModel @Inject constructor(
                     logger.debug("set cbEscrowOn success")
                 } else {
                     logger.debug("set cbEscrowOn fail")
+                }
+                _setupCashBox.value = false
+                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                delay(300)
+                if (_setupCashBox.value) {
+                    logger.debug("set cbSetNumberRecycleBill success")
+                } else {
+                    logger.debug("set cbSetNumberRecycleBill fail")
                 }
                 sendCommandVendingMachine(byteArrays.vmReadTemp)
             } catch (e: Exception) {
@@ -3163,10 +3225,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun withdrawalMoneyDebounced() {
+        debounceJob?.cancel()
+        debounceJob = viewModelScope.launch {
+            delay(1000)
+            withdrawalMoney()
+        }
+    }
+
     fun withdrawalMoney() {
         logger.info("withdrawalMoney")
         viewModelScope.launch {
             try {
+                _state.update { it.copy(isLoading = true) }
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
@@ -3179,28 +3250,37 @@ class HomeViewModel @Inject constructor(
                         0
                     }
                     if (numberCashNeedReturn > 0) {
+                        numberRottenBoxBalance = -1
                         sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
                         delay(300)
-                        if (_numberRottenBoxBalance.value != -1) {
-                            if (_numberRottenBoxBalance.value >= numberCashNeedReturn) {
-                                _returnMoneySuccess.value = false
-                                sendCommandCashBox(
-                                    getCreateByteArrayDispenseBill(
-                                        numberCashNeedReturn
-                                    )
-                                )
-                                delay(300)
-                                if(_returnMoneySuccess.value) {
-                                    initSetup.currentCash = currentCash - (numberCashNeedReturn * 10000)
-                                    _state.update { it.copy(initSetup = initSetup) }
-                                    baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                                    baseRepository.addNewDepositWithdrawLogToLocal(
-                                        machineCode = _state.value.initSetup!!.vendCode,
-                                        transactionType = "widthdraw",
-                                        denominationType = 10000,
-                                        quantity = numberCashNeedReturn,
-                                        currentBalance = currentCash,
-                                    )
+                        logger.debug("========= numberRottenBoxBalance: $numberRottenBoxBalance")
+                        if (numberRottenBoxBalance != -1) {
+                            logger.debug("========= numberRottenBoxBalance =! 1")
+                            logger.debug("========= numberCashNeedReturn: $numberCashNeedReturn")
+                            if (numberRottenBoxBalance >= numberCashNeedReturn) {
+                                isSetupCashBoxReturnMoneySuccess = false
+                                val byteArrayTmp = getByteArrayDispenseBill(numberCashNeedReturn)
+                                if(byteArrayTmp!=null) {
+                                    sendCommandCashBox(byteArrayTmp)
+                                    delay(300)
+                                    if(isSetupCashBoxReturnMoneySuccess) {
+                                        initSetup.currentCash = currentCash - (numberCashNeedReturn * 10000)
+                                        _state.update { it.copy(initSetup = initSetup) }
+                                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                                        baseRepository.addNewDepositWithdrawLogToLocal(
+                                            machineCode = _state.value.initSetup!!.vendCode,
+                                            transactionType = "widthdraw",
+                                            denominationType = 10000,
+                                            quantity = numberCashNeedReturn,
+                                            currentBalance = currentCash,
+                                        )
+                                    } else {
+                                        showDialogWarning("Thối tiền không thành công, xin vui lòng thử lại sau!")
+                                        baseRepository.addNewErrorLogToLocal(
+                                            machineCode = _state.value.initSetup!!.vendCode,
+                                            errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney()",
+                                        )
+                                    }
                                 } else {
                                     showDialogWarning("Thối tiền không thành công, xin vui lòng thử lại sau!")
                                     baseRepository.addNewErrorLogToLocal(
@@ -3208,29 +3288,23 @@ class HomeViewModel @Inject constructor(
                                         errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney()",
                                     )
                                 }
-
-//                                delay(300)
-//                                if(_setupCashBox.value) {
-//                                    logger.debug("Ok")
-//                                } else {
-//                                    logger.debug("Lỗi")
-//                                }
                             } else {
                                 showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
                             }
                         } else {
-                            logger.debug("Lỗi")
+                            logger.debug("bill disable")
                         }
                     } else {
-                        showDialogWarning("Máy chỉ có thể thối tền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
+                        showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
                     }
-                    logger.debug("Number cash return: $numberCashNeedReturn")
                 }
             } catch (e: Exception) {
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
                     errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney(): ${e.message}",
                 )
+
+            } finally {
                 _state.update { it.copy(isLoading = false) }
             }
         }
@@ -3250,6 +3324,47 @@ class HomeViewModel @Inject constructor(
         val checksum = (0x1E - (number - 1)).toByte()
 
         return byteArrayOf(byte1, byte2, byte3, byte4, byte5, byte6, checksum)
+    }
+
+    fun getByteArrayDispenseBill(number: Int): ByteArray? {
+        when(number) {
+            1 -> return byteArrays.cbDispenseBill1
+            2 -> return byteArrays.cbDispenseBill2
+            3 -> return byteArrays.cbDispenseBill3
+            4 -> return byteArrays.cbDispenseBill4
+            5 -> return byteArrays.cbDispenseBill5
+            6 -> return byteArrays.cbDispenseBill6
+            7 -> return byteArrays.cbDispenseBill7
+            8 -> return byteArrays.cbDispenseBill8
+            9 -> return byteArrays.cbDispenseBill9
+            10 -> return byteArrays.cbDispenseBill10
+            11 -> return byteArrays.cbDispenseBill11
+            12 -> return byteArrays.cbDispenseBill12
+            13 -> return byteArrays.cbDispenseBill13
+            14 -> return byteArrays.cbDispenseBill14
+            15 -> return byteArrays.cbDispenseBill15
+            16 -> return byteArrays.cbDispenseBill16
+            17 -> return byteArrays.cbDispenseBill17
+            18 -> return byteArrays.cbDispenseBill18
+            19 -> return byteArrays.cbDispenseBill19
+            20 -> return byteArrays.cbDispenseBill20
+            21 -> return byteArrays.cbDispenseBill21
+            22 -> return byteArrays.cbDispenseBill22
+            23 -> return byteArrays.cbDispenseBill23
+            24 -> return byteArrays.cbDispenseBill24
+            25 -> return byteArrays.cbDispenseBill25
+            26 -> return byteArrays.cbDispenseBill26
+            27 -> return byteArrays.cbDispenseBill27
+            28 -> return byteArrays.cbDispenseBill28
+            29 -> return byteArrays.cbDispenseBill29
+            30 -> return byteArrays.cbDispenseBill30
+            31 -> return byteArrays.cbDispenseBill31
+            32 -> return byteArrays.cbDispenseBill32
+            33 -> return byteArrays.cbDispenseBill33
+            34 -> return byteArrays.cbDispenseBill34
+            35 -> return byteArrays.cbDispenseBill35
+            else -> return null
+        }
     }
 
     fun productDispenseNotSensor(

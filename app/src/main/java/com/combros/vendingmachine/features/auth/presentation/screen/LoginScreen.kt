@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.combros.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.combros.vendingmachine.common.base.presentation.composables.CustomButtonComposable
 import com.combros.vendingmachine.common.base.presentation.composables.LoadingDialogComposable
 import com.combros.vendingmachine.common.base.presentation.composables.TitleAndEditTextComposable
@@ -41,12 +43,15 @@ internal fun LoginScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.loadInitData()
+    }
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
 
     // Launch a coroutine that checks for inactivity
     LaunchedEffect(lastInteractionTime) {
         while (true) {
-            if (System.currentTimeMillis() - lastInteractionTime > 60000) { // 60 seconds
+            if (System.currentTimeMillis() - lastInteractionTime > 120000) { // 60 seconds
                 navController.navigate(Screens.HomeScreenRoute.route) {
                     popUpTo(Screens.LoginScreenRoute.route) {
                         inclusive = true
@@ -86,10 +91,17 @@ fun LoginContent(
     navController: NavHostController,
     onClick: () -> Unit,
 ) {
-    var inputUsername by remember { mutableStateOf("admin") }
-    var inputPassword by remember { mutableStateOf("AVF@1234") }
+//    var inputUsername by remember { mutableStateOf("admin") }
+//    var inputPassword by remember { mutableStateOf("AVF@1234") }
+    var inputUsername by remember { mutableStateOf("") }
+    var inputPassword by remember { mutableStateOf("") }
+    var vendingMachineCode by remember { mutableStateOf("") }
 
     val context: Context = LocalContext.current
+
+    LaunchedEffect(state.initSetup) {
+        vendingMachineCode = state.initSetup?.vendCode ?: ""
+    }
 
     LoadingDialogComposable(isLoading = state.isLoading)
 //    WarningDialogComposable(
@@ -97,21 +109,28 @@ fun LoginContent(
 //        titleDialogWarning = state.titleDialogWarning,
 //        onClickClose = { viewModel.hideDialogWarning() },
 //    )
-    Scaffold(modifier = Modifier.fillMaxSize().fillMaxSize().pointerInput(Unit) {
-        detectTapGestures(
-            onTap = {
-                onClick()
-            }
-        )
-    }) {
+    Scaffold(modifier = Modifier
+        .fillMaxSize()
+        .fillMaxSize()
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    onClick()
+                }
+            )
+        }) {
         Column(
-            modifier = Modifier.padding(20.dp).fillMaxWidth().fillMaxSize().pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        onClick()
-                    }
-                )
-            },
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth()
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            onClick()
+                        }
+                    )
+                },
             content = {
                 CustomButtonComposable(
                     title = "BACK",
@@ -124,6 +143,22 @@ fun LoginContent(
                 ) { navController.popBackStack() }
 
                 TitleTextComposable(title = "LOGIN TO SETTINGS MACHINE")
+                if(state.initSetup!=null) {
+                    BodyTextComposable(title = "Vending machine code: ${state.initSetup.vendCode}")
+                } else {
+                    BodyTextComposable(title = "Vending machine code: is empty")
+
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+//                TitleAndEditTextComposable(title = "Vending machine code") {
+//                    onClick()
+////                    vendingMachineCode = it
+//                    if(state.initSetup!=null) {
+//                        state.initSetup.vendCode
+//                    } else {
+//                        ""
+//                    }
+//                }
                 TitleAndEditTextComposable(title = "Enter username") {
                     onClick()
                     inputUsername = it

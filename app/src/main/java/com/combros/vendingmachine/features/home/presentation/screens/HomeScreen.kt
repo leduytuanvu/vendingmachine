@@ -100,14 +100,9 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-            delay(1000)
+            delay(750)
             viewModel.pollStatus()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(3500)
+            delay(750)
             viewModel.getBillType()
         }
     }
@@ -581,7 +576,7 @@ fun HomeContent(
                                             .clickable {
                                                 checkTouch = 0
                                                 if (state.initSetup.withdrawalAllowed == "ON") {
-                                                    viewModel.withdrawalMoney()
+                                                    viewModel.withdrawalMoneyDebounced()
                                                 }
                                             },
                                         verticalArrangement = Arrangement.Center,
