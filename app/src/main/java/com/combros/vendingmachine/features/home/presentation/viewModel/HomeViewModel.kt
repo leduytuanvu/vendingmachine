@@ -625,6 +625,12 @@ class HomeViewModel @Inject constructor(
                                         listSlotDropSuccess.add(slot)
                                     }
                                     homeRepository.minusInventory(slot.slot)
+
+                                    if(_state.value.nameMethodPayment == "cash") {
+                                        initSetupTmp!!.currentCash -= item.price
+                                        baseRepository.writeDataToLocal(initSetupTmp, pathFileInitSetup)
+                                    }
+                                    //
                                 }
 
                                 DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
@@ -720,6 +726,11 @@ class HomeViewModel @Inject constructor(
                                                             listSlotDropSuccess.add(slot)
                                                         }
                                                         homeRepository.minusInventory(slot.slot)
+
+                                                        if(_state.value.nameMethodPayment == "cash") {
+                                                            initSetupTmp!!.currentCash -= item.price
+                                                            baseRepository.writeDataToLocal(initSetupTmp, pathFileInitSetup)
+                                                        }
                                                         break
                                                     }
 
@@ -1000,24 +1011,24 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 var numberProductDropped = 0
-                val initSetup = _state.value.initSetup
+//                val initSetup = _state.value.initSetup
                 val promotion = _state.value.promotion
                 for (item in listSlotDropSuccess) {
                     numberProductDropped += item.inventory
                 }
                 if (listProductDropInCart.size > numberProductDropped) {
-                    var cashDropped = 0
+//                    var cashDropped = 0
                     var titleWarning = ""
-                    val currentCash = initSetup!!.currentCash
-                    for (item in listSlotDropSuccess) {
-                        cashDropped += item.inventory * item.price
-                    }
-                    if (_state.value.nameMethodPayment == "cash") {
-//                        initSetup.currentCash = currentCash - cashDropped
-//                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                    } else {
-
-                    }
+//                    val currentCash = initSetup!!.currentCash
+//                    for (item in listSlotDropSuccess) {
+//                        cashDropped += item.inventory * item.price
+//                    }
+//                    if (_state.value.nameMethodPayment == "cash") {
+////                        initSetup.currentCash = currentCash - cashDropped
+////                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+//                    } else {
+//
+//                    }
                     if (_state.value.nameMethodPayment == "cash") {
                         titleWarning =
                             "Có ${listProductDropInCart.size - numberProductDropped} sản phẩm rớt không thành công! Vui lòng chọn và mua lại sản phẩm khác hoặc bấm nút \"Hoàn Tiền\". Chi tiết liên hệ 1900.99.99.80"
@@ -1030,7 +1041,7 @@ class HomeViewModel @Inject constructor(
                             isShowWaitForDropProduct = false,
                             listSlotInCard = arrayListOf(),
                             listSlotInHome = listSlotShowInHome,
-                            initSetup = initSetup,
+                            initSetup = initSetupTmp,
                             isWarning = true,
                             titleDialogWarning = titleWarning,
                             listSlot = listSlot,
@@ -1038,15 +1049,15 @@ class HomeViewModel @Inject constructor(
                     }
                 } else {
                     if (_state.value.nameMethodPayment == "cash") {
-                        val currentCash = initSetup!!.currentCash
+//                        val currentCash = initSetup!!.currentCash
                         if (promotion != null) {
-                            val currentCashTmp = currentCash - promotion.paymentAmount!!
+//                            val currentCashTmp = currentCash - promotion.paymentAmount!!
 //                            initSetup.currentCash = currentCashTmp
                         } else {
-                            val currentCashTmp = currentCash - _state.value.totalAmount
+//                            val currentCashTmp = currentCash - _state.value.totalAmount
 //                            initSetup.currentCash = currentCashTmp
                         }
-                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+//                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                     }
                     _state.update {
                         it.copy (
@@ -1059,7 +1070,7 @@ class HomeViewModel @Inject constructor(
                             isShowWaitForDropProduct = false,
                             listSlotInCard = arrayListOf(),
                             listSlotInHome = listSlotShowInHome,
-                            initSetup = initSetup,
+                            initSetup = initSetupTmp,
                             listSlot = listSlot,
                             promotion = null,
                         )
