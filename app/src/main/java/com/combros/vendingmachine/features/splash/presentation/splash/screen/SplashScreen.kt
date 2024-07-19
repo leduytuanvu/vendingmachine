@@ -37,6 +37,7 @@ fun SplashContent(state: SplashViewState) {
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
+//            .background(Color(0XFFF37024))
             .background(Color(0xFFCB1A17))
     ) { paddingValues ->
         Column(

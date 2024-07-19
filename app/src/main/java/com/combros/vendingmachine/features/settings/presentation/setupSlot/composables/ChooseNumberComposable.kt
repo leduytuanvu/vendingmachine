@@ -66,9 +66,11 @@ fun ChooseNumberComposable(
                                         if(index+1 > slot!!.capacity) {
                                             Color.Gray
                                         } else {
+//                                            Color(0XFFF37024)
                                             Color(0xFFE72B28)
                                         }
                                     } else {
+//                                        Color(0XFFF37024)
                                         Color(0xFFE72B28)
                                     }
                                 ) {

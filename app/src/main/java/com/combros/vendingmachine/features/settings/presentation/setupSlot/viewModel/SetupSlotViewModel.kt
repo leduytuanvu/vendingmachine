@@ -1139,7 +1139,7 @@ class SetupSlotViewModel @Inject constructor(
             }
             if(_isRotate.value) {
                 logger.debug("data receive from vending machine: $dataHexString")
-                if(dataHexString!="00,5D,00,00,5D" && dataHexString!="00,5D,01,00,5E" && dataHexString!="00,5C,00,00,5C") {
+                if(dataHexString=="00,5D,01,00,5E" || dataHexString=="00,5C,00,00,5C") {
                     logger.debug("status door")
                 } else {
                     val result = when (dataHexString) {

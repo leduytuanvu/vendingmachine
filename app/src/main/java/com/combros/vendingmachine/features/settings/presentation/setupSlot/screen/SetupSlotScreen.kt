@@ -721,6 +721,7 @@ fun SetupSlotContent(
                                                         val slotNext = state.listSlot[index+1]
                                                         if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
                                                             CustomButtonComposable(
+                                                                backgroundColor = Color.Gray,
                                                                 title = "MERGE SLOT",
                                                                 titleAlignment = TextAlign.Center,
                                                                 cornerRadius = 4.dp,

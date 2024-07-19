@@ -188,7 +188,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingUsbVendingMachine(512) { data ->
-//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
                             val receivedText = byteArrayToHexString(data)
@@ -227,7 +227,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingVendingMachine(512) { data ->
-//                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
+                        Logger.info("-------> data from vending machine: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromVendingMachine.emit(data)
                             val receivedText = byteArrayToHexString(data)
@@ -265,7 +265,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
-                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
+//                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromCashBox.emit(data)
                         }
@@ -280,7 +280,7 @@ class PortConnectionDatasource {
 
     // Send command vending machine
     fun sendCommandVendingMachine(byteArray: ByteArray) : Int {
-//        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
+        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortVendingMachine(byteArray)
     }
 

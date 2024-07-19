@@ -45,7 +45,8 @@ fun DatetimeHomeComposable(
         modifier = Modifier
             .height(30.dp)
             .fillMaxWidth()
-            .background(Color(0xFFA31412)),
+//            .background(Color(0XFFDE5F16)),
+        .background(Color(0xFFA31412)),
         Arrangement.Center,
         Alignment.CenterVertically,
     ) {

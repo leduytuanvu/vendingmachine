@@ -54,7 +54,8 @@ fun InformationHomeComposable(
         modifier = Modifier
             .height(80.dp)
             .fillMaxWidth()
-            .background(Color(0xFFCB1A17)),
+//            .background(Color(0XFFF37024)),
+        .background(Color(0xFFCB1A17)),
         Arrangement.Center,
         Alignment.CenterVertically,
     ) {

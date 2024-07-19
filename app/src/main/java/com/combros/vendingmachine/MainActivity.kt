@@ -45,21 +45,42 @@ import androidx.core.content.ContextCompat
 import com.combros.vendingmachine.core.util.pathFileLogServer
 import java.io.File
 import android.os.Process
+import android.view.View
+import androidx.core.view.WindowCompat
+import com.combros.vendingmachine.common.base.domain.repository.BaseRepository
 import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var portConnectionDataSource: PortConnectionDatasource
+    @Inject
+    lateinit var baseRepository: BaseRepository
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Set content to fullscreen
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Hide system UI
+        hideSystemUI()
+
         val localStorageDatasource = LocalStorageDatasource()
         val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
         if(initSetup!=null) {
             initSetup.autoStartApplication = "ON"
+//            if(initSetup.currentCash > 0) {
+//                baseRepository.addNewDepositWithdrawLogToLocal(
+//                    machineCode = initSetup.vendCode,
+//                    transactionType = "withdraw",
+//                    denominationType = initSetup.currentCash,
+//                    quantity = 1,
+//                    currentBalance = 0,
+//                )
+//                initSetup.currentCash = 0
+//            }
             localStorageDatasource.writeData(pathFileInitSetup, localStorageDatasource.gson.toJson(initSetup))
         }
 
@@ -113,6 +134,16 @@ class MainActivity : ComponentActivity() {
                     Navigation(navController)
                 }
             }
+        }
+
+    }
+
+
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemUI()
         }
     }
 
@@ -261,4 +292,16 @@ class BootReceiver : BroadcastReceiver() {
             }
         }
     }
+}
+
+@Suppress("DEPRECATION")
+fun Activity.hideSystemUI() {
+    window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
 }
