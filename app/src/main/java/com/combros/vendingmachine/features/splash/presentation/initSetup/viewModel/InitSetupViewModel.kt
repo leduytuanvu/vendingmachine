@@ -160,6 +160,7 @@ class InitSetupViewModel @Inject constructor(
                                 currentCash = 0,
                                 timeoutPaymentByCash = "60",
                                 timeoutPaymentByQrCode = "60",
+                                timeoutRemoveCart = "600",
                                 autoResetAppEveryday = "OFF",
                                 timeResetOnEveryDay = "00:00",
                                 timeStartSession = "",

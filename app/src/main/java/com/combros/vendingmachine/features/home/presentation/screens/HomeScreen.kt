@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.combros.vendingmachine.MainActivity
 import com.combros.vendingmachine.R
 import com.combros.vendingmachine.common.base.presentation.composables.BodyTextComposable
 import com.combros.vendingmachine.common.base.presentation.composables.ConfirmDialogComposable
@@ -86,6 +87,7 @@ import com.combros.vendingmachine.features.home.presentation.composables.Informa
 import com.combros.vendingmachine.features.home.presentation.composables.PutMoneyComposable
 import com.combros.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.combros.vendingmachine.features.home.presentation.viewState.HomeViewState
+import com.combros.vendingmachine.hideSystemUI
 import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -109,8 +111,9 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000)
+            delay(10000)
             if (!state.isVendingMachineBusy) {
+                Logger.debug("call door")
                 viewModel.readDoor()
             }
         }
@@ -159,6 +162,15 @@ fun HomeContent(
             checkTouch = 0
         }
     }
+
+//    // Side-effect to reapply the system UI flags
+//    val activity = LocalContext.current as? MainActivity
+//    LaunchedEffect(state.isLoading) {
+//        if (state.isLoading) {
+//            activity?.hideSystemUI()
+//        }
+//    }
+
     if (state.initSetup != null) {
         if (!state.isShowBigAds && !state.isShowWaitForDropProduct) {
             checkTouch = 0
@@ -234,7 +246,8 @@ fun HomeContent(
                         modifier = Modifier
                             .height(30.dp)
                             .fillMaxWidth()
-                            .background(Color(0xFFA31412)),
+                            .background(Color(0XFFDE5F16)),
+//                        .background(Color(0xFFA31412)),
                         Arrangement.Center,
                         Alignment.CenterVertically,
                     ) {
@@ -263,7 +276,8 @@ fun HomeContent(
                         modifier = Modifier
                             .height(80.dp)
                             .fillMaxWidth()
-                            .background(Color(0xFFCB1A17)),
+//                            .background(Color(0XFFF37024)),
+                        .background(Color(0xFFCB1A17)),
                         Arrangement.Center,
                         Alignment.CenterVertically,
                     ) {
@@ -375,15 +389,15 @@ fun HomeContent(
                                                 val imageModifier = Modifier
                                                     .width(150.dp)
                                                     .height(150.dp)
-                                                    .clickable(
-                                                        onClick = {
-                                                            val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
-                                                            if(indexCheck == -1) {
-                                                                viewModel.addProduct(slot)
-                                                                Logger.debug("${state.listSlotInCard}")
-                                                            }
-                                                        }
-                                                    )
+//                                                    .clickable(
+//                                                        onClick = {
+//                                                            val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
+//                                                            if(indexCheck == -1) {
+//                                                                viewModel.addProduct(slot)
+//                                                                Logger.debug("${state.listSlotInCard}")
+//                                                            }
+//                                                        }
+//                                                    )
                                                 val imagePainter =
                                                     if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                             pathFolderImageProduct + "/${slot.productCode}.png"
@@ -419,6 +433,7 @@ fun HomeContent(
                                                     title = slot.price.toVietNamDong(),
                                                     fontSize = 19.sp,
                                                     paddingBottom = 20.dp,
+//                                                    color = Color(0XFFF37024),
                                                     color = Color(0xFFE72B28),
                                                     fontWeight = FontWeight.Bold,
                                                 )
@@ -432,6 +447,7 @@ fun HomeContent(
                                                             .height(60.dp)
                                                             .border(
                                                                 width = 0.dp,
+//                                                                color = Color(0XFFF37024),
                                                                 color = Color(0xFFE72B28),
                                                                 shape = RoundedCornerShape(50.dp)
                                                             ),
@@ -449,6 +465,7 @@ fun HomeContent(
                                                                     .width(30.dp)
                                                                     .clickable {
                                                                         viewModel.minusProductDebounced(slot)
+//                                                                        viewModel.minusProduct(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
                                                                 painter = painterResource(id = R.drawable.image_minus),
@@ -468,6 +485,7 @@ fun HomeContent(
                                                                     .width(30.dp)
                                                                     .clickable {
                                                                         viewModel.plusProductDebounced(slot)
+//                                                                        viewModel.plusProduct(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
                                                                 painter = painterResource(id = R.drawable.image_plus),
@@ -479,15 +497,18 @@ fun HomeContent(
                                                     Button(
                                                         onClick = {
                                                             viewModel.addProductDebounced(slot)
+//                                                            viewModel.addProduct(slot)
                                                         },
                                                         modifier = Modifier
                                                             .height(60.dp)
                                                             .border(
                                                                 width = 0.dp,
+//                                                                color = Color(0XFFF37024),
                                                                 color = Color(0xFFE72B28),
                                                                 shape = RoundedCornerShape(50.dp)
                                                             ),
                                                         colors = ButtonDefaults.buttonColors(
+//                                                            Color(0XFFF37024),
                                                             Color(0xFFE72B28),
                                                             contentColor = Color.Black
                                                         ),
@@ -576,6 +597,7 @@ fun HomeContent(
                                             .clickable {
                                                 checkTouch = 0
                                                 if (state.initSetup.withdrawalAllowed == "ON") {
+//                                                    viewModel.paymentConfirmation()
                                                     viewModel.withdrawalMoneyDebounced()
                                                 }
                                             },
@@ -661,6 +683,7 @@ fun HomeContent(
                                     Text("(Số lượng ${state.slotAtBottom.inventory})")
                                     Text(
                                         state.slotAtBottom.price.toVietNamDong(),
+//                                        color = Color(0XFFF37024),
                                         color = Color(0xFFE72B28),
                                         fontWeight = FontWeight.Bold
                                     )
@@ -668,15 +691,18 @@ fun HomeContent(
                                 Spacer(modifier = Modifier.weight(1f))
                                 Button(
                                     onClick = { viewModel.showPaymentDebounced() },
+//                                    onClick = { viewModel.showPayment() },
                                     modifier = Modifier
                                         .height(80.dp)
                                         .wrapContentWidth()
                                         .border(
                                             width = 0.dp,
+//                                            color = Color(0XFFF37024),
                                             color = Color(0xFFE72B28),
                                             shape = RoundedCornerShape(10.dp)
                                         ),
                                     colors = ButtonDefaults.buttonColors(
+//                                        Color(0XFFF37024),
                                         Color(0xFFE72B28),
                                         contentColor = Color.Black
                                     ),
@@ -820,6 +846,9 @@ fun HomeContent(
                                                             viewModel.minusProductDebounced(
                                                                 item
                                                             )
+//                                                            viewModel.minusProduct(
+//                                                                item
+//                                                            )
                                                         },
                                                     contentAlignment = Alignment.Center,
                                                 ) {
@@ -855,6 +884,9 @@ fun HomeContent(
                                                             viewModel.plusProductDebounced(
                                                                 item
                                                             )
+//                                                            viewModel.plusProduct(
+//                                                                item
+//                                                            )
                                                         },
                                                     contentAlignment = Alignment.Center,
                                                 ) {
@@ -871,6 +903,7 @@ fun HomeContent(
                                                 Spacer(modifier = Modifier.weight(1f))
                                                 Text(
                                                     (item.price * item.inventory).toVietNamDong(),
+//                                                    color = Color(0XFFF37024),
                                                     color = Color(0xFFE72B28),
                                                     fontWeight = FontWeight.Bold
                                                 )
@@ -929,6 +962,7 @@ fun HomeContent(
                                     fontWeight = FontWeight.Bold,
                                 ) {
                                     viewModel.applyPromotionDebounced(text)
+//                                    viewModel.applyPromotion(text)
                                     focusManager.clearFocus()
                                 }
                             }
@@ -1087,7 +1121,7 @@ fun HomeContent(
                                     fontSize = 20.sp,
                                     paddingTop = 12.dp,
                                 ) {
-                                    viewModel.paymentConfirmation()
+                                    viewModel.paymentConfirmationDebounced()
                                 }
                             }
                         }
@@ -1122,8 +1156,8 @@ fun HomeContent(
                         initSetup = state.initSetup!!,
                         countDownPaymentByCash = state.countDownPaymentByCash,
                         totalAmount = state.totalAmount,
-                        onClickChooseAnotherMethodPayment = { viewModel.chooseAnotherMethodPayment() },
-                        onClickBackInPayment = { viewModel.backInPayment() }
+                        onClickChooseAnotherMethodPayment = { viewModel.chooseAnotherMethodPaymentDebounced() },
+                        onClickBackInPayment = { viewModel.backInPaymentDebounced() }
                     )
                 }
             }
@@ -1273,6 +1307,7 @@ fun HomeContent(
                                 modifier = Modifier.padding(bottom = 34.dp),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
+//                                color = Color(0XFFF37024),
                                 color = Color(0xFFE72B28),
                             )
                         }

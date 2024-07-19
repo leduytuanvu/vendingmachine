@@ -556,6 +556,20 @@ class SetupPaymentViewModel @Inject constructor(
         }
     }
 
+    fun resetCashBoxx() {
+        viewModelScope.launch {
+            try {
+                portConnectionDatasource.sendCommandCashBox(ByteArrays().cbReset)
+            } catch (e: Exception) {
+                logger.error("dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}")
+//                baseRepository.addNewErrorLogToLocal(
+//                    machineCode = _state.value.initSetup!!.vendCode,
+//                    errorContent = "dispensed one fail in HomeViewModel/dispensedOne(): ${e.message}",
+//                )
+            }
+        }
+    }
+
     fun stack() {
         viewModelScope.launch {
             try {

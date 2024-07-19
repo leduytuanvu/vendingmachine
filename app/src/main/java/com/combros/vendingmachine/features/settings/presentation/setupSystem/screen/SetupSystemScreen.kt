@@ -253,6 +253,7 @@ fun SetupSystemMainContentComposable(
     var selectedItemDropSensor by remember { mutableStateOf(AnnotatedString("ON")) }
     var selectedItemInchingMode by remember { mutableStateOf(AnnotatedString("0")) }
     var selectedItemTimeJumpToAdsScreen by remember { mutableStateOf(AnnotatedString("60s")) }
+    var selectedItemTimeHideCart by remember { mutableStateOf(AnnotatedString("600s")) }
     var selectedItemGlassHeatingMode by remember { mutableStateOf(AnnotatedString("ON")) }
     var selectedItemBigAds by remember { mutableStateOf(AnnotatedString("ON")) }
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -297,6 +298,7 @@ fun SetupSystemMainContentComposable(
         selectedItemDropSensor = AnnotatedString(state.initSetup?.dropSensor ?: "ON")
         selectedItemInchingMode = AnnotatedString(state.initSetup?.inchingMode ?: "0")
         selectedItemTimeJumpToAdsScreen = AnnotatedString(if(state.initSetup?.timeoutJumpToBigAdsScreen!=null) "${state.initSetup.timeoutJumpToBigAdsScreen}s" else "60s")
+        selectedItemTimeHideCart = AnnotatedString(if(state.initSetup?.timeoutRemoveCart!=null) "${state.initSetup.timeoutRemoveCart}s" else "600s")
         selectedItemGlassHeatingMode = AnnotatedString(state.initSetup?.glassHeatingMode ?: "ON")
         selectedItemBigAds = AnnotatedString(state.initSetup?.fullScreenAds ?: "ON")
         partsTurnOnLight = if (state.initSetup?.timeTurnOnLight != null) state.initSetup.timeTurnOnLight.split(":") else listOf("0", "0")
@@ -752,6 +754,41 @@ fun SetupSystemMainContentComposable(
                 ) {
                     onClick()
                     viewModel.updateTimeJumpToAdsScreenInLocal(selectedItemTimeJumpToAdsScreen.toString().substringBefore("s"))
+                }
+
+                BodyTextComposable(title = "Time hide cart", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("60s"),
+                    AnnotatedString("120s"),
+                    AnnotatedString("180s"),
+                    AnnotatedString("240s"),
+                    AnnotatedString("300s"),
+                    AnnotatedString("360s"),
+                    AnnotatedString("420s"),
+                    AnnotatedString("480s"),
+                    AnnotatedString("540s"),
+                    AnnotatedString("600s"),
+                    AnnotatedString("660s"),
+                    AnnotatedString("720s"),
+                    AnnotatedString("780s"),
+                    AnnotatedString("840s"),
+                    AnnotatedString("900s"),
+                    AnnotatedString("960s"),
+                ), selectedItem = selectedItemTimeHideCart, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedItemTimeHideCart = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.updateTimeHideCartInLocal(selectedItemTimeHideCart.toString().substringBefore("s"))
                 }
 
                 BodyTextComposable(title = "Glass heating mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)

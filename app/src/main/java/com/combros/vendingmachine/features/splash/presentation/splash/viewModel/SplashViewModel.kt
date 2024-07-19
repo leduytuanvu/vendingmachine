@@ -65,6 +65,21 @@ class SplashViewModel
                         val minuteReset = partsTimeResetApp[1].toInt()
                         scheduleDailyTask("ResetAppTask", hourReset, minuteReset)
 
+                        if(initSetup.currentCash > 0) {
+                            baseRepository.addNewDepositWithdrawLogToLocal(
+                                machineCode = initSetup.vendCode,
+                                transactionType = "withdraw",
+                                denominationType = initSetup.currentCash,
+                                quantity = 1,
+                                currentBalance = 0,
+                            )
+                            initSetup.currentCash = 0
+                            baseRepository.writeDataToLocal(
+                                data = initSetup,
+                                path = pathFileInitSetup,
+                            )
+                        }
+
                         navController.navigate(Screens.HomeScreenRoute.route) {
                             popUpTo(Screens.SplashScreenRoute.route) {
                                 inclusive = true

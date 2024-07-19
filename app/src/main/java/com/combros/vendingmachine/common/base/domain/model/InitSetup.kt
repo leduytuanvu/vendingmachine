@@ -30,6 +30,7 @@ data class InitSetup (
     var timeoutJumpToBigAdsScreen: String,
     var timeoutPaymentByCash: String,
     var timeoutPaymentByQrCode: String,
+    var timeoutRemoveCart: String,
     var timeClosingSession: String,
     var timeStartSession: String,
     var numberSlot: Int,

@@ -325,7 +325,8 @@ class BaseRepositoryImpl @Inject constructor(
         transactionType: String,
         denominationType: Int,
         quantity: Int,
-        currentBalance: Int
+        currentBalance: Int,
+        status: String,
     ) {
         try {
             val logDepositWithdraw = LogDepositWithdraw(
@@ -335,6 +336,7 @@ class BaseRepositoryImpl @Inject constructor(
                 quantity = quantity,
                 currentBalance = currentBalance,
                 synTime = LocalDateTime.now().toDateTimeString(),
+                status = status,
                 isSent = false,
             )
             var listLogDepositWithdraw = arrayListOf<LogDepositWithdraw>()

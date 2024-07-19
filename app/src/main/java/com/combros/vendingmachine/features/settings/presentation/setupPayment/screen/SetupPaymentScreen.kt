@@ -444,6 +444,18 @@ fun SetupPaymentContent(
                     viewModel.transferToCashBox()
                 }
 
+                CustomButtonComposable(
+                    title = "RESET CASH BOX",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 10.dp,
+                ) {
+                    viewModel.resetCashBoxx()
+                }
+
 //                CustomButtonComposable(
 //                    title = "on",
 //                    wrap = true,
