@@ -1387,6 +1387,7 @@ class HomeViewModel @Inject constructor(
                     transactionType = "deposit",
                     denominationType = cash,
                     currentBalance = initSetup.currentCash,
+                    status = "true",
                 )
                 initSetup.currentCash += cash
                 baseRepository.writeDataToLocal(
@@ -1658,6 +1659,7 @@ class HomeViewModel @Inject constructor(
                                     denominationType = item.denominationType.toString(),
                                     quantity = item.quantity.toString(),
                                     currentBalance = item.currentBalance.toString(),
+                                    status = item.status.toString(),
                                     synTime = item.synTime,
                                 )
                                 try {
@@ -1843,6 +1845,7 @@ class HomeViewModel @Inject constructor(
                                 denominationType = item.denominationType.toString(),
                                 quantity = item.quantity.toString(),
                                 currentBalance = item.currentBalance.toString(),
+                                status = item.status.toString(),
                                 synTime = item.synTime,
                             )
                             try {
@@ -3548,6 +3551,7 @@ class HomeViewModel @Inject constructor(
                                         denominationType = 10000,
                                         quantity = numberCashNeedReturn,
                                         currentBalance = currentCash,
+                                        status = "true",
                                     )
                                 } else {
                                     showDialogWarning("Thối tiền thất bại. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")

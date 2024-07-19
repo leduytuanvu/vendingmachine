@@ -10,4 +10,5 @@ data class DepositAndWithdrawMoneyRequest(
     @SerializedName("quantity") val quantity: String,
     @SerializedName("current_balance") val currentBalance: String,
     @SerializedName("syn_time") val synTime: String,
+    @SerializedName("status") val status: String,
 )

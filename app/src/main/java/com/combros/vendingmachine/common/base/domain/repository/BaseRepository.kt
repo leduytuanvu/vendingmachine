@@ -61,6 +61,7 @@ interface BaseRepository {
         denominationType: Int,
         quantity: Int = 1,
         currentBalance: Int,
+        status: String,
     )
     suspend fun addNewUpdateInventoryToLocal(
         machineCode: String,
