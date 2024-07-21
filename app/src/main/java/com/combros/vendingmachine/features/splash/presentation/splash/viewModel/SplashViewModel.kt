@@ -71,6 +71,7 @@ class SplashViewModel
                                 transactionType = "withdraw",
                                 denominationType = initSetup.currentCash,
                                 quantity = 1,
+                                status = "unknown",
                                 currentBalance = 0,
                             )
                             initSetup.currentCash = 0
