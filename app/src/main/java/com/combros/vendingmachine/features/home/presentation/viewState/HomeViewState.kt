@@ -9,6 +9,7 @@ import com.combros.vendingmachine.features.settings.domain.model.Slot
 
 data class HomeViewState (
     val isLoading: Boolean = false,
+    val isReturning: Boolean = false,
     val isVendingMachineBusy: Boolean = false,
     val isShowAds: Boolean = true,
     val isShowCart: Boolean = false,
@@ -18,6 +19,7 @@ data class HomeViewState (
     val isShowPushMoney: Boolean = false,
     val isShowWaitForDropProduct: Boolean = false,
     val isWarning: Boolean = false,
+    val isWithdrawMoney: Boolean = false,
     val titleDialogWarning: String = "",
     val titleDialogConfirm: String = "",
     val setUpCashBox: Boolean = false,

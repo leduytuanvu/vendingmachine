@@ -52,6 +52,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 //import android.content.Intent
 //import android.content.IntentFilter
@@ -137,6 +139,7 @@ class HomeViewModel @Inject constructor(
     private var isSetupCashBoxNumberRecycleBill35Success = false
     private var isSetupCashBoxReturnMoneySuccess = false
     private var checkDropSensorSuccess = false
+    private var checkCashBoxNomally = true
     private var numberRottenBoxBalance = -1
 
     private var funWithdrawMoneyIsRunning = false
@@ -147,6 +150,10 @@ class HomeViewModel @Inject constructor(
     private var funIsShowPaymentIsRunning = false
     private var funApplyPromotionIsRunning = false
     private var funPaymentConfirmationIsRunning = false
+
+    private var dataByteArrayWithdraw = byteArrayOf()
+
+
 
 
     private val _returnMoneySuccess = MutableStateFlow(false)
@@ -162,6 +169,7 @@ class HomeViewModel @Inject constructor(
     val isCashBoxNormal: StateFlow<Boolean> = _isCashBoxNormal.asStateFlow()
 
     private val _numberRottenBoxBalance = MutableStateFlow(-1)
+    private val _byteArrayCheckReturnCashBox = MutableStateFlow(byteArrayOf())
 
     private val _statusDropProduct = MutableStateFlow(DropSensorResult.ANOTHER)
     val statusDropProduct: StateFlow<DropSensorResult> = _statusDropProduct.asStateFlow()
@@ -1191,7 +1199,13 @@ class HomeViewModel @Inject constructor(
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
-            if (dataByteArray.size == 8) {
+            if (dataByteArray.size == 13) {
+                if(dataByteArray[0] == 0x01.toByte() && dataByteArray[1] == 0x07.toByte()) {
+                    dataByteArrayWithdraw = dataByteArray
+                    _byteArrayCheckReturnCashBox.value = dataByteArray
+                    logger.debug("Vô data byte array off: $dataHexString")
+                }
+            } else if (dataByteArray.size == 8) {
                 // Enable cash box
                 if (dataHexString == "01,02,03,00,00,00,00,00") {
                     processingWhenCashBoxDisable(dataHexString)
@@ -1280,6 +1294,8 @@ class HomeViewModel @Inject constructor(
                                 0x01.toByte() -> processingWhenCashBoxHasProblem("Motor problem")
                             }
                         }
+                    } else {
+                        checkCashBoxNomally = true
                     }
                 }
             } else if (dataByteArray.size == 6) {
@@ -1364,6 +1380,7 @@ class HomeViewModel @Inject constructor(
 
     private fun processingWhenCashBoxHasProblem(message: String) {
         viewModelScope.launch {
+            checkCashBoxNomally = false
             logger.debug("ERRRRRRRRRRRRRRRRRRRRRRRRRRR: $message")
             baseRepository.addNewErrorLogToLocal(
                 machineCode = _state.value.initSetup!!.vendCode,
@@ -1371,7 +1388,6 @@ class HomeViewModel @Inject constructor(
                 severity = "highest"
             )
         }
-
     }
 
     private fun processingCash(cash: Int) {
@@ -2152,7 +2168,8 @@ class HomeViewModel @Inject constructor(
                     }
                 }
 
-//                initSetup.currentCash = 350000
+//                initSetup.currentCash = 50000
+//                baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                 _state.update {
                     it.copy(
                         initSetup = initSetup,
@@ -3515,73 +3532,226 @@ class HomeViewModel @Inject constructor(
 //        }
 //    }
 
+//    fun withdrawalMoney() {
+//        logger.info("withdrawalMoney")
+//        viewModelScope.launch {
+//            delay(50L)
+//            if(funWithdrawMoneyIsRunning) {
+//
+//            } else {
+//                try {
+//                    funWithdrawMoneyIsRunning = true
+//                    _state.update {it.copy(
+////                        isLoading = true,
+//                        isWithdrawMoney = true,
+//                    )}
+//                    val initSetup: InitSetup = baseRepository.getDataFromLocal(
+//                        type = object : TypeToken<InitSetup>() {}.type,
+//                        path = pathFileInitSetup
+//                    )!!
+//                    val currentCash = initSetup.currentCash
+//                    if (currentCash > 0) {
+//                        val numberCashNeedReturn = if (currentCash > 9999) {
+//                            currentCash / 10000
+//                        } else {
+//                            0
+//                        }
+//                        if (numberCashNeedReturn > 0) {
+//                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
+//                            delay(300)
+//                            logger.debug("number rotten is: ${_numberRottenBoxBalance.value}")
+//                            logger.debug("number cash return is: ${numberCashNeedReturn}")
+//                            if (_numberRottenBoxBalance.value != -1) {
+//                                if (_numberRottenBoxBalance.value >= numberCashNeedReturn) {
+//                                    for(num in 1..numberCashNeedReturn) {
+//                                        logger.debug("1")
+//                                        checkCashBoxNomally = false
+//                                        logger.debug("2")
+//                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbPollStatus)
+//                                        logger.debug("3")
+//                                        delay(300)
+//                                        logger.debug("4")
+//                                        if(checkCashBoxNomally) {
+//                                            logger.debug("5")
+//                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
+//                                            delay(300)
+//                                            logger.debug("6")
+//                                            val tmpNumCash1 = _numberRottenBoxBalance.value
+//                                            logger.debug("7")
+//                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
+//                                            logger.debug("7.1")
+//                                            delay(300)
+//                                            logger.debug("8")
+//                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
+//                                            delay(300)
+//                                            logger.debug("9")
+//                                            val tmpNumCash2 = _numberRottenBoxBalance.value
+//                                            if(tmpNumCash1==tmpNumCash2-1) {
+//                                                initSetup.currentCash = currentCash - 10000
+//                                                _state.update { it.copy(initSetup = initSetup) }
+//                                                baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+//                                                baseRepository.addNewDepositWithdrawLogToLocal(
+//                                                    machineCode = _state.value.initSetup!!.vendCode,
+//                                                    transactionType = "withdraw",
+//                                                    denominationType = 10000,
+//                                                    quantity = numberCashNeedReturn,
+//                                                    currentBalance = currentCash,
+//                                                    status = "true",
+//                                                )
+//                                            }
+//                                        }
+//                                    }
+//                                } else {
+//                                    showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
+//                                }
+//                            } else {
+//                                logger.debug("Lỗi")
+//                            }
+//                        } else {
+//                            showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
+//                        }
+//                        logger.debug("Number cash return: $numberCashNeedReturn")
+//                    }
+//                } catch (e: Exception) {
+//                    logger.info("error catch: ${e.message}")
+//                    baseRepository.addNewErrorLogToLocal(
+//                        machineCode = _state.value.initSetup!!.vendCode,
+//                        errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney(): ${e.message}",
+//                    )
+//                } finally {
+//                    funWithdrawMoneyIsRunning = false
+//                    _state.update { it.copy(
+////                        isLoading = true,
+//                        isWithdrawMoney = false,
+//                    ) }
+//                }
+//            }
+//        }
+
     fun withdrawalMoney() {
         logger.info("withdrawalMoney")
+        if (funWithdrawMoneyIsRunning) return
+
         viewModelScope.launch {
             delay(50L)
+            funWithdrawMoneyIsRunning = true
+
             try {
-                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                _state.update {
+                    it.copy(
+                        isReturning = true,
+                        isWithdrawMoney = true,
+                    )
+                }
+                var initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                val currentCash = initSetup.currentCash
-                if (currentCash > 0) {
-                    val numberCashNeedReturn = if (currentCash > 9999) {
-                        currentCash / 10000
-                    } else {
-                        0
-                    }
 
-                    if (numberCashNeedReturn > 0) {
-                        sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
-                        delay(300)
-                        logger.debug("number rotten is: ${_numberRottenBoxBalance.value}")
-                        logger.debug("number cash return is: ${numberCashNeedReturn}")
-                        if (_numberRottenBoxBalance.value != -1) {
-                            if (_numberRottenBoxBalance.value >= numberCashNeedReturn) {
-                                val byteArrayTmp = getByteArrayDispenseBill(numberCashNeedReturn)
-                                if(byteArrayTmp!=null) {
-                                    sendCommandCashBox(byteArrayTmp)
-                                    initSetup.currentCash = currentCash - (numberCashNeedReturn * 10000)
-                                    _state.update { it.copy(initSetup = initSetup) }
-                                    baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                                    baseRepository.addNewDepositWithdrawLogToLocal(
-                                        machineCode = _state.value.initSetup!!.vendCode,
-                                        transactionType = "withdraw",
-                                        denominationType = 10000,
-                                        quantity = numberCashNeedReturn,
-                                        currentBalance = currentCash,
-                                        status = "true",
-                                    )
-                                } else {
-                                    showDialogWarning("Thối tiền thất bại. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
+                val currentCash = initSetup.currentCash
+                if (currentCash <= 0) {
+//                    showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
+                    return@launch
+                }
+
+                val numberCashNeedReturn = if (currentCash > 9999) currentCash / 10000 else 0
+                if (numberCashNeedReturn <= 0) {
+                    showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
+                    return@launch
+                }
+                portConnectionDatasource.sendCommandCashBox(byteArrays.cbGetNumberRottenBoxBalance)
+                delay(500)
+                logger.debug("number rotten is: ${_numberRottenBoxBalance.value}")
+                logger.debug("number cash return is: $numberCashNeedReturn")
+
+                if (_numberRottenBoxBalance.value == -1) {
+                    logger.debug("Lỗi")
+                    return@launch
+                }
+
+                if (_numberRottenBoxBalance.value < numberCashNeedReturn) {
+                    showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
+                    return@launch
+                }
+
+                for (num in 1..numberCashNeedReturn) {
+                    var returnSuccess = true
+                    try {
+                        withTimeout(20000L) {
+                            checkCashBoxNomally = false
+                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbPollStatus)
+                            delay(500)
+                            if (checkCashBoxNomally) {
+                                while (true) {
+                                    portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseMonitorStatus)
+                                    delay(500)
+                                    //  01  07  03  00  00  13  11  22  11  22  11  22  25
+                                    var byteArrayCheck = 0x00.toByte()
+                                    if(_byteArrayCheckReturnCashBox.value[6]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[6]
+                                    } else if(_byteArrayCheckReturnCashBox.value[7]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[7]
+                                    } else if(_byteArrayCheckReturnCashBox.value[8]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[8]
+                                    } else if(_byteArrayCheckReturnCashBox.value[9]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[9]
+                                    } else if(_byteArrayCheckReturnCashBox.value[10]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[10]
+                                    } else if(_byteArrayCheckReturnCashBox.value[11]!=0x00.toByte()) {
+                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[11]
+                                    }
+                                    if(byteArrayCheck!=0x11.toByte()) {
+                                        logger.debug("byteArrayCheck::::::::::::: ${byteArrayCheck}")
+                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
+                                        delay(8000)
+                                        initSetup = baseRepository.getDataFromLocal(
+                                            type = object : TypeToken<InitSetup>() {}.type,
+                                            path = pathFileInitSetup
+                                        )!!
+                                        initSetup.currentCash -= 10000
+                                        _state.update { it.copy(initSetup = initSetup) }
+                                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                                        baseRepository.addNewDepositWithdrawLogToLocal(
+                                            machineCode = _state.value.initSetup!!.vendCode,
+                                            transactionType = "withdraw",
+                                            denominationType = 10000,
+                                            quantity = numberCashNeedReturn,
+                                            currentBalance = currentCash,
+                                            status = "true",
+                                        )
+                                        break
+                                    }
                                 }
-//                                delay(300)
-//                                if(_setupCashBox.value) {
-//                                    logger.debug("Ok")
-//                                } else {
-//                                    logger.debug("Lỗi")
-//                                }
                             } else {
-                                showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
+                                returnSuccess = false
+                                logger.info("cash box have problem")
                             }
-                        } else {
-                            logger.debug("Lỗi")
                         }
-                    } else {
-                        showDialogWarning("Máy chỉ có thể thối tền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
+                    } catch (e: TimeoutCancellationException) {
+                        returnSuccess = false
+                        logger.info("timeout occurred for iteration $num")
                     }
-                    logger.debug("Number cash return: $numberCashNeedReturn")
+                    if(!returnSuccess) break
                 }
             } catch (e: Exception) {
+                logger.info("error catch: ${e.message}")
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
                     errorContent = "withdrawal money fail in HomeViewModel/withdrawalMoney(): ${e.message}",
                 )
-                _state.update { it.copy(isLoading = false) }
+            } finally {
+                funWithdrawMoneyIsRunning = false
+                _state.update {
+                    it.copy(
+                        isReturning = false,
+                        isWithdrawMoney = false,
+                    )
+                }
             }
         }
     }
+
+
 
 
     fun getCreateByteArrayDispenseBill(number: Int): ByteArray {
