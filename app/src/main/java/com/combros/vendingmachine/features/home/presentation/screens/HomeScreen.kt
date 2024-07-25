@@ -85,6 +85,7 @@ import com.combros.vendingmachine.features.home.presentation.composables.BigAdsC
 import com.combros.vendingmachine.features.home.presentation.composables.DatetimeHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.InformationHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.PutMoneyComposable
+import com.combros.vendingmachine.features.home.presentation.composables.WithdrawMoneyDialogComposable
 import com.combros.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.combros.vendingmachine.features.home.presentation.viewState.HomeViewState
 import com.combros.vendingmachine.hideSystemUI
@@ -102,10 +103,15 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-            delay(750)
-            viewModel.pollStatus()
-            delay(750)
-            viewModel.getBillType()
+//            Logger.debug("state.isWithdrawMoney: ${state.isWithdrawMoney}")
+            if(!state.isWithdrawMoney) {
+                delay(800)
+                viewModel.pollStatus()
+                delay(800)
+                viewModel.getBillType()
+            } else {
+                delay(3000)
+            }
         }
     }
 
@@ -113,8 +119,9 @@ internal fun HomeScreen(
         while (true) {
             delay(10000)
             if (!state.isVendingMachineBusy) {
-                Logger.debug("call door")
                 viewModel.readDoor()
+            } else {
+                delay(3000)
             }
         }
     }
@@ -124,6 +131,8 @@ internal fun HomeScreen(
             delay(300000)
             if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
+            } else {
+                delay(3000)
             }
         }
     }
@@ -191,6 +200,7 @@ fun HomeContent(
         }
     }
     LoadingDialogComposable(isLoading = state.isLoading)
+    WithdrawMoneyDialogComposable(isReturning = state.isReturning)
     WarningDialogComposable(
         isWarning = state.isWarning,
         titleDialogWarning = state.titleDialogWarning,
@@ -596,7 +606,7 @@ fun HomeContent(
                                             .padding(end = 10.dp)
                                             .clickable {
                                                 checkTouch = 0
-                                                if (state.initSetup.withdrawalAllowed == "ON") {
+                                                if (state.initSetup.withdrawalAllowed == "ON" && !state.isVendingMachineBusy) {
 //                                                    viewModel.paymentConfirmation()
                                                     viewModel.withdrawalMoneyDebounced()
                                                 }
@@ -741,7 +751,9 @@ fun HomeContent(
             if (state.isShowCart && state.listSlotInCard.isNotEmpty()) {
                 Box(modifier = Modifier
                     .fillMaxSize()
-                    .clickable { }) {
+                    .clickable { }
+                    .background(Color(0x99000000))
+                ) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)

@@ -265,7 +265,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
-//                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
+                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromCashBox.emit(data)
                         }
