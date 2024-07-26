@@ -103,8 +103,7 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-//            Logger.debug("state.isWithdrawMoney: ${state.isWithdrawMoney}")
-            if(!state.isWithdrawMoney) {
+            if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
                 delay(800)
                 viewModel.pollStatus()
                 delay(800)
@@ -172,14 +171,6 @@ fun HomeContent(
         }
     }
 
-//    // Side-effect to reapply the system UI flags
-//    val activity = LocalContext.current as? MainActivity
-//    LaunchedEffect(state.isLoading) {
-//        if (state.isLoading) {
-//            activity?.hideSystemUI()
-//        }
-//    }
-
     if (state.initSetup != null) {
         if (!state.isShowBigAds && !state.isShowWaitForDropProduct) {
             checkTouch = 0
@@ -187,10 +178,8 @@ fun HomeContent(
                 while (true) {
                     delay(1000L)
                     checkTouch++
-//                    Logger.debug("check touch = $checkTouch, ${state.initSetup.timeoutJumpToBigAdsScreen.toLong()}")
                     if (state.initSetup.fullScreenAds == "ON") {
                         if (checkTouch > state.initSetup.timeoutJumpToBigAdsScreen.toLong() && state.listBigAds.isNotEmpty()) {
-//                        Logger.debug("vo check touch")
                             viewModel.showBigAds()
                             break
                         }
