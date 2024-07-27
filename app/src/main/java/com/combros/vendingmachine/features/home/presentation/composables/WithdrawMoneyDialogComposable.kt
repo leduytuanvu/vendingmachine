@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,14 +26,17 @@ import com.combros.vendingmachine.R
 
 @Composable
 fun WithdrawMoneyDialogComposable(isReturning: Boolean) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
     if (isReturning) {
         Dialog(
             onDismissRequest = { /*TODO*/ },
             properties = DialogProperties(dismissOnClickOutside = false)
         ) {
             Box(modifier = Modifier
-                .height(600.dp)
-                .width(500.dp)
+                .height(screenHeight*0.5f)
+                .width(screenHeight*0.42f)
                 .background(Color.White),
             ) {
                 Column(
@@ -40,16 +44,16 @@ fun WithdrawMoneyDialogComposable(isReturning: Boolean) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(screenHeight*0.08f))
                     Image(
                         modifier = Modifier
-                            .height(300.dp)
-                            .width(300.dp),
+                            .height(screenHeight*0.28f)
+                            .width(screenHeight*0.28f),
                         alignment = Alignment.Center,
                         painter = painterResource(id = R.drawable.image_put_money),
                         contentDescription = ""
                     )
-                    Spacer(modifier = Modifier.height(60.dp).width(500.dp))
+                    Spacer(modifier = Modifier.height(screenHeight*0.054f).width(screenHeight*0.5f))
                     Text(text = "Vui lòng nhận tiền ở hộp thối", fontSize = 20.sp)
                 }
             }

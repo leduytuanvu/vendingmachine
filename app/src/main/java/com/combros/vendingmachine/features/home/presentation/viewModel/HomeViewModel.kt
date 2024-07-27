@@ -526,30 +526,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isVendingMachineBusy = true) }
-//                funIsCheckDropSensorIsRunning = true
-//                checkDropSensorSuccess = false
-//                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmCheckDropSensor)
-//                logger.debug("1111111111111")
-//                delay(3001)
-//                logger.debug("2222222222222: $checkDropSensorSuccess")
-//                if(checkDropSensorSuccess) {
-//
-//                }
-//                else
-//                {
-//                    _state.update {
-//                        it.copy (
-//                            isShowWaitForDropProduct = false,
-//                            isWarning = true,
-//                            titleDialogWarning = "Cảm biến rơi có vấn đề, vui lòng thử lại sau!",
-//                        )
-//                    }
-//                    logger.debug("dropsensor failllllll")
-//                }
-//                funIsCheckDropSensorIsRunning = true
-//                checkDropSensorSuccess = false
-//                portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmCheckDropSensor)
-//                logger.debug("1111111111111")
                 var checkDropSensorIsNormal = true
                 funIsCheckDropSensorIsRunning = true
                 checkDropSensorSuccess = false
@@ -4013,11 +3989,11 @@ class HomeViewModel @Inject constructor(
                 if(_state.value.listSlotInCard.isNullOrEmpty()) {
                     countdownHideCart?.cancel()
                 }
-                logger.debug("start countdown: $millisUntilFinished")
+//                logger.debug("start countdown: $millisUntilFinished")
             }
 
             override fun onFinish() {
-                logger.debug("start countdown: finishhhhhhhhhhhhhhhhhhhhhhhhhhh")
+//                logger.debug("start countdown: finishhhhhhhhhhhhhhhhhhhhhhhhhhh")
                 _state.update {
                     it.copy(
                         listSlotInCard = arrayListOf(),

@@ -21,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -34,12 +36,13 @@ fun AdsHomeComposable(
     onStartAdsHome: (path: String) -> Unit,
 ) {
     var currentVideoIndex by remember { mutableIntStateOf(0) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val screenHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.4f).coerceAtLeast(250.dp)
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(screenHeight)
+            .height(screenHeight*0.36f)
             .background(Color.Black)
     ) {
         AndroidView(
@@ -68,7 +71,7 @@ fun AdsHomeComposable(
         Button(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = 16.dp, end = 16.dp)
+                .padding(bottom = screenHeight*0.01f, end = screenHeight*0.01f)
                 .border(
                     width = 1.dp,
                     color = Color.White,
