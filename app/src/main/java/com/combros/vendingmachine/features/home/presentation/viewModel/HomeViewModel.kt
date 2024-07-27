@@ -526,20 +526,12 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isVendingMachineBusy = true) }
-                var checkDropSensorIsNormal = true
+                logger.debug("================================= ${state.value.isVendingMachineBusy}")
+                delay(300)
+                Logger.debug("0")
                 funIsCheckDropSensorIsRunning = true
                 checkDropSensorSuccess = false
                 portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmCheckDropSensor)
-                logger.debug("1111111111111")
-                // Stop countdown timer
-                if (countdownTimer != null) {
-                    countdownTimer!!.cancel()
-                    countdownTimer = null
-                }
-                if (countdownTimerCallApi != null) {
-                    countdownTimerCallApi!!.cancel()
-                    countdownTimerCallApi = null
-                }
                 var initSetupTmp = _state.value.initSetup
                 // List slot drop fail
                 val listSlotDropFail: ArrayList<Slot> = arrayListOf()
@@ -558,7 +550,7 @@ class HomeViewModel @Inject constructor(
                 if (listLogSyncOrderTransaction.isNullOrEmpty()) {
                     listLogSyncOrderTransaction = arrayListOf()
                 }
-
+                Logger.debug("1")
                 // List slot in cart
                 val listSlotInCart = _state.value.listSlotInCard
                 val listProductDropInCart: ArrayList<Slot> = arrayListOf()
@@ -570,7 +562,8 @@ class HomeViewModel @Inject constructor(
                                 listProductDropInCart.add(tmpItem)
                             }
                         }
-                    } else {
+                    }
+                    else {
                         for (item in _state.value.promotion!!.carts!!) {
                             val slot = Slot(
                                 slot = item.slot!!,
@@ -590,32 +583,19 @@ class HomeViewModel @Inject constructor(
                             listProductDropInCart.add(slot)
                         }
                     }
-                } else {
-                    delay(1500)
-                    logger.debug("2222222222222: $checkDropSensorSuccess")
-                    if(checkDropSensorSuccess) {
-                        for (item in _state.value.listSlotInCard) {
-                            for (smallItem in 0 until item.inventory) {
-                                val tmpItem = item.copy(inventory = 1)
-                                listProductDropInCart.add(tmpItem)
-                            }
+                }
+                else {
+                    for (item in _state.value.listSlotInCard) {
+                        for (smallItem in 0 until item.inventory) {
+                            val tmpItem = item.copy(inventory = 1)
+                            listProductDropInCart.add(tmpItem)
                         }
                     }
-                    else
-                    {
-                        checkDropSensorIsNormal = false
-//                        _state.update {
-//                            it.copy (
-//                                isShowWaitForDropProduct = false,
-//                                isWarning = true,
-//                                titleDialogWarning = "Cảm biến rơi có vấn đề, vui lòng thử lại sau!",
-//                            )
-//                        }
-                        logger.debug("dropsensor failllllll")
-                    }
                 }
-
-                if(checkDropSensorIsNormal) {
+                delay(1600)
+                logger.debug("checkDropSensor: $checkDropSensorSuccess")
+                Logger.debug("2 listProductDropInCart: $listProductDropInCart")
+                if(checkDropSensorSuccess) {
                     var indexCheck = -1
                     for (item in listProductDropInCart) {
                         val slot = homeRepository.getSlotDrop(item.productCode)
@@ -1123,7 +1103,8 @@ class HomeViewModel @Inject constructor(
                             )
                         }
                     }
-                } else {
+                }
+                else {
                     _state.update {
                         it.copy (
                             isShowWaitForDropProduct = false,
@@ -1133,11 +1114,13 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
+                Logger.debug("=============== error")
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
                     errorContent = "drop product fail in HomeViewModel/dropProduct(): ${e.message}",
                 )
             } finally {
+                Logger.debug("=============== finallyy")
                 funIsCheckDropSensorIsRunning = false
                 _state.update {
                     it.copy(
@@ -3076,7 +3059,7 @@ class HomeViewModel @Inject constructor(
                             it.copy(
                                 titleDropProductSuccess = "Vui lòng chờ để nhận sản phẩm từ khe bên dưới",
                                 countDownPaymentByCash = (_state.value.initSetup!!.timeoutPaymentByCash.toLong()),
-                                isVendingMachineBusy = true,
+//                                isVendingMachineBusy = true,
                             )
                         }
                         val orderCode = LocalDateTime.now().toId()
@@ -3239,7 +3222,7 @@ class HomeViewModel @Inject constructor(
                                     _state.update {
                                         it.copy(
                                             isLoading = false,
-                                            isVendingMachineBusy = false,
+//                                            isVendingMachineBusy = false,
                                         )
                                     }
                                 }
@@ -3253,13 +3236,13 @@ class HomeViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 isLoading = false,
-                                isVendingMachineBusy = false,
+//                                isVendingMachineBusy = false,
                             )
                         }
                     } finally {
                         _state.update {
                             it.copy(
-                                isVendingMachineBusy = false,
+//                                isVendingMachineBusy = false,
                             )
                         }
                     }
@@ -3276,10 +3259,12 @@ class HomeViewModel @Inject constructor(
             1000
         ) {
             override fun onTick(millisUntilFinished: Long) {
+                logger.debug("count down timer online")
                 _state.update { it.copy(countDownPaymentByOnline = (millisUntilFinished / 1000).toLong()) }
             }
 
             override fun onFinish() {
+                logger.debug("count down timer online finish")
                 _state.update { it.copy(countDownPaymentByOnline = 0) }
                 cancelPaymentOnline()
             }
@@ -3290,6 +3275,7 @@ class HomeViewModel @Inject constructor(
             2000
         ) {
             override fun onTick(millisUntilFinished: Long) {
+                logger.debug("count down timer check api")
                 viewModelScope.launch {
                     try {
                         val checkResultPaymentOnline = CheckPaymentResultOnlineRequest(
@@ -3318,7 +3304,9 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            override fun onFinish() {}
+            override fun onFinish() {
+                logger.debug("count down timer check api finish")
+            }
         }.start()
     }
 
@@ -3327,7 +3315,7 @@ class HomeViewModel @Inject constructor(
         _state.update {
             it.copy(
                 isShowQrCode = false,
-                isVendingMachineBusy = false,
+//                isVendingMachineBusy = false,
             )
         }
     }
@@ -3953,6 +3941,7 @@ class HomeViewModel @Inject constructor(
         countdownTimer = object :
             CountDownTimer((_state.value.initSetup!!.timeoutPaymentByCash.toLong() * 1000), 1000) {
             override fun onTick(millisUntilFinished: Long) {
+                logger.debug("count down timer by cash")
                 _state.update { it.copy(countDownPaymentByCash = (millisUntilFinished / 1000).toLong()) }
                 if (_state.value.initSetup!!.currentCash >= _state.value.totalAmount) {
                     _state.update {
@@ -3969,13 +3958,12 @@ class HomeViewModel @Inject constructor(
             }
 
             override fun onFinish() {
+                logger.debug("count down timer by cash finish")
                 _state.update {
                     it.copy(
                         countDownPaymentByCash = 0,
-                        isVendingMachineBusy = false,
                     )
                 }
-                // Handle countdown finish, e.g., cancel payment
                 cancelPaymentByCash()
             }
         }.start()
@@ -3986,18 +3974,20 @@ class HomeViewModel @Inject constructor(
         countdownHideCart = object :
             CountDownTimer((_state.value.initSetup!!.timeoutRemoveCart.toLong() * 1000), 1000) {
             override fun onTick(millisUntilFinished: Long) {
+                Logger.debug("count down hide cart")
                 if(_state.value.listSlotInCard.isNullOrEmpty()) {
                     countdownHideCart?.cancel()
                 }
-//                logger.debug("start countdown: $millisUntilFinished")
             }
 
             override fun onFinish() {
-//                logger.debug("start countdown: finishhhhhhhhhhhhhhhhhhhhhhhhhhh")
-                _state.update {
-                    it.copy(
-                        listSlotInCard = arrayListOf(),
-                    )
+                Logger.debug("count down hide cart finish")
+                if(!_state.value.isVendingMachineBusy) {
+                    _state.update {
+                        it.copy(
+                            listSlotInCard = arrayListOf(),
+                        )
+                    }
                 }
             }
         }.start()

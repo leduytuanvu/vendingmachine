@@ -286,13 +286,13 @@ class PortConnectionDatasource {
 
     // Send command vending machine
     fun sendCommandUsbVendingMachine(byteArray: ByteArray) : Int {
-//        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
+        Logger.debug("data vending machine send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataUsbPortVendingMachine(byteArray)
     }
 
     // Send command cash box
     fun sendCommandCashBox(byteArray: ByteArray) : Int {
-//        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
+        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortCashBox(byteArray)
     }
     @OptIn(DelicateCoroutinesApi::class)

@@ -107,9 +107,13 @@ internal fun HomeScreen(
             Logger.debug("========= ${state.isWithdrawMoney} ${state.isVendingMachineBusy}")
             if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
                 delay(800)
-                viewModel.pollStatus()
+                if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
+                    viewModel.pollStatus()
+                }
                 delay(800)
-                viewModel.getBillType()
+                if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
+                    viewModel.getBillType()
+                }
             } else {
                 Logger.debug("+++++++++")
                 delay(3000)
