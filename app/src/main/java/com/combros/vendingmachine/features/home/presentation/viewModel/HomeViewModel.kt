@@ -601,7 +601,7 @@ class HomeViewModel @Inject constructor(
                                 productCode = item.productCode!!,
                                 productName = item.productName!!,
                                 inventory = item.quantity!!,
-                                capacity = 10,
+                                capacity = 6,
                                 price = item.amount!!,
                                 isCombine = "no",
                                 springType = "lo xo don",
