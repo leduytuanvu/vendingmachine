@@ -3665,8 +3665,11 @@ class HomeViewModel @Inject constructor(
                                         byteArrayCheck = _byteArrayCheckReturnCashBox.value[11]
                                     }
                                     if(byteArrayCheck!=0x11.toByte()) {
-                                        logger.debug("byteArrayCheck::::::::::::: ${byteArrayCheck}")
+                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbEnableType3456789)
+                                        delay(300)
                                         portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
+                                        delay(300)
+                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDisable)
                                         delay(8000)
                                         initSetup = baseRepository.getDataFromLocal(
                                             type = object : TypeToken<InitSetup>() {}.type,
