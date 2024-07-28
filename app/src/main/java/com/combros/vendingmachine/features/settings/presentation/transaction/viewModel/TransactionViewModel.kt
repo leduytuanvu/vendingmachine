@@ -17,6 +17,7 @@ import com.combros.vendingmachine.features.settings.domain.repository.SettingsRe
 import com.combros.vendingmachine.features.settings.presentation.transaction.viewState.TransactionViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -178,7 +179,13 @@ class TransactionViewModel @Inject constructor (
             ) }
         }
     }
-
+    fun autoTurnOnLed() {
+        viewModelScope.launch {
+            portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOnLight)
+            delay(10000)
+            portConnectionDatasource.sendCommandVendingMachine(ByteArrays().vmTurnOffLight)
+        }
+    }
     fun compareDateTimeStrings(dateString1: String, dateString2: String): Int {
         // Define the date format
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")

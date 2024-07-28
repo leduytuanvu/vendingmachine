@@ -372,25 +372,25 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 _isRotate.value = true
                 _checkFirst.value = true
-                val byteArraySlot: Byte = slot.slot.toByte()
-                val byteArrayNumberBoard: Byte = 0.toByte()
-                val byteArray: ByteArray = byteArrayOf(
-                    byteArrayNumberBoard,
-                    (0xFF - 0).toByte(),
-                    byteArraySlot,
-                    (0xFF - slot.slot).toByte(),
-                    0xAA.toByte(),
-                    0x55,
-                )
-                _statusDropProduct.value =
-                    DropSensorResult.INITIALIZATION
-                portConnectionDatasource.sendCommandVendingMachine(byteArray)
-                var result = withTimeoutOrNull(20000L) {
-                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
-                }
-                if(result == null) {
-                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
-                } else {
+//                val byteArraySlot: Byte = slot.slot.toByte()
+//                val byteArrayNumberBoard: Byte = 0.toByte()
+//                val byteArray: ByteArray = byteArrayOf(
+//                    byteArrayNumberBoard,
+//                    (0xFF - 0).toByte(),
+//                    byteArraySlot,
+//                    (0xFF - slot.slot).toByte(),
+//                    0xAA.toByte(),
+//                    0x55,
+//                )
+//                _statusDropProduct.value =
+//                    DropSensorResult.INITIALIZATION
+//                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+//                var result = withTimeoutOrNull(20000L) {
+//                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
+//                }
+//                if(result == null) {
+//                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
+//                } else {
                     val listSlot = _state.value.listSlot
                     val index = listSlot.indexOfFirst { it.slot == slot.slot }
                     listSlot[index].isLock = false
@@ -402,7 +402,7 @@ class SetupSlotViewModel @Inject constructor(
                     )
                     onSuccess()
                     _state.update { it.copy(listSlot = listSlot) }
-                }
+//                }
                 _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -1140,7 +1140,7 @@ class SetupSlotViewModel @Inject constructor(
             if(_isRotate.value) {
                 logger.debug("data receive from vending machine: $dataHexString")
                 if(dataHexString=="00,5D,01,00,5E" || dataHexString=="00,5C,00,00,5C") {
-                    logger.debug("status door")
+                  //  logger.debug("status door")
                 } else {
                     val result = when (dataHexString) {
                         "00,5D,00,00,5D" -> DropSensorResult.ROTATED_BUT_PRODUCT_NOT_FALL
@@ -1210,18 +1210,26 @@ class SetupSlotViewModel @Inject constructor(
         numberBoard: Int = 0,
         slot: Int,
     ) {
-        val byteArraySlot: Byte = slot.toByte()
-        val byteArrayNumberBoard: Byte = numberBoard.toByte()
-        val byteArray: ByteArray = byteArrayOf(
-            byteArrayNumberBoard,
-            (0xFF - numberBoard).toByte(),
-            byteArraySlot,
-            (0xFF - slot).toByte(),
-            0x55,
-            0xAA.toByte(),
-        )
-        portConnectionDatasource.sendCommandVendingMachine(byteArray)
-    }
+        viewModelScope.launch {
+            try {
+                val byteArraySlot: Byte = slot.toByte()
+                val byteArrayNumberBoard: Byte = numberBoard.toByte()
+                val byteArray: ByteArray = byteArrayOf(
+                    byteArrayNumberBoard,
+                    (0xFF - numberBoard).toByte(),
+                    byteArraySlot,
+                    (0xFF - slot).toByte(),
+                    0x55,
+                    0xAA.toByte(),
+                )
+                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+
+            }
+            catch (e: Exception) {
+                sendEvent(Event.Toast("ERROR"))
+            }
+        }
+        }
 
     fun productDispense(
         numberBoard: Int = 0,

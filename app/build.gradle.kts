@@ -62,6 +62,7 @@ android {
         create("release") {
             keyAlias = "key0"
             keyPassword = "1234567890"
+
 //            storeFile = file("C:\\leduytuanvu\\develop\\application\\kotlin\\vendingmachine\\keystore\\keystore2.jks")
             storeFile = file("/Users/admin/Documents/develop/vendingmachine/keystore/keystore2.jks")
             storePassword = "1234567890"

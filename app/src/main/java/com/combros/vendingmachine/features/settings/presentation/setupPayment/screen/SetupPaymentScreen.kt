@@ -222,12 +222,12 @@ fun SetupPaymentContent(
                 if(state.initSetup!=null) {
                     if(state.initSetup.role == "admin") {
                         BodyTextComposable(
-                            title = "Current cash: ${if(state.initSetup == null) 0.toVietNamDong() else state.initSetup.currentCash.toVietNamDong()}",
+                            title = "Số dư: ${if(state.initSetup == null) 0.toVietNamDong() else state.initSetup.currentCash.toVietNamDong()}",
                             fontWeight = FontWeight.Bold,
                             paddingBottom = 8.dp,
                         )
                         CustomButtonComposable(
-                            title = "REFRESH",
+                            title = "Hủy số dư",
                             wrap = true,
                             cornerRadius = 4.dp,
                             height = 60.dp,
@@ -239,11 +239,11 @@ fun SetupPaymentContent(
                             viewModel.refreshCurrentCash()
                         }
                         if(state.numberRottenBoxBalance>=0) {
-                            BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                            BodyTextComposable(title = "Số tờ hộp thối: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                         }
 //                BodyTextComposable(title = "Rotten box balance: ${state.numberRottenBoxBalance}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                         CustomButtonComposable(
-                            title = "REFRESH",
+                            title = "Tải lại",
                             wrap = true,
                             cornerRadius = 4.dp,
                             height = 60.dp,
@@ -257,7 +257,7 @@ fun SetupPaymentContent(
                     }
                 }
 
-                BodyTextComposable(title = "Default promotion", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Khuyến mãi", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -278,7 +278,7 @@ fun SetupPaymentContent(
                     viewModel.saveDefaultPromotion(selectedItemDefaultPromotion.toString())
                 }
 
-                BodyTextComposable(title = "Time out payment online", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Thời gian QR thanh toán online", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("30s"),
                     AnnotatedString("60s"),
@@ -307,7 +307,7 @@ fun SetupPaymentContent(
                     viewModel.saveTimeoutPaymentQrCode(selectedItemTimeOutPaymentQrCode.toString())
                 }
 
-                BodyTextComposable(title = "Time out payment cash", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Thời gian thanh toán tiền mặt", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("30s"),
                     AnnotatedString("60s"),
@@ -336,7 +336,7 @@ fun SetupPaymentContent(
                     viewModel.saveTimeoutPaymentCash(selectedItemTimeOutPaymentCash.toString())
                 }
 
-                BodyTextComposable(title = "Method payment", fontWeight = FontWeight.Bold, paddingBottom = 18.dp)
+                BodyTextComposable(title = "Phương thức thanh toán đang áp dụng", fontWeight = FontWeight.Bold, paddingBottom = 18.dp)
                 for(item in state.listPaymentMethod) {
                     Row(
                         modifier = Modifier.padding(bottom = 6.dp),
@@ -367,7 +367,7 @@ fun SetupPaymentContent(
                     }
                 }
                 CustomButtonComposable(
-                    title = "DOWNLOAD PAYMENT METHODS",
+                    title = "Cập nhật phương thức thanh toán",
                     wrap = true,
                     cornerRadius = 4.dp,
                     paddingTop = 12.dp,
@@ -381,7 +381,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "TURN ON PUT MONEY IN THE ROTTEN BOX",
+                    title = "Bật nạp tiền hộp thối",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -394,7 +394,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "TURN OFF PUT MONEY IN THE ROTTEN BOX",
+                    title = "Tắt nạp tiền hộp thối",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -409,7 +409,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "DISPENSED ONE",
+                    title = "Thối thử 1 tờ",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -421,7 +421,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "DISPENSED ALL",
+                    title = "Thối thử tất cả",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
