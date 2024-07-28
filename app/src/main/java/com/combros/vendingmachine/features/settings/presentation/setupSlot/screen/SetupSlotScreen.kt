@@ -711,12 +711,7 @@ fun SetupSlotContent(
                                                         height = 60.dp,
                                                         function = {
                                                             onClick()
-<<<<<<< HEAD
-                                                            viewModel.productDispense(0, slot.slot)
-//                                                            viewModel.productDispenseNotSensor(0, slot.slot)
-=======
                                                             viewModel.productDispenseNotSensor(0, slot.slot)
->>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                         },
                                                         backgroundColor = Color.Blue,
                                                         fontSize = 20.sp,
@@ -748,12 +743,7 @@ fun SetupSlotContent(
                                                                 paddingTop = 10.dp,
                                                                 function = {
                                                                     onClick()
-<<<<<<< HEAD
-                                                                    viewModel.productDispense(0, slot.slot)
-//                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
-=======
                                                                     viewModel.productDispenseNotSensor(0, slot.slot)
->>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,
@@ -767,12 +757,7 @@ fun SetupSlotContent(
                                                                 height = 60.dp,
                                                                 function = {
                                                                     onClick()
-<<<<<<< HEAD
-                                                                    viewModel.productDispense(0, slot.slot)
-//                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
-=======
                                                                     viewModel.productDispenseNotSensor(0, slot.slot)
->>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,

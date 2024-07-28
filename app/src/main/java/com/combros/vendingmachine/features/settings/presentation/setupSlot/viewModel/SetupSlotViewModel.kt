@@ -372,18 +372,17 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 _isRotate.value = true
                 _checkFirst.value = true
-<<<<<<< HEAD
-                val byteArraySlot: Byte = slot.slot.toByte()
-                val byteArrayNumberBoard: Byte = 0.toByte()
-                val byteArray: ByteArray = byteArrayOf(
-                    byteArrayNumberBoard,
-                    (0xFF - 0).toByte(),
-                    byteArraySlot,
-                    (0xFF - slot.slot).toByte(),
-                    0xAA.toByte(),
-                    0x55,
-                )
-                productDispense(0, slot.slot)
+//                val byteArraySlot: Byte = slot.slot.toByte()
+//                val byteArrayNumberBoard: Byte = 0.toByte()
+//                val byteArray: ByteArray = byteArrayOf(
+//                    byteArrayNumberBoard,
+//                    (0xFF - 0).toByte(),
+//                    byteArraySlot,
+//                    (0xFF - slot.slot).toByte(),
+//                    0xAA.toByte(),
+//                    0x55,
+//                )
+//                productDispense(0, slot.slot)
                 val listSlot = _state.value.listSlot
                 val index = listSlot.indexOfFirst { it.slot == slot.slot }
                 listSlot[index].isLock = false
@@ -395,19 +394,6 @@ class SetupSlotViewModel @Inject constructor(
                 )
                 onSuccess()
                 _state.update { it.copy(listSlot = listSlot,isLoading = false,) }
-//                _state.update { it.copy(isLoading = false) }
-=======
-//                val byteArraySlot: Byte = slot.slot.toByte()
-//                val byteArrayNumberBoard: Byte = 0.toByte()
-//                val byteArray: ByteArray = byteArrayOf(
-//                    byteArrayNumberBoard,
-//                    (0xFF - 0).toByte(),
-//                    byteArraySlot,
-//                    (0xFF - slot.slot).toByte(),
-//                    0xAA.toByte(),
-//                    0x55,
-//                )
->>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
 //                _statusDropProduct.value =
 //                    DropSensorResult.INITIALIZATION
 //                portConnectionDatasource.sendCommandVendingMachine(byteArray)
@@ -417,7 +403,6 @@ class SetupSlotViewModel @Inject constructor(
 //                if(result == null) {
 //                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
 //                } else {
-<<<<<<< HEAD
 //                    val listSlot = _state.value.listSlot
 //                    val index = listSlot.indexOfFirst { it.slot == slot.slot }
 //                    listSlot[index].isLock = false
@@ -431,21 +416,6 @@ class SetupSlotViewModel @Inject constructor(
 //                    _state.update { it.copy(listSlot = listSlot) }
 //                }
 //                _state.update { it.copy(isLoading = false) }
-=======
-                    val listSlot = _state.value.listSlot
-                    val index = listSlot.indexOfFirst { it.slot == slot.slot }
-                    listSlot[index].isLock = false
-                    baseRepository.writeDataToLocal(listSlot, pathFileSlot)
-                    baseRepository.addNewFillLogToLocal(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        fillType = "setup slot",
-                        content = "unlock slot ${slot.slot}"
-                    )
-                    onSuccess()
-                    _state.update { it.copy(listSlot = listSlot) }
-//                }
-                _state.update { it.copy(isLoading = false) }
->>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
