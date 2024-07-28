@@ -1320,17 +1320,17 @@ class HomeViewModel @Inject constructor(
                 }
             }
             isSetupCashBoxNumberRecycleBill35Success = false
-            sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+            sendCommandCashBox(byteArrays.cbSetNumberRecycleBill20)
             delay(300)
             if (isSetupCashBoxNumberRecycleBill35Success) {
-                logger.debug("set cbSetNumberRecycleBill35 success")
+                logger.debug("set cbSetNumberRecycleBill20 success")
             } else {
-                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill20)
                 delay(300)
                 if (isSetupCashBoxNumberRecycleBill35Success) {
-                    logger.debug("set cbSetNumberRecycleBill35 success")
+                    logger.debug("set cbSetNumberRecycleBill20 success")
                 } else {
-                    sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                    sendCommandCashBox(byteArrays.cbSetNumberRecycleBill20)
                     delay(300)
                 }
             }
@@ -2177,7 +2177,7 @@ class HomeViewModel @Inject constructor(
                     logger.debug("set cbEscrowOn fail")
                 }
                 _setupCashBox.value = false
-                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill35)
+                sendCommandCashBox(byteArrays.cbSetNumberRecycleBill20)
                 delay(300)
                 if (_setupCashBox.value) {
                     logger.debug("set cbSetNumberRecycleBill success")
