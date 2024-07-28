@@ -133,8 +133,7 @@ class InitSetupViewModel @Inject constructor(
                             logger.debug("android id: $androidId")
                             val initSetup = InitSetup(
                                 vendCode = inputVendingMachineCode,
-//                                androidId = androidId,
-                                androidId = "18cab7c3d9e785fe",
+                                androidId = androidId,
                                 username = loginRequest.username,
                                 password = passwordEncode,
                                 portVendingMachine = portVendingMachine,

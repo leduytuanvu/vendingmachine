@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -85,6 +86,7 @@ import com.combros.vendingmachine.features.home.presentation.composables.BigAdsC
 import com.combros.vendingmachine.features.home.presentation.composables.DatetimeHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.InformationHomeComposable
 import com.combros.vendingmachine.features.home.presentation.composables.PutMoneyComposable
+import com.combros.vendingmachine.features.home.presentation.composables.WithdrawMoneyDialogComposable
 import com.combros.vendingmachine.features.home.presentation.viewModel.HomeViewModel
 import com.combros.vendingmachine.features.home.presentation.viewState.HomeViewState
 import com.combros.vendingmachine.hideSystemUI
@@ -102,19 +104,31 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-            delay(750)
-            viewModel.pollStatus()
-            delay(750)
-            viewModel.getBillType()
+            Logger.debug("========= ${state.isWithdrawMoney} ${state.isVendingMachineBusy}")
+            if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
+                delay(800)
+                if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
+                    viewModel.pollStatus()
+                }
+                delay(800)
+                if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
+                    viewModel.getBillType()
+                }
+            } else {
+                Logger.debug("+++++++++")
+                delay(3000)
+            }
         }
     }
 
     LaunchedEffect(Unit) {
         while (true) {
             delay(10000)
-            if (!state.isVendingMachineBusy) {
-               // Logger.debug("call door")
+
+            if (!state.isVendingMachineBusy && !state.isWithdrawMoney) {
                 viewModel.readDoor()
+            } else {
+                delay(3000)
             }
         }
     }
@@ -124,6 +138,8 @@ internal fun HomeScreen(
             delay(300000)
             if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
+            } else {
+                delay(3000)
             }
         }
     }
@@ -162,14 +178,9 @@ fun HomeContent(
             checkTouch = 0
         }
     }
-
-//    // Side-effect to reapply the system UI flags
-//    val activity = LocalContext.current as? MainActivity
-//    LaunchedEffect(state.isLoading) {
-//        if (state.isLoading) {
-//            activity?.hideSystemUI()
-//        }
-//    }
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
 
     if (state.initSetup != null) {
         if (!state.isShowBigAds && !state.isShowWaitForDropProduct) {
@@ -178,10 +189,8 @@ fun HomeContent(
                 while (true) {
                     delay(1000L)
                     checkTouch++
-//                    Logger.debug("check touch = $checkTouch, ${state.initSetup.timeoutJumpToBigAdsScreen.toLong()}")
                     if (state.initSetup.fullScreenAds == "ON") {
                         if (checkTouch > state.initSetup.timeoutJumpToBigAdsScreen.toLong() && state.listBigAds.isNotEmpty()) {
-//                        Logger.debug("vo check touch")
                             viewModel.showBigAds()
                             break
                         }
@@ -191,6 +200,7 @@ fun HomeContent(
         }
     }
     LoadingDialogComposable(isLoading = state.isLoading)
+    WithdrawMoneyDialogComposable(isReturning = state.isReturning)
     WarningDialogComposable(
         isWarning = state.isWarning,
         titleDialogWarning = state.titleDialogWarning,
@@ -277,7 +287,7 @@ fun HomeContent(
                             .height(80.dp)
                             .fillMaxWidth()
 //                            .background(Color(0XFFF37024)),
-                        .background(Color(0xFFCB1A17)),
+                            .background(Color(0xFFCB1A17)),
                         Arrangement.Center,
                         Alignment.CenterVertically,
                     ) {
@@ -355,14 +365,14 @@ fun HomeContent(
                         val chunks = state.listSlotInHome.chunked(state.initSetup.layoutHomeScreen.toInt())
                         Column(
                             modifier = Modifier
-                                .padding(start = 20.dp, end = 20.dp)
+                                .padding(start = screenHeight * 0.02f, end = screenHeight * 0.02f)
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            Spacer(modifier = Modifier.height(54.dp))
+                            Spacer(modifier = Modifier.height(screenHeight*0.04f))
                             chunks.forEach { rowItems ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(screenHeight*0.016f)
                                 ) {
                                     rowItems.forEach { slot ->
                                         Box(
@@ -380,15 +390,15 @@ fun HomeContent(
                                         ) {
                                             Column(
                                                 modifier = Modifier
-                                                    .padding(20.dp)
+                                                    .padding(screenHeight * 0.018f)
                                                     .fillMaxWidth()
                                                     .fillMaxHeight(),
                                                 verticalArrangement = Arrangement.Center,
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                             ) {
                                                 val imageModifier = Modifier
-                                                    .width(150.dp)
-                                                    .height(150.dp)
+                                                    .width(screenHeight * 0.12f)
+                                                    .height(screenHeight * 0.12f)
 //                                                    .clickable(
 //                                                        onClick = {
 //                                                            val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
@@ -417,12 +427,12 @@ fun HomeContent(
                                                     contentDescription = "",
                                                 )
 
-                                                Spacer(modifier = Modifier.height(20.dp))
+                                                Spacer(modifier = Modifier.height(screenHeight*0.012f))
 
                                                 Text(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(bottom = 10.dp),
+                                                        .padding(bottom = screenHeight * 0.008f),
                                                     text = slot.productName,
                                                     minLines = 2,
                                                     maxLines = 2,
@@ -432,7 +442,7 @@ fun HomeContent(
                                                 BodyTextComposable(
                                                     title = slot.price.toVietNamDong(),
                                                     fontSize = 19.sp,
-                                                    paddingBottom = 20.dp,
+                                                    paddingBottom = screenHeight*0.008f,
 //                                                    color = Color(0XFFF37024),
                                                     color = Color(0xFFE72B28),
                                                     fontWeight = FontWeight.Bold,
@@ -444,10 +454,9 @@ fun HomeContent(
                                                 ) {
                                                     Box(
                                                         modifier = Modifier
-                                                            .height(60.dp)
+                                                            .height(screenHeight * 0.05f)
                                                             .border(
                                                                 width = 0.dp,
-//                                                                color = Color(0XFFF37024),
                                                                 color = Color(0xFFE72B28),
                                                                 shape = RoundedCornerShape(50.dp)
                                                             ),
@@ -455,16 +464,18 @@ fun HomeContent(
                                                         Row(
                                                             modifier = Modifier
                                                                 .fillMaxSize()
-                                                                .padding(horizontal = 20.dp),
+                                                                .padding(horizontal = screenHeight * 0.02f),
                                                             horizontalArrangement = Arrangement.SpaceBetween,
                                                             verticalAlignment = Alignment.CenterVertically,
                                                         ) {
                                                             Image(
                                                                 modifier = Modifier
-                                                                    .height(30.dp)
-                                                                    .width(30.dp)
+                                                                    .height(screenHeight * 0.022f)
+                                                                    .width(screenHeight * 0.022f)
                                                                     .clickable {
-                                                                        viewModel.minusProductDebounced(slot)
+                                                                        viewModel.minusProductDebounced(
+                                                                            slot
+                                                                        )
 //                                                                        viewModel.minusProduct(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
@@ -481,10 +492,12 @@ fun HomeContent(
                                                             )
                                                             Image(
                                                                 modifier = Modifier
-                                                                    .height(30.dp)
-                                                                    .width(30.dp)
+                                                                    .height(screenHeight * 0.022f)
+                                                                    .width(screenHeight * 0.022f)
                                                                     .clickable {
-                                                                        viewModel.plusProductDebounced(slot)
+                                                                        viewModel.plusProductDebounced(
+                                                                            slot
+                                                                        )
 //                                                                        viewModel.plusProduct(slot)
                                                                     },
                                                                 alignment = Alignment.Center,
@@ -500,7 +513,7 @@ fun HomeContent(
 //                                                            viewModel.addProduct(slot)
                                                         },
                                                         modifier = Modifier
-                                                            .height(60.dp)
+                                                            .height(screenHeight * 0.05f)
                                                             .border(
                                                                 width = 0.dp,
 //                                                                color = Color(0XFFF37024),
@@ -522,7 +535,7 @@ fun HomeContent(
                                                             Image(
                                                                 modifier = Modifier
                                                                     .padding(end = 6.dp)
-                                                                    .height(30.dp),
+                                                                    .height(screenHeight * 0.03f),
                                                                 alignment = Alignment.Center,
                                                                 painter = painterResource(id = R.drawable.image_select_to_buy),
                                                                 contentDescription = ""
@@ -551,7 +564,7 @@ fun HomeContent(
                         Row {
                             Box(
                                 modifier = Modifier
-                                    .padding(top = 14.dp)
+                                    .padding(top = screenHeight * 0.01f)
                                     .background(
                                         Color(0xFFF59E0B),
                                         shape = RoundedCornerShape(
@@ -563,13 +576,12 @@ fun HomeContent(
                                 Row(
                                     modifier = Modifier
                                         .padding(horizontal = 12.dp)
-                                        .height(80.dp),
+                                        .height(screenHeight * 0.066f),
                                     Arrangement.Center,
                                     Alignment.CenterVertically
                                 ) {
                                     Column(
                                         modifier = Modifier
-
                                     ) {
                                         Text(
                                             "Số dư tiền mặt",
@@ -596,7 +608,7 @@ fun HomeContent(
                                             .padding(end = 10.dp)
                                             .clickable {
                                                 checkTouch = 0
-                                                if (state.initSetup.withdrawalAllowed == "ON") {
+                                                if (state.initSetup.withdrawalAllowed == "ON" && !state.isVendingMachineBusy) {
 //                                                    viewModel.paymentConfirmation()
                                                     viewModel.withdrawalMoneyDebounced()
                                                 }
@@ -607,8 +619,8 @@ fun HomeContent(
                                         Image(
                                             modifier = Modifier
                                                 .padding(bottom = 2.dp, top = 2.dp)
-                                                .height(28.dp)
-                                                .width(28.dp),
+                                                .height(screenHeight * 0.028f)
+                                                .width(screenHeight * 0.028f),
                                             alignment = Alignment.Center,
                                             painter = painterResource(id = R.drawable.image_withdraw),
                                             contentDescription = ""
@@ -626,7 +638,10 @@ fun HomeContent(
                             if (!state.isShowAds) {
                                 Button(
                                     modifier = Modifier
-                                        .padding(end = 14.dp, top = 14.dp)
+                                        .padding(
+                                            end = screenHeight * 0.01f,
+                                            top = screenHeight * 0.01f
+                                        )
                                         .background(
                                             color = Color(0xFF9CA3AF),
                                             shape = RoundedCornerShape(4.dp) // Set the shape here
@@ -649,16 +664,16 @@ fun HomeContent(
                         if (state.listSlotInCard.isNotEmpty()) {
                             Row(
                                 modifier = Modifier
-                                    .height(120.dp)
+                                    .height(screenHeight * 0.094f)
                                     .background(Color.White)
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = screenHeight * 0.018f)
                                     .align(Alignment.BottomCenter),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 val imageModifier = Modifier
-                                    .width(80.dp)
-                                    .height(80.dp)
+                                    .width(screenHeight * 0.066f)
+                                    .height(screenHeight * 0.066f)
                                 val imagePainter =
                                     if (state.slotAtBottom!!.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                             pathFolderImageProduct + "/${state.slotAtBottom.productCode}.png"
@@ -677,7 +692,7 @@ fun HomeContent(
                                     painter = imagePainter,
                                     contentDescription = ""
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(screenHeight*0.01f))
                                 Column() {
                                     Text(state.slotAtBottom.productName)
                                     Text("(Số lượng ${state.slotAtBottom.inventory})")
@@ -693,7 +708,7 @@ fun HomeContent(
                                     onClick = { viewModel.showPaymentDebounced() },
 //                                    onClick = { viewModel.showPayment() },
                                     modifier = Modifier
-                                        .height(80.dp)
+                                        .height(screenHeight * 0.066f)
                                         .wrapContentWidth()
                                         .border(
                                             width = 0.dp,
@@ -741,7 +756,9 @@ fun HomeContent(
             if (state.isShowCart && state.listSlotInCard.isNotEmpty()) {
                 Box(modifier = Modifier
                     .fillMaxSize()
-                    .clickable { }) {
+                    .clickable { }
+                    .background(Color(0x99000000))
+                ) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -765,13 +782,13 @@ fun HomeContent(
                                 )
                             ),
                     ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
+                        Column(modifier = Modifier.padding(screenHeight*0.016f)) {
                             CustomButtonComposable(
                                 title = "Quay lại",
                                 wrap = true,
-                                paddingBottom = 36.dp,
+                                paddingBottom = screenHeight*0.016f,
                                 fontSize = 20.sp,
-                                height = 60.dp,
+                                height = screenHeight*0.05f,
                                 fontWeight = FontWeight.Bold,
                                 cornerRadius = 6.dp,
                             ) {
@@ -779,19 +796,19 @@ fun HomeContent(
                             }
                             Column(
                                 modifier = Modifier
-                                    .heightIn(max = 400.dp)
+                                    .heightIn(max = screenHeight * 0.3f)
                                     .fillMaxWidth()
                                     .verticalScroll(rememberScrollState())
                             ) {
                                 state.listSlotInCard.forEach { item ->
                                     Row(
-                                        modifier = Modifier.padding(bottom = 10.dp),
+                                        modifier = Modifier.padding(bottom = screenHeight*0.01f),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         val imageModifier = Modifier
-                                            .width(130.dp)
-                                            .height(130.dp)
-                                            .padding(end = 10.dp)
+                                            .width(screenHeight * 0.1f)
+                                            .height(screenHeight * 0.1f)
+                                            .padding(end = screenHeight * 0.016f)
                                         val imagePainter =
                                             if (item.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                     pathFolderImageProduct + "/${item.productCode}.png"
@@ -819,20 +836,20 @@ fun HomeContent(
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.height(screenHeight*0.002f))
                                             Text(
                                                 "Đơn giá: ${item.price.toVietNamDong()}",
                                                 fontSize = 14.sp
                                             )
-                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Spacer(modifier = Modifier.height(screenHeight*0.01f))
                                             Row(
                                                 modifier = Modifier,
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .width(50.dp)
-                                                        .height(40.dp)
+                                                        .width(screenHeight * 0.038f)
+                                                        .height(screenHeight * 0.036f)
                                                         .border(
                                                             width = 0.2.dp,
                                                             color = Color.Gray,
@@ -854,8 +871,8 @@ fun HomeContent(
                                                 ) {
                                                     Image(
                                                         modifier = Modifier
-                                                            .height(20.dp)
-                                                            .width(20.dp),
+                                                            .height(screenHeight * 0.018f)
+                                                            .width(screenHeight * 0.018f),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_minus),
                                                         contentDescription = ""
@@ -869,8 +886,8 @@ fun HomeContent(
                                                 )
                                                 Box(
                                                     modifier = Modifier
-                                                        .width(50.dp)
-                                                        .height(40.dp)
+                                                        .width(screenHeight * 0.038f)
+                                                        .height(screenHeight * 0.036f)
                                                         .border(
                                                             width = 0.2.dp,
                                                             color = Color.Gray,
@@ -892,8 +909,8 @@ fun HomeContent(
                                                 ) {
                                                     Image(
                                                         modifier = Modifier
-                                                            .height(20.dp)
-                                                            .width(20.dp),
+                                                            .height(screenHeight * 0.018f)
+                                                            .width(screenHeight * 0.018f),
                                                         alignment = Alignment.Center,
                                                         painter = painterResource(id = R.drawable.image_plus),
                                                         contentDescription = ""
@@ -916,7 +933,7 @@ fun HomeContent(
                             }
                             Row(
                                 modifier = Modifier
-                                    .padding(top = 28.dp)
+                                    .padding(top = screenHeight * 0.018f)
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -925,8 +942,8 @@ fun HomeContent(
                                     value = text,
                                     onValueChange = { text = it },
                                     modifier = Modifier
-                                        .padding(end = 10.dp)
-                                        .height(60.dp)
+                                        .padding(end = screenHeight * 0.01f)
+                                        .height(screenHeight * 0.05f)
                                         .weight(1f),
                                     placeholder = {
                                         Text(
@@ -958,7 +975,7 @@ fun HomeContent(
                                     cornerRadius = 6.dp,
                                     fontSize = 20.sp,
                                     wrap = true,
-                                    height = 60.dp,
+                                    height = screenHeight*0.05f,
                                     fontWeight = FontWeight.Bold,
                                 ) {
                                     viewModel.applyPromotionDebounced(text)
@@ -966,7 +983,7 @@ fun HomeContent(
                                     focusManager.clearFocus()
                                 }
                             }
-                            Spacer(modifier = Modifier.height(34.dp))
+                            Spacer(modifier = Modifier.height(screenHeight*0.02f))
                             Row {
                                 Text(
                                     "Khuyến mãi",
@@ -980,7 +997,7 @@ fun HomeContent(
                                     fontSize = 20.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(28.dp))
+                            Spacer(modifier = Modifier.height(screenHeight*0.02f))
                             Row {
                                 Text(
                                     "Tổng tiền thanh toán",
@@ -990,7 +1007,7 @@ fun HomeContent(
                                 )
                                 Text(state.totalAmount.toVietNamDong(), fontSize = 20.sp)
                             }
-                            Spacer(modifier = Modifier.height(28.dp))
+                            Spacer(modifier = Modifier.height(screenHeight*0.02f))
                             Row {
                                 Text(
                                     "Số dư tiền mặt trên máy",
@@ -1003,7 +1020,7 @@ fun HomeContent(
                                     fontSize = 20.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(28.dp))
+                            Spacer(modifier = Modifier.height(screenHeight*0.02f))
                             Text(
                                 "Hình thức thanh toán",
                                 fontWeight = FontWeight.Bold,
@@ -1024,12 +1041,12 @@ fun HomeContent(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 28.dp)
+                                            .padding(top = screenHeight * 0.02f)
                                     ) {
                                         chunks.forEach { rowItems ->
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                                horizontalArrangement = Arrangement.spacedBy(screenHeight*0.01f)
                                             ) {
                                                 rowItems.forEach { item ->
 //                                            var isChoose by remember { mutableStateOf(false) }
@@ -1040,8 +1057,8 @@ fun HomeContent(
                                                     Box(
                                                         modifier = Modifier
                                                             .weight(1f)
-                                                            .height(106.dp)
-                                                            .padding(bottom = 14.dp)
+                                                            .height(screenHeight * 0.08f)
+                                                            .padding(bottom = screenHeight * 0.01f)
                                                             .border(
                                                                 width = if (state.nameMethodPayment == item.methodName) 2.dp else 0.4.dp,
                                                                 color = if (state.nameMethodPayment == item.methodName) Color.Green else Color.Gray,
@@ -1058,13 +1075,16 @@ fun HomeContent(
                                                     ) {
                                                         Row(
                                                             modifier = Modifier
-                                                                .padding(start = 24.dp, end = 10.dp)
+                                                                .padding(
+                                                                    start = screenHeight * 0.014f,
+                                                                    end = screenHeight * 0.006f
+                                                                )
                                                                 .fillMaxWidth(),
                                                             verticalAlignment = Alignment.CenterVertically,
                                                         ) {
                                                             val imageModifier = Modifier
-                                                                .width(44.dp)
-                                                                .height(44.dp)
+                                                                .width(screenHeight * 0.034f)
+                                                                .height(screenHeight * 0.034f)
                                                                 .clickable { }
                                                             val imagePainter =
                                                                 if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
@@ -1092,7 +1112,7 @@ fun HomeContent(
                                                             )
                                                             Text(
                                                                 item.brief ?: "",
-                                                                modifier = Modifier.padding(20.dp),
+                                                                modifier = Modifier.padding(screenHeight*0.01f),
                                                                 fontSize = 16.sp,
                                                                 maxLines = 2,
                                                                 overflow = TextOverflow.Ellipsis,
@@ -1117,7 +1137,7 @@ fun HomeContent(
                                     cornerRadius = 6.dp,
                                     titleAlignment = TextAlign.Center,
                                     fontWeight = FontWeight.Bold,
-                                    height = 70.dp,
+                                    height = screenHeight*0.06f,
                                     fontSize = 20.sp,
                                     paddingTop = 12.dp,
                                 ) {
@@ -1129,36 +1149,38 @@ fun HomeContent(
                 }
             }
             if (state.isShowPushMoney) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .border(
-                            width = 0.dp,
-                            color = Color.White,
-                            shape = RoundedCornerShape(
-                                topStart = 22.dp,
-                                topEnd = 22.dp,
-                                bottomEnd = 0.dp,
-                                bottomStart = 0.dp
+                Box (modifier = Modifier.align(Alignment.BottomCenter).clickable {  }.fillMaxHeight().background(Color(0x99000000))){
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .border(
+                                width = 0.dp,
+                                color = Color.White,
+                                shape = RoundedCornerShape(
+                                    topStart = 22.dp,
+                                    topEnd = 22.dp,
+                                    bottomEnd = 0.dp,
+                                    bottomStart = 0.dp
+                                )
                             )
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(
+                                    topStart = 22.dp,
+                                    topEnd = 22.dp,
+                                    bottomEnd = 0.dp,
+                                    bottomStart = 0.dp
+                                )
+                            ),
+                    ) {
+                        PutMoneyComposable(
+                            initSetup = state.initSetup!!,
+                            countDownPaymentByCash = state.countDownPaymentByCash,
+                            totalAmount = state.totalAmount,
+                            onClickChooseAnotherMethodPayment = { viewModel.chooseAnotherMethodPaymentDebounced() },
+                            onClickBackInPayment = { viewModel.backInPaymentDebounced() }
                         )
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(
-                                topStart = 22.dp,
-                                topEnd = 22.dp,
-                                bottomEnd = 0.dp,
-                                bottomStart = 0.dp
-                            )
-                        ),
-                ) {
-                    PutMoneyComposable(
-                        initSetup = state.initSetup!!,
-                        countDownPaymentByCash = state.countDownPaymentByCash,
-                        totalAmount = state.totalAmount,
-                        onClickChooseAnotherMethodPayment = { viewModel.chooseAnotherMethodPaymentDebounced() },
-                        onClickBackInPayment = { viewModel.backInPaymentDebounced() }
-                    )
+                    }
                 }
             }
             if (state.isShowQrCode) {
@@ -1205,7 +1227,7 @@ fun HomeContent(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(630.dp),
+                            .height(screenHeight*0.53f),
                         shape = RoundedCornerShape(8.dp),
                         color = Color.White,
                     ) {
@@ -1219,8 +1241,8 @@ fun HomeContent(
                                 modifier = Modifier
                                     .clickable { viewModel.hideShowQrCode() }
                                     .align(Alignment.End)
-                                    .height(38.dp)
-                                    .width(38.dp),
+                                    .height(screenHeight*0.03f)
+                                    .width(screenHeight*0.03f),
                                 alignment = Alignment.Center,
                                 painter = painterResource(id = R.drawable.image_close),
                                 contentDescription = ""
@@ -1233,11 +1255,11 @@ fun HomeContent(
                             Image(
                                 bitmap = state.imageBitmap!!,
                                 contentDescription = "QR Code",
-                                modifier = Modifier.size(460.dp)
+                                modifier = Modifier.size(screenHeight*0.36f)
                             )
                             Text(
                                 "Vui lòng quét mã trong ${state.countDownPaymentByOnline}s",
-                                modifier = Modifier.padding(bottom = 30.dp, top = 10.dp),
+                                modifier = Modifier.padding(bottom = 0.dp, top = 10.dp),
                                 fontSize = 21.sp,
                             )
                         }
@@ -1268,7 +1290,7 @@ fun HomeContent(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(570.dp),
+                            .height(screenHeight*0.5f),
                         shape = RoundedCornerShape(8.dp),
                         color = Color.White,
                     ) {
@@ -1279,32 +1301,32 @@ fun HomeContent(
                         ) {
                             Image(
                                 modifier = Modifier
-                                    .padding(bottom = 20.dp)
-                                    .height(300.dp)
-                                    .width(300.dp),
+                                    .padding(bottom = screenHeight*0.018f)
+                                    .height(screenHeight*0.26f)
+                                    .width(screenHeight*0.26f),
                                 alignment = Alignment.Center,
                                 painter = painterResource(id = R.drawable.image_get_product),
                                 contentDescription = ""
                             )
                             Text(
                                 state.titleDropProductSuccess,
-                                modifier = Modifier.padding(bottom = 36.dp, start = 22.dp, end = 22.dp),
+                                modifier = Modifier.padding(bottom = screenHeight*0.018f, start = screenHeight*0.018f, end = screenHeight*0.018f),
                                 textAlign = TextAlign.Center,
                                 fontSize = 25.sp,
                             )
                             Text(
                                 "Nước có ga vui lòng mở sau 2 phút",
-                                modifier = Modifier.padding(bottom = 36.dp),
+                                modifier = Modifier.padding(bottom = screenHeight*0.018f),
                                 fontSize = 21.sp,
                             )
                             Text(
                                 "Nếu bạn cần hỗ trợ thêm liên hệ hotline",
-                                modifier = Modifier.padding(bottom = 10.dp),
+                                modifier = Modifier.padding(bottom = screenHeight*0.01f),
                                 fontSize = 21.sp,
                             )
                             Text(
                                 "1900.99.99.89",
-                                modifier = Modifier.padding(bottom = 34.dp),
+                                modifier = Modifier.padding(bottom = screenHeight*0.018f),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
 //                                color = Color(0XFFF37024),

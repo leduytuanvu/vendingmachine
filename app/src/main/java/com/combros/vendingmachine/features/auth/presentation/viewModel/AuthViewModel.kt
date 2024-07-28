@@ -117,6 +117,7 @@ class AuthViewModel @Inject constructor (
                     }
                 }
             } catch (e: Exception) {
+                Logger.debug("login fail in AuthViewModel/login(): ${e.message}")
                 if(e.message!=null) {
                     if(e.message!!.contains("timeout")) {
                         val initSetup: InitSetup = baseRepository.getDataFromLocal(
@@ -137,6 +138,8 @@ class AuthViewModel @Inject constructor (
                         } else {
                             sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                         }
+                    } else if(e.message!!.contains("HTTP 401")) {
+                        sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                     } else {
                         val initSetup: InitSetup = baseRepository.getDataFromLocal(
                             type = object : TypeToken<InitSetup>() {}.type,

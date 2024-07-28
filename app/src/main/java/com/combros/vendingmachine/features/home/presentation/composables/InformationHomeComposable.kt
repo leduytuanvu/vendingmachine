@@ -25,6 +25,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +42,9 @@ fun InformationHomeComposable(
 ) {
     var checkLeft by remember { mutableIntStateOf(0) }
     var checkCenter by remember { mutableIntStateOf(0) }
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(lastInteractionTime) {
         val currentInteractionTime = lastInteractionTime
@@ -52,9 +56,8 @@ fun InformationHomeComposable(
     }
     Row(
         modifier = Modifier
-            .height(80.dp)
+            .height(screenHeight*0.06f)
             .fillMaxWidth()
-//            .background(Color(0XFFF37024)),
         .background(Color(0xFFCB1A17)),
         Arrangement.Center,
         Alignment.CenterVertically,
@@ -87,8 +90,8 @@ fun InformationHomeComposable(
                 ) {
                     Image(
                         modifier = Modifier
-                            .width(21.dp)
-                            .height(21.dp)
+                            .width(screenHeight*0.017f)
+                            .height(screenHeight*0.017f)
                             .clickable { },
                         alignment = Alignment.TopEnd,
                         painter = painterResource(id = R.drawable.image_circle_phone),
@@ -122,7 +125,7 @@ fun InformationHomeComposable(
         ) {
             Image(
                 modifier = Modifier
-                    .height(26.dp),
+                    .height(screenHeight*0.02f),
                 alignment = Alignment.Center,
                 painter = painterResource(id = R.drawable.image_logo_avf),
                 contentDescription = ""
@@ -137,7 +140,7 @@ fun InformationHomeComposable(
                 Alignment.CenterVertically,
             ) {
                 Image(
-                    modifier = Modifier.height(20.dp),
+                    modifier = Modifier.height(screenHeight*0.018f),
                     alignment = Alignment.Center,
                     painter = painterResource(id = R.drawable.image_flags),
                     contentDescription = ""
