@@ -98,29 +98,29 @@ fun SettingsContent(
         Column(
             modifier = Modifier.padding(20.dp),
             content = {
-                TitleTextComposable(title = "GENERAL SETTINGS")
-                ButtonSettingsComposable("HOME", function = {
+                TitleTextComposable(title = "CÀI ĐẶT CHUNG")
+                ButtonSettingsComposable("VỀ MÀN HÌNH BÁN HÀNG", function = {
                     navController.navigate(Screens.HomeScreenRoute.route)
                 }, )
-                ButtonSettingsComposable("HOME ANDROID", function = {
+                ButtonSettingsComposable("VỀ MÀN HÌNH ANDROID", function = {
 //                    throw Exception("Deliberate crash for testing purposes")
                     viewModel.navigateToHomeAndroid()
 
                 })
                 if(state.initSetup!=null) {
                     if(state.initSetup.role == "admin") {
-                        ButtonSettingsComposable("SET UP PORT", function = {
+                        ButtonSettingsComposable("CÀI ĐẶT CỔNG KẾT NỐI", function = {
                             navController.navigate(Screens.SetupPortScreenRoute.route)
                         })
                     }
                 }
-                ButtonSettingsComposable("SET UP PRODUCT", function = {
+                ButtonSettingsComposable("TẢI HÌNH SẢN PHẨM", function = {
                     navController.navigate(Screens.SetupProductScreenRoute.route)
                 })
-                ButtonSettingsComposable("SET UP SLOT", function = {
+                ButtonSettingsComposable("CÀI ĐẶT LAYOUT SẢN PHẨM", function = {
                     navController.navigate(Screens.SetupSlotScreenRoute.route)
                 })
-                ButtonSettingsComposable("SET UP SYSTEM", function = {
+                ButtonSettingsComposable("CÀI ĐẶT HỆ THỐNG", function = {
                     navController.navigate(Screens.SetupSystemScreenRoute.route)
                 })
 //                if(state.initSetup!=null) {
@@ -132,21 +132,21 @@ fun SettingsContent(
 //                }
 //                if(state.initSetup!=null) {
 //                    if(state.initSetup.role == "admin") {
-                        ButtonSettingsComposable("SET UP PAYMENT", function = {
+                        ButtonSettingsComposable("CÀI ĐẶT THANH TOÁN", function = {
                             navController.navigate(Screens.SetupPaymentScreenRoute.route)
                         })
 //                    }
 //                }
-                ButtonSettingsComposable("VIEW TRANSACTIONS IN THE LAST 7 DAYS", function = {
+                ButtonSettingsComposable("KẾT THÚC PHIÊN LÀM VIỆC", function = {
                     navController.navigate(Screens.TransactionScreenRoute.route)
                 })
-                ButtonSettingsComposable("VIEW LOG", function = {
+                ButtonSettingsComposable("XEM LOG", function = {
                     navController.navigate(Screens.ViewLogScreenRoute.route)
                 })
                 if(state.initSetup!=null) {
                     if(state.initSetup.role == "admin") {
-                        ButtonSettingsComposable("RESET FACTORY", function = {
-                            viewModel.showDialogConfirm("Are you sure you want to reset factory?")
+                        ButtonSettingsComposable("KHÔI PHỤC CÀI ĐẶT GỐC", function = {
+                            viewModel.showDialogConfirm("Xác nhận khôi phục cài đặt gốc?")
                         })
                     }
                 }

@@ -113,7 +113,7 @@ internal fun HomeScreen(
         while (true) {
             delay(10000)
             if (!state.isVendingMachineBusy) {
-                Logger.debug("call door")
+               // Logger.debug("call door")
                 viewModel.readDoor()
             }
         }

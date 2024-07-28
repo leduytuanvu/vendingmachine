@@ -3843,7 +3843,7 @@ class HomeViewModel @Inject constructor(
                 if(_state.value.listSlotInCard.isNullOrEmpty()) {
                     countdownHideCart?.cancel()
                 }
-                logger.debug("start countdown: $millisUntilFinished")
+               // logger.debug("start countdown: $millisUntilFinished")
             }
 
             override fun onFinish() {
