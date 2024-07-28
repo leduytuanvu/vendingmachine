@@ -124,6 +124,7 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(10000)
+
             if (!state.isVendingMachineBusy && !state.isWithdrawMoney) {
                 viewModel.readDoor()
             } else {

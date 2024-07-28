@@ -261,11 +261,11 @@ fun SetupSlotContent(
                     ButtonSetupSlotComposable("RESET", function = {
                         onClick()
                         viewModel.showDialogConfirm(
-                            mess = "Are you sure to reset all slot in vending machine?",
+                            mess = "Cài đặt tồn tối đa các sản phẩm các ô đã chọn",
                             nameFunction = "resetAllSlot",
                         )
                     })
-                    ButtonSetupSlotComposable("ADD MORE", function = {
+                    ButtonSetupSlotComposable("Thêm nhiều", function = {
                         if (state.listSlotAddMore.size > 0) {
                             onClick()
                             viewModel.showDialogChooseImage(slot = null)
@@ -274,14 +274,14 @@ fun SetupSlotContent(
                             viewModel.showToast("Please choose slot to add more!")
                         }
                     })
-                    ButtonSetupSlotComposable("FULL INVENTORY", function = {
+                    ButtonSetupSlotComposable("Tồn 100%", function = {
                         onClick()
                         viewModel.showDialogConfirm(
                             mess = "Are you sure to set full inventory for all slot?",
                             nameFunction = "setFullInventory",
                         )
                     })
-                    ButtonSetupSlotComposable("GET LAYOUT", function = {
+                    ButtonSetupSlotComposable("Kéo LAYOUT", function = {
                         onClick()
                         viewModel.showDialogConfirm(
                             mess = "Are you sure to get layout from server?",
@@ -298,7 +298,7 @@ fun SetupSlotContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        Text("Number slot", fontSize = 18.sp)
+                        Text("Số lượng lò xo ", fontSize = 18.sp)
                         TextField(
                             value = inputNumberSetupSlot,
                             onValueChange = { newText ->
@@ -563,7 +563,7 @@ fun SetupSlotContent(
                                         }
                                         Spacer(modifier = Modifier.height(20.dp))
                                         Text(
-                                            slot.productName.ifEmpty { "Not have product" },
+                                            slot.productName.ifEmpty { "Trống" },
                                             modifier = Modifier.height(50.dp),
                                             maxLines = 2,
                                             fontSize = 18.sp,
@@ -573,13 +573,13 @@ fun SetupSlotContent(
 
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                                             Column {
-                                                Text("Inventory", fontSize = 18.sp)
+                                                Text("Tồn", fontSize = 18.sp)
                                                 Spacer(modifier = Modifier.height(6.dp))
                                                 Text(text = "${slot.inventory}/${slot.capacity}", fontSize = 20.sp)
                                             }
                                             Spacer(modifier = Modifier.weight(1f))
                                             CustomButtonComposable(
-                                                title = "Edit",
+                                                title = "+",
                                                 wrap = true,
                                                 height = 60.dp,
                                                 cornerRadius = 4.dp
@@ -595,13 +595,13 @@ fun SetupSlotContent(
 
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                                             Column {
-                                                Text("Price", fontSize = 18.sp)
+                                                Text("Giá", fontSize = 18.sp)
                                                 Spacer(modifier = Modifier.height(6.dp))
                                                 Text(text = slot.price.toVietNamDong(), fontSize = 20.sp)
                                             }
                                             Spacer(modifier = Modifier.weight(1f))
                                             CustomButtonComposable(
-                                                title = "Edit",
+                                                title = "+",
                                                 wrap = true,
                                                 height = 60.dp,
                                                 cornerRadius = 4.dp
@@ -617,13 +617,13 @@ fun SetupSlotContent(
 
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                                             Column {
-                                                Text("Capacity", fontSize = 18.sp)
+                                                Text("Loại Lò xo", fontSize = 18.sp)
                                                 Spacer(modifier = Modifier.height(6.dp))
                                                 Text(text = "${slot.capacity}", fontSize = 20.sp)
                                             }
                                             Spacer(modifier = Modifier.weight(1f))
                                             CustomButtonComposable(
-                                                title = "Edit",
+                                                title = "+",
                                                 wrap = true,
                                                 height = 60.dp,
                                                 cornerRadius = 4.dp
@@ -640,7 +640,7 @@ fun SetupSlotContent(
                                         if(slot.isCombine == "yes") {
                                             if(slot.isLock) {
                                                 CustomButtonComposable(
-                                                    title = "UNLOCK SLOT",
+                                                    title = "Xóa Lỗi",
                                                     titleAlignment = TextAlign.Center,
                                                     cornerRadius = 4.dp,
                                                     height = 60.dp,
@@ -651,13 +651,14 @@ fun SetupSlotContent(
                                                         viewModel.unlockSlot(slot) {
                                                             isLock = false
                                                         }
+                                                        viewModel.productDispenseNotSensor(0, slot.slot)
                                                     },
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
                                                 )
                                             } else {
                                                 CustomButtonComposable(
-                                                    title = "SPLIT SLOT",
+                                                    title = "Tách lò xo",
                                                     titleAlignment = TextAlign.Center,
                                                     cornerRadius = 4.dp,
                                                     height = 60.dp,
@@ -673,7 +674,7 @@ fun SetupSlotContent(
                                         else {
                                             if(isLock) {
                                                 CustomButtonComposable(
-                                                    title = "UNLOCK SLOT",
+                                                    title = "Xóa Lỗi",
                                                     titleAlignment = TextAlign.Center,
                                                     cornerRadius = 4.dp,
                                                     height = 60.dp,
@@ -683,6 +684,7 @@ fun SetupSlotContent(
                                                         viewModel.unlockSlot(slot) {
                                                             isLock = false
                                                         }
+                                                        viewModel.productDispenseNotSensor(0, slot.slot)
                                                     },
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -703,14 +705,18 @@ fun SetupSlotContent(
                                                     || slot.slot == 120
                                                     ) {
                                                     CustomButtonComposable(
-                                                        title = "ROTATE",
+                                                        title = "Xoay",
                                                         titleAlignment = TextAlign.Center,
                                                         cornerRadius = 4.dp,
                                                         height = 60.dp,
                                                         function = {
                                                             onClick()
+<<<<<<< HEAD
                                                             viewModel.productDispense(0, slot.slot)
 //                                                            viewModel.productDispenseNotSensor(0, slot.slot)
+=======
+                                                            viewModel.productDispenseNotSensor(0, slot.slot)
+>>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                         },
                                                         backgroundColor = Color.Blue,
                                                         fontSize = 20.sp,
@@ -723,7 +729,7 @@ fun SetupSlotContent(
                                                         if (slot.productCode.isEmpty() && slotNext.productCode.isEmpty()) {
                                                             CustomButtonComposable(
                                                                 backgroundColor = Color.Gray,
-                                                                title = "MERGE SLOT",
+                                                                title = "Ghép Lò xo",
                                                                 titleAlignment = TextAlign.Center,
                                                                 cornerRadius = 4.dp,
                                                                 height = 60.dp,
@@ -735,15 +741,19 @@ fun SetupSlotContent(
                                                                 fontWeight = FontWeight.Bold,
                                                             )
                                                             CustomButtonComposable(
-                                                                title = "ROTATE",
+                                                                title = "Xoay",
                                                                 titleAlignment = TextAlign.Center,
                                                                 cornerRadius = 4.dp,
                                                                 height = 60.dp,
                                                                 paddingTop = 10.dp,
                                                                 function = {
                                                                     onClick()
+<<<<<<< HEAD
                                                                     viewModel.productDispense(0, slot.slot)
 //                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
+=======
+                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
+>>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,
@@ -751,14 +761,18 @@ fun SetupSlotContent(
                                                             )
                                                         } else {
                                                             CustomButtonComposable(
-                                                                title = "ROTATE",
+                                                                title = "Xoay",
                                                                 titleAlignment = TextAlign.Center,
                                                                 cornerRadius = 4.dp,
                                                                 height = 60.dp,
                                                                 function = {
                                                                     onClick()
+<<<<<<< HEAD
                                                                     viewModel.productDispense(0, slot.slot)
 //                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
+=======
+                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
+>>>>>>> 80e3653045348311ebc2dbebe7b47d26cde96a37
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,
@@ -800,7 +814,7 @@ fun SetupSlotContent(
                                     ),
                                 contentAlignment = Alignment.Center // Center the content
                             ) {
-                                Text("Slot have problems!")
+                                Text("Lò xo có vấn đề!")
                             }
                         }
                     }

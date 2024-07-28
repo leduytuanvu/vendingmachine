@@ -330,7 +330,7 @@ fun SetupSystemMainContentComposable(
         if(state.initSetup!=null) {
             if(state.initSetup.role == "admin") {
                 BodyTextComposable(
-                    title = "Application version: $appVersionName",
+                    title = "Phiên bản: $appVersionName",
                     fontWeight = FontWeight.Bold,
                     paddingBottom = 50.dp,
                 )
@@ -341,9 +341,9 @@ fun SetupSystemMainContentComposable(
                     paddingBottom = 50.dp,
                 )
 
-                BodyTextComposable(title = "Serial sim id: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Serial sim: ${seralSimId}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 CustomButtonComposable(
-                    title = "REFRESH",
+                    title = "Kiểm tra",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -364,7 +364,7 @@ fun SetupSystemMainContentComposable(
                 BodyTextComposable(title = "Description: ${state.informationOfMachine?.description ?: ""}", paddingBottom = 12.dp)
 
                 CustomButtonComposable(
-                    title = "REFRESH",
+                    title = "Kiểm tra",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -378,7 +378,7 @@ fun SetupSystemMainContentComposable(
 
 
 
-                BodyTextComposable(title = "Vending machine code", fontWeight = FontWeight.Bold)
+                BodyTextComposable(title = "Mã máy bán hàng", fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
                 if(state.initSetup!=null) {
                     TitleAndEditTextComposable(
@@ -401,7 +401,7 @@ fun SetupSystemMainContentComposable(
                 }
 
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -433,7 +433,7 @@ fun SetupSystemMainContentComposable(
 //            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
 //        }
 
-                BodyTextComposable(title = "Withdrawal allowed", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Trả tiền thừa", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -442,7 +442,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemWithdrawalAllowed = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -454,7 +454,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateWithdrawalAllowedInLocal(selectedItemWithdrawalAllowed.toString())
                 }
 
-                BodyTextComposable(title = "Automatically start the application", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Tự khởi động lại ứng dụng (check app)", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -463,7 +463,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemAutoStartApplication = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -475,7 +475,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateAutoStartApplicationInLocal(selectedItemAutoStartApplication.toString())
                 }
 
-                BodyTextComposable(title = "Layout home screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Bố cục trang bán hàng", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("3"),
                     AnnotatedString("4"),
@@ -486,7 +486,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemLayoutHomeScreen = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -498,7 +498,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
                 }
 
-                BodyTextComposable(title = "Auto turn on light and turn off light", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Tự động bật tắt đèn", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -507,7 +507,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemAutoTurnOnTurnOffLight = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -535,7 +535,7 @@ fun SetupSystemMainContentComposable(
                             }
                         )
                     }) {
-                        BodyTextComposable(title = "Time to turn on the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+                        BodyTextComposable(title = "Thời gian bật đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
 //                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
                         if(state.initSetup!=null) {
                             TimePickerWrapperComposable(
@@ -559,7 +559,7 @@ fun SetupSystemMainContentComposable(
                             }
                         )
                     }) {
-                        BodyTextComposable(title = "Time to turn off the light", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+                        BodyTextComposable(title = "Thời gian tắt đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
 //                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
                         if(state.initSetup!=null) {
                             TimePickerWrapperComposable(
@@ -578,7 +578,7 @@ fun SetupSystemMainContentComposable(
                 }
 
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     titleAlignment = TextAlign.Center,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -593,7 +593,7 @@ fun SetupSystemMainContentComposable(
                     )
                 }
 
-                BodyTextComposable(title = "Auto reset app every day", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Tự khởi động ứng dụng hàng ngày", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -602,7 +602,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemAutoResetAppEveryday = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -614,7 +614,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateAutoResetAppEveryDayInLocal(selectedItemAutoResetAppEveryday.toString())
                 }
 
-                BodyTextComposable(title = "Set time reset on everyday", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
+                BodyTextComposable(title = "Thời gian khởi động lại hàng ngày", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
                 if(state.initSetup!=null){
 //                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
                     TimePickerWrapperComposable(
@@ -631,7 +631,7 @@ fun SetupSystemMainContentComposable(
                     )
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     cornerRadius = 4.dp,
                     titleAlignment = TextAlign.Center,
                     height = 60.dp,
@@ -648,7 +648,7 @@ fun SetupSystemMainContentComposable(
                 }
 
                 CustomButtonComposable(
-                    title = "CHECK THE DROP SENSOR",
+                    title = "Kiểm tra cảm biến rơi",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -660,7 +660,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.checkDropSensor()
                 }
 
-                BodyTextComposable(title = "Drop sensor", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Bật tắt cảm biến rơi mua hàng", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -669,7 +669,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemDropSensor = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -681,7 +681,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateDropSensorInLocal(selectedItemDropSensor.toString())
                 }
 
-                BodyTextComposable(title = "Inching mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Nhích thêm nếu chưa rơi hàng", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("0"),
                     AnnotatedString("1"),
@@ -694,7 +694,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemInchingMode = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -706,7 +706,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
                 }
 
-                BodyTextComposable(title = "Big Ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Quảng cáo toàn màn hình", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -715,7 +715,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemBigAds = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -727,7 +727,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateBigAdsInLocal(selectedItemBigAds.toString())
                 }
 
-                BodyTextComposable(title = "Time to jump to the advertising screen", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Thời gian trở về video toàn màn hình", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("30s"),
                     AnnotatedString("60s"),
@@ -744,7 +744,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemTimeJumpToAdsScreen = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -756,7 +756,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateTimeJumpToAdsScreenInLocal(selectedItemTimeJumpToAdsScreen.toString().substringBefore("s"))
                 }
 
-                BodyTextComposable(title = "Time hide cart", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Thời gian sản phẩm giỏ hàng", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("60s"),
                     AnnotatedString("120s"),
@@ -779,7 +779,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemTimeHideCart = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -791,7 +791,7 @@ fun SetupSystemMainContentComposable(
                     viewModel.updateTimeHideCartInLocal(selectedItemTimeHideCart.toString().substringBefore("s"))
                 }
 
-                BodyTextComposable(title = "Glass heating mode", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                BodyTextComposable(title = "Sưởi kính", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
                     AnnotatedString("OFF"),
@@ -800,7 +800,7 @@ fun SetupSystemMainContentComposable(
                     selectedItemGlassHeatingMode = it
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -865,7 +865,7 @@ fun SetupSystemMainContentComposable(
                     }
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     cornerRadius = 4.dp,
                     titleAlignment = TextAlign.Center,
                     height = 60.dp,
@@ -901,7 +901,7 @@ fun SetupSystemMainContentComposable(
                     }
                 }
                 CustomButtonComposable(
-                    title = "SAVE",
+                    title = "Lưu",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -917,7 +917,7 @@ fun SetupSystemMainContentComposable(
                 BodyTextComposable(title = "Temperature 1: ${state.temp1}${if(state.temp1.isNotEmpty()&&state.temp1!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 BodyTextComposable(title = "Temperature 2: ${state.temp2}${if(state.temp2.isNotEmpty()&&state.temp2!="không thể kết nối")"℃" else ""}", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 CustomButtonComposable(
-                    title = "READ TEMPERATURE",
+                    title = "Đọc nhiệt độ",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -930,7 +930,7 @@ fun SetupSystemMainContentComposable(
                 }
             }
             CustomButtonComposable(
-                title = "TURN ON LIGHT",
+                title = "Bật đèn",
                 wrap = true,
                 cornerRadius = 4.dp,
                 height = 60.dp,
@@ -942,7 +942,7 @@ fun SetupSystemMainContentComposable(
                 viewModel.turnOnLight()
             }
             CustomButtonComposable(
-                title = "TURN OFF LIGHT",
+                title = "Tắt đèn",
                 wrap = true,
                 cornerRadius = 4.dp,
                 height = 60.dp,
