@@ -382,28 +382,41 @@ class SetupSlotViewModel @Inject constructor(
                     0xAA.toByte(),
                     0x55,
                 )
-                _statusDropProduct.value =
-                    DropSensorResult.INITIALIZATION
-                portConnectionDatasource.sendCommandVendingMachine(byteArray)
-                var result = withTimeoutOrNull(20000L) {
-                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
-                }
-                if(result == null) {
-                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
-                } else {
-                    val listSlot = _state.value.listSlot
-                    val index = listSlot.indexOfFirst { it.slot == slot.slot }
-                    listSlot[index].isLock = false
-                    baseRepository.writeDataToLocal(listSlot, pathFileSlot)
-                    baseRepository.addNewFillLogToLocal(
-                        machineCode = _state.value.initSetup!!.vendCode,
-                        fillType = "setup slot",
-                        content = "unlock slot ${slot.slot}"
-                    )
-                    onSuccess()
-                    _state.update { it.copy(listSlot = listSlot) }
-                }
-                _state.update { it.copy(isLoading = false) }
+                productDispense(0, slot.slot)
+                val listSlot = _state.value.listSlot
+                val index = listSlot.indexOfFirst { it.slot == slot.slot }
+                listSlot[index].isLock = false
+                baseRepository.writeDataToLocal(listSlot, pathFileSlot)
+                baseRepository.addNewFillLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    fillType = "setup slot",
+                    content = "unlock slot ${slot.slot}"
+                )
+                onSuccess()
+                _state.update { it.copy(listSlot = listSlot,isLoading = false,) }
+//                _state.update { it.copy(isLoading = false) }
+//                _statusDropProduct.value =
+//                    DropSensorResult.INITIALIZATION
+//                portConnectionDatasource.sendCommandVendingMachine(byteArray)
+//                var result = withTimeoutOrNull(20000L) {
+//                    statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
+//                }
+//                if(result == null) {
+//                    sendEvent(Event.Toast("Unlock slot fail! (TIMEOUT)"))
+//                } else {
+//                    val listSlot = _state.value.listSlot
+//                    val index = listSlot.indexOfFirst { it.slot == slot.slot }
+//                    listSlot[index].isLock = false
+//                    baseRepository.writeDataToLocal(listSlot, pathFileSlot)
+//                    baseRepository.addNewFillLogToLocal(
+//                        machineCode = _state.value.initSetup!!.vendCode,
+//                        fillType = "setup slot",
+//                        content = "unlock slot ${slot.slot}"
+//                    )
+//                    onSuccess()
+//                    _state.update { it.copy(listSlot = listSlot) }
+//                }
+//                _state.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
@@ -516,8 +529,8 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 for (item in _state.value.listSlot) {
                     if (item.slot == _state.value.slot!!.slot) {
-                        item.inventory = 10
-                        item.capacity = 10
+                        item.inventory = 6
+                        item.capacity = 6
                         item.productCode = ""
                         item.productName = "Not have product"
                         item.price = 10000
@@ -838,8 +851,8 @@ class SetupSlotViewModel @Inject constructor(
                 _state.update { it.copy(isLoading = true) }
                 for (item in _state.value.listSlot) {
                     if (item.slot == _state.value.slot!!.slot) {
-                        item.inventory = 10
-                        item.capacity = 10
+                        item.inventory = 6
+                        item.capacity = 6
                         val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
                         logger.debug("index: ${indexCheck}")
                         if(indexCheck!=-1) {
@@ -904,8 +917,8 @@ class SetupSlotViewModel @Inject constructor(
                     for (itemAdd in _state.value.listSlotAddMore) {
                         for (item in _state.value.listSlot) {
                             if (item.slot == itemAdd.slot) {
-                                item.inventory = 10
-                                item.capacity = 10
+                                item.inventory = 6
+                                item.capacity = 6
                                 val indexCheck = _state.value.listSlot.indexOfFirst { it.productCode == product.productCode }
                                 item.productCode = product.productCode
                                 item.productName = product.productName

@@ -697,6 +697,7 @@ class HomeViewModel @Inject constructor(
                                             for (itemAnother in listAnotherSlot) {
                                                 val anotherSlot =
                                                     homeRepository.getSlotDrop(item.productCode)
+                                                logger.debug("another slot ne: $anotherSlot")
                                                 if (anotherSlot != null) {
                                                     _statusDropProduct.value =
                                                         DropSensorResult.INITIALIZATION
@@ -778,6 +779,7 @@ class HomeViewModel @Inject constructor(
                                                         }
 
                                                         else -> {
+                                                            logger.debug("else else else else")
                                                             indexCheck =
                                                                 listAnotherSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == anotherResult!!.name }
                                                             if (indexCheck != -1) {
@@ -1114,7 +1116,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Logger.debug("=============== error")
+                Logger.debug("=============== error: ${e.message}")
                 baseRepository.addNewErrorLogToLocal(
                     machineCode = _state.value.initSetup!!.vendCode,
                     errorContent = "drop product fail in HomeViewModel/dropProduct(): ${e.message}",
@@ -3634,72 +3636,136 @@ class HomeViewModel @Inject constructor(
                 }
 
                 if (_numberRottenBoxBalance.value < numberCashNeedReturn) {
-                    showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
-                    return@launch
+//                    showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
+//                    return@launch
+                    for (num in 1.._numberRottenBoxBalance.value) {
+                        var returnSuccess = true
+                        try {
+                            withTimeout(20000L) {
+                                checkCashBoxNomally = false
+                                portConnectionDatasource.sendCommandCashBox(byteArrays.cbPollStatus)
+                                delay(500)
+                                if (checkCashBoxNomally) {
+                                    while (true) {
+                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseMonitorStatus)
+                                        delay(500)
+                                        //  01  07  03  00  00  13  11  22  11  22  11  22  25
+                                        var byteArrayCheck = 0x00.toByte()
+                                        if(_byteArrayCheckReturnCashBox.value[6]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[6]
+                                        } else if(_byteArrayCheckReturnCashBox.value[7]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[7]
+                                        } else if(_byteArrayCheckReturnCashBox.value[8]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[8]
+                                        } else if(_byteArrayCheckReturnCashBox.value[9]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[9]
+                                        } else if(_byteArrayCheckReturnCashBox.value[10]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[10]
+                                        } else if(_byteArrayCheckReturnCashBox.value[11]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[11]
+                                        }
+                                        if(byteArrayCheck!=0x11.toByte()) {
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbEnableType3456789)
+                                            delay(300)
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
+                                            delay(300)
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbDisable)
+                                            delay(8000)
+                                            initSetup = baseRepository.getDataFromLocal(
+                                                type = object : TypeToken<InitSetup>() {}.type,
+                                                path = pathFileInitSetup
+                                            )!!
+                                            initSetup.currentCash -= 10000
+                                            _state.update { it.copy(initSetup = initSetup) }
+                                            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                                            baseRepository.addNewDepositWithdrawLogToLocal(
+                                                machineCode = _state.value.initSetup!!.vendCode,
+                                                transactionType = "withdraw",
+                                                denominationType = 10000,
+                                                quantity = numberCashNeedReturn,
+                                                currentBalance = currentCash,
+                                                status = "true",
+                                            )
+                                            break
+                                        }
+                                    }
+                                } else {
+                                    returnSuccess = false
+                                    logger.info("cash box have problem")
+                                }
+                            }
+                        } catch (e: TimeoutCancellationException) {
+                            returnSuccess = false
+                            logger.info("timeout occurred for iteration $num")
+                        }
+                        if(!returnSuccess) break
+                    }
+                } else {
+                    for (num in 1..numberCashNeedReturn) {
+                        var returnSuccess = true
+                        try {
+                            withTimeout(20000L) {
+                                checkCashBoxNomally = false
+                                portConnectionDatasource.sendCommandCashBox(byteArrays.cbPollStatus)
+                                delay(500)
+                                if (checkCashBoxNomally) {
+                                    while (true) {
+                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseMonitorStatus)
+                                        delay(500)
+                                        //  01  07  03  00  00  13  11  22  11  22  11  22  25
+                                        var byteArrayCheck = 0x00.toByte()
+                                        if(_byteArrayCheckReturnCashBox.value[6]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[6]
+                                        } else if(_byteArrayCheckReturnCashBox.value[7]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[7]
+                                        } else if(_byteArrayCheckReturnCashBox.value[8]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[8]
+                                        } else if(_byteArrayCheckReturnCashBox.value[9]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[9]
+                                        } else if(_byteArrayCheckReturnCashBox.value[10]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[10]
+                                        } else if(_byteArrayCheckReturnCashBox.value[11]!=0x00.toByte()) {
+                                            byteArrayCheck = _byteArrayCheckReturnCashBox.value[11]
+                                        }
+                                        if(byteArrayCheck!=0x11.toByte()) {
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbEnableType3456789)
+                                            delay(300)
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
+                                            delay(300)
+                                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbDisable)
+                                            delay(8000)
+                                            initSetup = baseRepository.getDataFromLocal(
+                                                type = object : TypeToken<InitSetup>() {}.type,
+                                                path = pathFileInitSetup
+                                            )!!
+                                            initSetup.currentCash -= 10000
+                                            _state.update { it.copy(initSetup = initSetup) }
+                                            baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
+                                            baseRepository.addNewDepositWithdrawLogToLocal(
+                                                machineCode = _state.value.initSetup!!.vendCode,
+                                                transactionType = "withdraw",
+                                                denominationType = 10000,
+                                                quantity = numberCashNeedReturn,
+                                                currentBalance = currentCash,
+                                                status = "true",
+                                            )
+                                            break
+                                        }
+                                    }
+                                } else {
+                                    returnSuccess = false
+                                    logger.info("cash box have problem")
+                                }
+                            }
+                        } catch (e: TimeoutCancellationException) {
+                            returnSuccess = false
+                            logger.info("timeout occurred for iteration $num")
+                        }
+                        if(!returnSuccess) break
+                    }
                 }
 
-                for (num in 1..numberCashNeedReturn) {
-                    var returnSuccess = true
-                    try {
-                        withTimeout(20000L) {
-                            checkCashBoxNomally = false
-                            portConnectionDatasource.sendCommandCashBox(byteArrays.cbPollStatus)
-                            delay(500)
-                            if (checkCashBoxNomally) {
-                                while (true) {
-                                    portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseMonitorStatus)
-                                    delay(500)
-                                    //  01  07  03  00  00  13  11  22  11  22  11  22  25
-                                    var byteArrayCheck = 0x00.toByte()
-                                    if(_byteArrayCheckReturnCashBox.value[6]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[6]
-                                    } else if(_byteArrayCheckReturnCashBox.value[7]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[7]
-                                    } else if(_byteArrayCheckReturnCashBox.value[8]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[8]
-                                    } else if(_byteArrayCheckReturnCashBox.value[9]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[9]
-                                    } else if(_byteArrayCheckReturnCashBox.value[10]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[10]
-                                    } else if(_byteArrayCheckReturnCashBox.value[11]!=0x00.toByte()) {
-                                        byteArrayCheck = _byteArrayCheckReturnCashBox.value[11]
-                                    }
-                                    if(byteArrayCheck!=0x11.toByte()) {
-                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbEnableType3456789)
-                                        delay(300)
-                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDispenseBill1)
-                                        delay(300)
-                                        portConnectionDatasource.sendCommandCashBox(byteArrays.cbDisable)
-                                        delay(8000)
-                                        initSetup = baseRepository.getDataFromLocal(
-                                            type = object : TypeToken<InitSetup>() {}.type,
-                                            path = pathFileInitSetup
-                                        )!!
-                                        initSetup.currentCash -= 10000
-                                        _state.update { it.copy(initSetup = initSetup) }
-                                        baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
-                                        baseRepository.addNewDepositWithdrawLogToLocal(
-                                            machineCode = _state.value.initSetup!!.vendCode,
-                                            transactionType = "withdraw",
-                                            denominationType = 10000,
-                                            quantity = numberCashNeedReturn,
-                                            currentBalance = currentCash,
-                                            status = "true",
-                                        )
-                                        break
-                                    }
-                                }
-                            } else {
-                                returnSuccess = false
-                                logger.info("cash box have problem")
-                            }
-                        }
-                    } catch (e: TimeoutCancellationException) {
-                        returnSuccess = false
-                        logger.info("timeout occurred for iteration $num")
-                    }
-                    if(!returnSuccess) break
-                }
+
             } catch (e: Exception) {
                 logger.info("error catch: ${e.message}")
                 baseRepository.addNewErrorLogToLocal(
@@ -3977,14 +4043,14 @@ class HomeViewModel @Inject constructor(
         countdownHideCart = object :
             CountDownTimer((_state.value.initSetup!!.timeoutRemoveCart.toLong() * 1000), 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                Logger.debug("count down hide cart")
+//                Logger.debug("count down hide cart")
                 if(_state.value.listSlotInCard.isNullOrEmpty()) {
                     countdownHideCart?.cancel()
                 }
             }
 
             override fun onFinish() {
-                Logger.debug("count down hide cart finish")
+//                Logger.debug("count down hide cart finish")
                 if(!_state.value.isVendingMachineBusy) {
                     _state.update {
                         it.copy(

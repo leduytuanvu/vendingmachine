@@ -104,7 +104,7 @@ internal fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadInitData()
         while (true) {
-            Logger.debug("========= ${state.isWithdrawMoney} ${state.isVendingMachineBusy}")
+//            Logger.debug("========= ${state.isWithdrawMoney} ${state.isVendingMachineBusy}")
             if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {
                 delay(800)
                 if(!state.isWithdrawMoney && !state.isVendingMachineBusy) {

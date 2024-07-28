@@ -710,6 +710,7 @@ fun SetupSlotContent(
                                                         function = {
                                                             onClick()
                                                             viewModel.productDispense(0, slot.slot)
+//                                                            viewModel.productDispenseNotSensor(0, slot.slot)
                                                         },
                                                         backgroundColor = Color.Blue,
                                                         fontSize = 20.sp,
@@ -742,6 +743,7 @@ fun SetupSlotContent(
                                                                 function = {
                                                                     onClick()
                                                                     viewModel.productDispense(0, slot.slot)
+//                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,
@@ -756,6 +758,7 @@ fun SetupSlotContent(
                                                                 function = {
                                                                     onClick()
                                                                     viewModel.productDispense(0, slot.slot)
+//                                                                    viewModel.productDispenseNotSensor(0, slot.slot)
                                                                 },
                                                                 backgroundColor = Color.Blue,
                                                                 fontSize = 20.sp,
