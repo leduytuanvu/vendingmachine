@@ -170,6 +170,7 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun lockSlot(slotIndex: Int) {
         try {
+            logger.debug("lock slot $slotIndex")
             val listSlot: ArrayList<Slot> = baseRepository.getDataFromLocal(
                 type = object : TypeToken<ArrayList<Slot>>() {}.type,
                 path = pathFileSlot

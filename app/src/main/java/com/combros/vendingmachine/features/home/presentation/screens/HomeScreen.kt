@@ -115,7 +115,7 @@ internal fun HomeScreen(
                     viewModel.getBillType()
                 }
             } else {
-                Logger.debug("+++++++++")
+//                Logger.debug("+++++++++")
                 delay(3000)
             }
         }

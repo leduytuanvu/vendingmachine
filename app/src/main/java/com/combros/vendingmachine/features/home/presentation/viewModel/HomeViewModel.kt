@@ -389,7 +389,7 @@ class HomeViewModel @Inject constructor(
             if (dataHexString.isNotEmpty()) {
                 if(funIsCheckDropSensorIsRunning) {
                     if(dataHexString == "00,5D,00,00,5D") {
-                        logger.debug("check drop sensor true 1")
+//                        logger.debug("check drop sensor true 1")
                         checkDropSensorSuccess = true
                     }
                 }
@@ -412,7 +412,7 @@ class HomeViewModel @Inject constructor(
                     }
                 } else {
                     if(dataHexString == "00,5D,00,00,5D") {
-                        logger.debug("check drop sensor true 2")
+//                        logger.debug("check drop sensor true 2")
                         checkDropSensorSuccess = true
                     } else if (_dataTmpVendingMachine.value != dataHexString) {
                         _dataTmpVendingMachine.value = dataHexString
@@ -526,9 +526,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isVendingMachineBusy = true) }
-                logger.debug("================================= ${state.value.isVendingMachineBusy}")
                 delay(300)
-                Logger.debug("0")
                 funIsCheckDropSensorIsRunning = true
                 checkDropSensorSuccess = false
                 portConnectionDatasource.sendCommandVendingMachine(byteArrays.vmCheckDropSensor)
@@ -553,6 +551,9 @@ class HomeViewModel @Inject constructor(
                 Logger.debug("1")
                 // List slot in cart
                 val listSlotInCart = _state.value.listSlotInCard
+                for(item in listSlotInCart) {
+                    Logger.debug("item = $item")
+                }
                 val listProductDropInCart: ArrayList<Slot> = arrayListOf()
                 if (_state.value.promotion != null) {
                     if (_state.value.promotion!!.carts.isNullOrEmpty()) {
@@ -592,15 +593,18 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
+                for(item in listProductDropInCart) {
+                    Logger.debug("item 2 = $item")
+                }
                 delay(1600)
                 logger.debug("checkDropSensor: $checkDropSensorSuccess")
-                Logger.debug("2 listProductDropInCart: $listProductDropInCart")
+//                Logger.debug("list product drop in cart: $listProductDropInCart")
                 if(checkDropSensorSuccess) {
                     var indexCheck = -1
                     for (item in listProductDropInCart) {
                         val slot = homeRepository.getSlotDrop(item.productCode)
                         if (slot != null) {
-                            logger.debug("slot: ${slot.slot}")
+                            logger.debug("slot ============ ${slot.slot}")
                             _statusDropProduct.value = DropSensorResult.INITIALIZATION
                             if (_state.value.initSetup!!.dropSensor == "OFF") {
                                 productDispenseNotSensor(0, slot.slot)
@@ -610,8 +614,10 @@ class HomeViewModel @Inject constructor(
                             var result = withTimeoutOrNull(20000L) {
                                 statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
                             }
+                            delay(1000)
                             logger.debug("done")
                             if (result == null) {
+                                logger.debug("result is null")
                                 homeRepository.lockSlot(slot.slot)
                                 indexCheck =
                                     listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "TIMEOUT_WAITING_FOR_DISPENSE_RESULT" }
@@ -636,6 +642,7 @@ class HomeViewModel @Inject constructor(
                                 }
                                 when (result) {
                                     DropSensorResult.SUCCESS, DropSensorResult.ERROR_00_5C_50_AA_56_PRODUCT_FALL -> {
+                                        logger.debug("1 ${result.name}")
                                         val message = if (result == DropSensorResult.SUCCESS) {
                                             "SUCCESS"
                                         } else {
@@ -662,6 +669,7 @@ class HomeViewModel @Inject constructor(
                                     }
 
                                     DropSensorResult.SENSOR_HAS_AN_OBSTACLE -> {
+                                        logger.debug("2 ${result.name}")
                                         indexCheck =
                                             listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "SENSOR_HAS_AN_OBSTACLE" }
                                         if (indexCheck != -1) {
@@ -677,6 +685,7 @@ class HomeViewModel @Inject constructor(
                                     }
 
                                     else -> {
+                                        logger.debug("3 ${result.name}")
                                         homeRepository.lockSlot(slot.slot)
                                         indexCheck =
                                             listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == result.name }
@@ -808,6 +817,18 @@ class HomeViewModel @Inject constructor(
                                                         listAnotherSlotDropFail.add(tmpItem)
                                                     }
                                                 }
+                                            }
+                                        } else {
+                                            indexCheck =
+                                                listSlotDropFail.indexOfFirst { it.slot == item.slot && it.messDrop == "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${item.productCode.uppercase()}" }
+                                            if (indexCheck != -1) {
+                                                listSlotDropFail[indexCheck].inventory++
+                                            } else {
+                                                val tmpItem = item.copy(
+                                                    inventory = 1,
+                                                    messDrop = "NOT_FOUND_SLOT_HAVE_PRODUCT_CODE_IS_${item.productCode.uppercase()}",
+                                                )
+                                                listSlotDropFail.add(tmpItem)
                                             }
                                         }
                                     }
@@ -3047,7 +3068,6 @@ class HomeViewModel @Inject constructor(
 
     fun paymentConfirmation() {
         viewModelScope.launch {
-            delay(50L)
             if(funPaymentConfirmationIsRunning) {
 
             } else {
@@ -3597,11 +3617,8 @@ class HomeViewModel @Inject constructor(
     fun withdrawalMoney() {
         logger.info("withdrawalMoney")
         if (funWithdrawMoneyIsRunning) return
-
         viewModelScope.launch {
-            delay(50L)
             funWithdrawMoneyIsRunning = true
-
             try {
                 _state.update {
                     it.copy(
@@ -3609,17 +3626,16 @@ class HomeViewModel @Inject constructor(
                         isWithdrawMoney = true,
                     )
                 }
+                portConnectionDatasource.sendCommandCashBox(byteArrays.cbDisable)
+                delay(300)
                 var initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-
                 val currentCash = initSetup.currentCash
                 if (currentCash <= 0) {
-//                    showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
                     return@launch
                 }
-
                 val numberCashNeedReturn = if (currentCash > 9999) currentCash / 10000 else 0
                 if (numberCashNeedReturn <= 0) {
                     showDialogWarning("Máy chỉ có thể thối tiền mệnh giá 10.000 vnđ. Vui lòng mua thêm sản phẩm khác")
@@ -3631,13 +3647,10 @@ class HomeViewModel @Inject constructor(
                 logger.debug("number cash return is: $numberCashNeedReturn")
 
                 if (_numberRottenBoxBalance.value == -1) {
-                    logger.debug("Lỗi")
                     return@launch
                 }
 
                 if (_numberRottenBoxBalance.value < numberCashNeedReturn) {
-//                    showDialogWarning("Máy hiện không đủ tiền thối. Vui lòng mua thêm sản phẩm hoặc liên hệ 1900.99.99.80 để nhận lại tiền thừa. Xin chân thành cảm ơn")
-//                    return@launch
                     for (num in 1.._numberRottenBoxBalance.value) {
                         var returnSuccess = true
                         try {
@@ -3780,6 +3793,7 @@ class HomeViewModel @Inject constructor(
                         isWithdrawMoney = false,
                     )
                 }
+                portConnectionDatasource.sendCommandCashBox(byteArrays.cbEnableType3456789)
             }
         }
     }
