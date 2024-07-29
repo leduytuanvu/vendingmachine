@@ -611,10 +611,10 @@ class HomeViewModel @Inject constructor(
                             } else {
                                 productDispense(0, slot.slot)
                             }
-                            var result = withTimeoutOrNull(20000L) {
+                            var result = withTimeoutOrNull(35000L) {
                                 statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
                             }
-                            delay(1000)
+                            delay(500)
                             logger.debug("done")
                             if (result == null) {
                                 logger.debug("result is null")
@@ -715,9 +715,10 @@ class HomeViewModel @Inject constructor(
                                                     } else {
                                                         productDispense(0, anotherSlot.slot)
                                                     }
-                                                    var anotherResult = withTimeoutOrNull(20000L) {
+                                                    var anotherResult = withTimeoutOrNull(35000L) {
                                                         statusDropProduct.first { it != DropSensorResult.INITIALIZATION }
                                                     }
+                                                    delay(1000)
                                                     if (anotherResult == null) {
                                                         homeRepository.lockSlot(anotherSlot.slot)
                                                         indexCheck =
@@ -4422,19 +4423,19 @@ class HomeViewModel @Inject constructor(
         val date = LocalDateTime.now();
         viewModelScope.launch {
             try {
-                logger.debug("1")
+//                logger.debug("1")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                logger.debug("2")
+//                logger.debug("2")
                 var listDataTrackingAds: ArrayList<DataTrackingAds> = baseRepository.getDataFromLocal(
                     type = object : TypeToken<ArrayList<DataTrackingAds>>() {}.type,
                     path = pathFileUpdateTrackingAds()
                 ) ?: arrayListOf()
-                logger.debug("3")
+//                logger.debug("3")
                 if (listDataTrackingAds.isEmpty()) {
-                    logger.debug("4")
+//                    logger.debug("4")
                     listDataTrackingAds.add(
                         DataTrackingAds(
                             eventId = "",
@@ -4452,7 +4453,7 @@ class HomeViewModel @Inject constructor(
                         ),
                     )
                 } else {
-                    logger.debug("5")
+//                    logger.debug("5")
                     if (
                         isWithinRange(
                             date,
