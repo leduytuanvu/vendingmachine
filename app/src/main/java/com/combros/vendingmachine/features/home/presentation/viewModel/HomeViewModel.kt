@@ -712,8 +712,10 @@ class HomeViewModel @Inject constructor(
                                                     _statusDropProduct.value =
                                                         DropSensorResult.INITIALIZATION
                                                     if (_state.value.initSetup!!.dropSensor == "OFF") {
+                                                        Logger.debug("slot another drop: ${anotherSlot.slot}")
                                                         productDispenseNotSensor(0, anotherSlot.slot)
                                                     } else {
+                                                        Logger.debug("slot another drop: ${anotherSlot.slot}")
                                                         productDispense(0, anotherSlot.slot)
                                                     }
                                                     var anotherResult = withTimeoutOrNull(35000L) {
@@ -751,6 +753,8 @@ class HomeViewModel @Inject constructor(
                                                                 } else {
                                                                     "ERROR_00_5C_50_AA_56_PRODUCT_FALL"
                                                                 }
+                                                            Logger.debug("----- ${anotherSlot.slot} - list success: ${listSlotDropSuccess.size}")
+                                                            Logger.debug("list success: ${listSlotDropSuccess}")
                                                             indexCheck =
                                                                 listSlotDropSuccess.indexOfFirst { it.slot == anotherSlot.slot }
                                                             if (indexCheck != -1) {
@@ -763,7 +767,7 @@ class HomeViewModel @Inject constructor(
                                                                 anotherSlot.inventory = 1
                                                                 anotherSlot.messDrop = message
                                                                 anotherSlot.price = item.price
-                                                                listSlotDropSuccess.add(slot)
+                                                                listSlotDropSuccess.add(anotherSlot)
                                                             }
                                                             homeRepository.minusInventory(anotherSlot.slot)
 
@@ -1792,6 +1796,7 @@ class HomeViewModel @Inject constructor(
                         for (item in listUpdateDeliveryStatus) {
                             if (!item.isSent) {
                                 val updateDeliveryStatus = UpdateDeliveryStatusRequest(
+                                    uuid = LocalDateTime.now().toId(),
                                     machineCode = item.machineCode,
                                     orderCode = item.orderCode,
                                     androidId = item.androidId,
@@ -1988,6 +1993,7 @@ class HomeViewModel @Inject constructor(
                     for (item in listUpdateDeliveryStatus) {
                         if (!item.isSent) {
                             val updateDeliveryStatus = UpdateDeliveryStatusRequest(
+                                uuid = LocalDateTime.now().toId(),
                                 machineCode = item.machineCode,
                                 orderCode = item.orderCode,
                                 androidId = item.androidId,
@@ -3196,6 +3202,7 @@ class HomeViewModel @Inject constructor(
                                 for (item in listProductInCart) {
                                     val slot = homeRepository.getSlotDrop(item.productCode)
                                     val productDetailRequest = ProductDetailRequest(
+                                        uuid = LocalDateTime.now().toId(),
                                         productCode = item.productCode,
                                         productName = item.productName,
                                         price = item.price,

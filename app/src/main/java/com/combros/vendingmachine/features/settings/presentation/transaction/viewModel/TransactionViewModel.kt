@@ -52,7 +52,7 @@ class TransactionViewModel @Inject constructor (
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
                 )!!
-                initSetup.timeStartSession = LocalDateTime.now().toString()
+                initSetup.timeStartSession = LocalDateTime.now().toDateTimeString()
                 if(initSetup.timeClosingSession.isEmpty()) {
                     initSetup.timeClosingSession = "Never ended a session before"
                 }
@@ -97,7 +97,7 @@ class TransactionViewModel @Inject constructor (
                             logger.debug("time close: ${initSetup.timeClosingSession}")
                             val inputFormatter = DateTimeFormatter.ISO_DATE_TIME
                             // Define the output date format with milliseconds
-                            val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+                            val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                             // Parse the date string to a ZonedDateTime object
                             val dateTime = ZonedDateTime.parse(item.orderTime, inputFormatter)
                             logger.debug("orderTimeConverter: ${dateTime.format(outputFormatter)}")
@@ -299,16 +299,16 @@ class TransactionViewModel @Inject constructor (
                             sessionType = type,
                             machineCode = _state.value.initSetup!!.vendCode,
                             androidId = _state.value.initSetup!!.androidId,
-                            timeStart = timeStartTmp,
-                            timeEnd = timeEndTmp,
+                            timeStart = timeStartSession,
+                            timeEnd = LocalDateTime.now().toDateTimeString(),
                             moneyData = listMoneyDataRequest,
                             moneyBox = listMoneyBox,
                         )
                         val response = settingsRepository.endOfSession(endOfSessionRequest)
                         if(response.code==200) {
                             sendEvent(Event.Toast("SUCCESS"))
-                            _state.value.initSetup!!.timeStartSession = LocalDateTime.now().toString()
-                            _state.value.initSetup!!.timeClosingSession = LocalDateTime.now().toString()
+                            _state.value.initSetup!!.timeStartSession = LocalDateTime.now().toDateTimeString()
+                            _state.value.initSetup!!.timeClosingSession = LocalDateTime.now().toDateTimeString()
                             val initSetup = _state.value.initSetup
                             baseRepository.writeDataToLocal(initSetup, pathFileInitSetup)
                             val listLogSyncOrderTransaction: ArrayList<LogSyncOrder> = arrayListOf()
