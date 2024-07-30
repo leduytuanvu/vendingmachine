@@ -16,7 +16,7 @@ fun Random.next14DigitNumber(): Long {
     return (10000000000000L..99999999999999L).random(this)
 }
 
-fun LocalDateTime.toDateTimeString(pattern: String = "yyyy-MM-dd'T'HH:mm:ss'Z'"): String {
+fun LocalDateTime.toDateTimeString(pattern: String = "yyyy-MM-dd HH:mm:ss"): String {
     try {
         val formatter = DateTimeFormatter.ofPattern(pattern)
         return this.format(formatter)

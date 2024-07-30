@@ -13,6 +13,7 @@ data class PromotionRequest (
 )
 
 data class ItemPromotionRequest (
+    @SerializedName("uuid") var uuid: String?,
     @SerializedName("product_code") var productCode: String?,
     @SerializedName("product_name") var productName: String?,
     @SerializedName("price") var price: Int?,

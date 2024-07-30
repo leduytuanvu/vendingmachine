@@ -13,6 +13,7 @@ import com.combros.vendingmachine.core.util.pathFileInitSetup
 import com.combros.vendingmachine.core.util.pathFileSlot
 import com.combros.vendingmachine.core.util.pathFolderAds
 import com.combros.vendingmachine.core.util.pathFolderBigAds
+import com.combros.vendingmachine.core.util.toId
 import com.combros.vendingmachine.features.home.data.model.request.CheckPaymentResultOnlineRequest
 import com.combros.vendingmachine.features.home.data.model.request.DepositAndWithdrawMoneyRequest
 import com.combros.vendingmachine.features.home.data.model.request.GetQrCodeRequest
@@ -35,6 +36,7 @@ import com.combros.vendingmachine.features.home.data.model.response.UpdatePromot
 import com.combros.vendingmachine.features.home.data.remote.HomeApi
 import com.combros.vendingmachine.features.home.domain.repository.HomeRepository
 import com.combros.vendingmachine.features.settings.domain.model.Slot
+import org.threeten.bp.LocalDateTime
 import javax.inject.Inject
 
 class HomeRepositoryImpl @Inject constructor(
@@ -99,6 +101,7 @@ class HomeRepositoryImpl @Inject constructor(
             for(item in listSlot) {
                 totalAmount += (item.inventory*item.price)
                 val itemCart = ItemPromotionRequest(
+                    uuid = LocalDateTime.now().toId(),
                     productCode = item.productCode,
                     productName = item.productName,
                     price = item.price,

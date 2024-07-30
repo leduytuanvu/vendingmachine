@@ -54,16 +54,16 @@ fun ChooseNumberComposable(
                             items(50) { index ->
                                 CustomButtonComposable(
                                     title = if (isChooseMoney) {
-                                        (index + 1).toChooseNumberMoney()
+                                        (index).toChooseNumberMoney()
                                     } else {
-                                        (index + 1).toChooseNumber()
+                                        (index).toChooseNumber()
                                     },
                                     titleAlignment = TextAlign.Center,
                                     fontSize = 18.sp,
                                     height = 80.dp,
                                     cornerRadius = 4.dp,
                                     backgroundColor = if(isInventory) {
-                                        if(index+1 > slot!!.capacity) {
+                                        if(index > slot!!.capacity) {
                                             Color.Gray
                                         } else {
 //                                            Color(0XFFF37024)
@@ -75,11 +75,11 @@ fun ChooseNumberComposable(
                                     }
                                 ) {
                                     if(isInventory) {
-                                        if(index+1 <= slot!!.capacity) {
-                                            chooseNumber(index+1)
+                                        if(index <= slot!!.capacity) {
+                                            chooseNumber(index)
                                         }
                                     } else {
-                                        chooseNumber(index+1)
+                                        chooseNumber(index)
                                     }
                                 }
                             }
