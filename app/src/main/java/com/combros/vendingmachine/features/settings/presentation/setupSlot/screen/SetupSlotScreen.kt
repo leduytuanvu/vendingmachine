@@ -63,6 +63,7 @@ import com.combros.vendingmachine.core.util.Screens
 import com.combros.vendingmachine.core.util.pathFolderImageProduct
 import com.combros.vendingmachine.core.util.toVietNamDong
 import com.combros.vendingmachine.features.settings.domain.model.Product
+import com.combros.vendingmachine.features.settings.domain.model.Slot
 import com.combros.vendingmachine.features.settings.presentation.setupSlot.composables.ChooseImageComposable
 import com.combros.vendingmachine.features.settings.presentation.setupSlot.viewModel.SetupSlotViewModel
 import com.combros.vendingmachine.features.settings.presentation.setupSlot.viewState.SetupSlotViewState
@@ -807,6 +808,11 @@ fun SetupSlotContent(
             }
         )
     }
+
+}
+
+@Composable
+fun ChooseNumberComposable(isChooseNumber: Boolean, isChooseMoney: Boolean, isInventory: Boolean, slot: Slot?, hideDialogChooseNumber: () -> Unit, chooseNumber: (Int) -> Unit) {
 
 }
 
