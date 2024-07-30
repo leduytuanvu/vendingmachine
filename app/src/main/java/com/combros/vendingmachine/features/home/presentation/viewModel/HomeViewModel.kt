@@ -660,6 +660,7 @@ class HomeViewModel @Inject constructor(
                                             slot.price = item.price
                                             listSlotDropSuccess.add(slot)
                                         }
+                                        Logger.debug("slot success: $slot")
                                         homeRepository.minusInventory(slot.slot)
 
                                         if(_state.value.nameMethodPayment == "cash") {
@@ -759,12 +760,12 @@ class HomeViewModel @Inject constructor(
                                                                 listSlotDropSuccess[indexCheck].price =
                                                                     item.price
                                                             } else {
-                                                                slot.inventory = 1
-                                                                slot.messDrop = message
-                                                                slot.price = item.price
+                                                                anotherSlot.inventory = 1
+                                                                anotherSlot.messDrop = message
+                                                                anotherSlot.price = item.price
                                                                 listSlotDropSuccess.add(slot)
                                                             }
-                                                            homeRepository.minusInventory(slot.slot)
+                                                            homeRepository.minusInventory(anotherSlot.slot)
 
                                                             if(_state.value.nameMethodPayment == "cash") {
                                                                 initSetupTmp!!.currentCash -= item.price

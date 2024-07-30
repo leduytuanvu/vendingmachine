@@ -433,7 +433,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "TRANSFER TO CASH BOX",
+                    title = "Đẩy tiền hộp thối lên trên",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
@@ -445,7 +445,7 @@ fun SetupPaymentContent(
                 }
 
                 CustomButtonComposable(
-                    title = "RESET CASH BOX",
+                    title = "Khởi động lại hộp thối",
                     wrap = true,
                     cornerRadius = 4.dp,
                     height = 60.dp,
