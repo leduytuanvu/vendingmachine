@@ -265,7 +265,7 @@ class PortConnectionDatasource {
             while (!currentThread().isInterrupted) {
                 try {
                     portConnectionHelperDataSource.startReadingCashBox(512) { data ->
-                        Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
+                      //  Logger.info("-------> data from cash box: ${byteArrayToHexString(data)}")
                         coroutineScope.launch {
                             _dataFromCashBox.emit(data)
                         }
@@ -292,7 +292,7 @@ class PortConnectionDatasource {
 
     // Send command cash box
     fun sendCommandCashBox(byteArray: ByteArray) : Int {
-        Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
+    //    Logger.debug("data cash box send: ${byteArrayToHexString(byteArray)}")
         return portConnectionHelperDataSource.writeDataPortCashBox(byteArray)
     }
     @OptIn(DelicateCoroutinesApi::class)

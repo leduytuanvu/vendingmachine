@@ -1078,53 +1078,81 @@ class SetupSystemViewModel @Inject constructor(
                 val byteArray1 = byteArrayOf(0x00, 0xFF.toByte(), 0xCC.toByte(), 0x33.toByte(), 0x01.toByte(), 0xFE.toByte())
                 portConnectionDatasource.sendCommandVendingMachine(byteArray1)
                 delay(1001)
-                if(_statusVendingMachine.value) {
-                    _statusVendingMachine.value = false
-                    if(initSetup.glassHeatingMode == "ON" || initSetup.glassHeatingMode == "OFF") {
-                        val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x00.toByte(), 0xFF.toByte())
-                        portConnectionDatasource.sendCommandVendingMachine(byteArray2)
-                    } else {
-                        val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x01.toByte(), 0xFE.toByte())
-                        portConnectionDatasource.sendCommandVendingMachine(byteArray2)
-                    }
+
+                val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x01.toByte(), 0xFE.toByte())
+                portConnectionDatasource.sendCommandVendingMachine(byteArray2)
+                delay(1001)
+                val byteArray3 = byteArrayOf( 0x00,
+                        0xFF.toByte(),
+                        0xCE.toByte(),
+                        0x31,
+                        temperature.toByte(),
+                        0xFA.toByte(),
+                    )
+
+                portConnectionDatasource.sendCommandVendingMachine(byteArray3)
                     delay(1001)
-                    if(_statusVendingMachine.value) {
-                        _statusVendingMachine.value = false
-//                        val byteArray3 = byteArrayOf(0x00, 0xFF.toByte(), 0xCE.toByte(), 0x31.toByte(), 0x05.toByte(), 0xFA.toByte())
-                        val numberBoard = 0
-                        val byteNumberBoard: Byte = numberBoard.toByte()
-                        val byteArray3 = byteArrayOf(
-                            byteNumberBoard,
-                            (0xFF - numberBoard).toByte(),
-                            0xCE.toByte(),
-                            0x31,
-                            temperature.toByte(),
-                            (0xFF - temperature.toInt()).toByte(),
-                        )
-                        portConnectionDatasource.sendCommandVendingMachine(byteArray3)
-                        delay(1001)
-                        if(_statusVendingMachine.value) {
-                            initSetup.temperature = temperature
-                            baseRepository.addNewSetupLogToLocal(
-                                machineCode = initSetup.vendCode,
-                                operationContent = "update temperature to ${initSetup.temperature}",
-                                operationType = "setup system",
-                                username = initSetup.username,
-                            )
-                            baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
-                            sendEvent(Event.Toast("SUCCESS"))
-                            _state.update { it.copy(
-                                initSetup = initSetup,
-                            ) }
-                        } else {
-                            sendEvent(Event.Toast("Set temperature failed!"))
-                        }
-                    } else {
-                        sendEvent(Event.Toast("Set temperature failed!"))
-                    }
-                } else {
-                    sendEvent(Event.Toast("Set temperature failed!"))
-                }
+
+
+//                if(_statusVendingMachine.value) {
+//                    _statusVendingMachine.value = false
+//                    if(initSetup.glassHeatingMode == "ON" || initSetup.glassHeatingMode == "OFF") {
+//                        val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x00.toByte(), 0xFF.toByte())
+//                        portConnectionDatasource.sendCommandVendingMachine(byteArray2)
+//                    } else {
+//                        val byteArray2 = byteArrayOf(0x00, 0xFF.toByte(), 0xCD.toByte(), 0x32.toByte(), 0x01.toByte(), 0xFE.toByte())
+//                        portConnectionDatasource.sendCommandVendingMachine(byteArray2)
+//                    }
+//                    val byteArray3 = byteArrayOf(
+//                        0x00,
+//                        0xFF.toByte(),
+//                        0xCE.toByte(),
+//                        0x31,
+//                        temperature.toByte(),
+//                        (0xFF - temperature.toInt()).toByte(),
+//                    )
+//
+//                    portConnectionDatasource.sendCommandVendingMachine(byteArray3)
+//                    delay(1001)
+//
+//                    if(_statusVendingMachine.value) {
+//                        _statusVendingMachine.value = false
+////                        val byteArray3 = byteArrayOf(0x00, 0xFF.toByte(), 0xCE.toByte(), 0x31.toByte(), 0x05.toByte(), 0xFA.toByte())
+//                        val numberBoard = 0
+//                        val byteNumberBoard: Byte = numberBoard.toByte()
+//                        val byteArray3 = byteArrayOf(
+//                            byteNumberBoard,
+//                            (0xFF - numberBoard).toByte(),
+//                            0xCE.toByte(),
+//                            0x31,
+//                            temperature.toByte(),
+//                            (0xFF - temperature.toInt()).toByte(),
+//                        )
+//
+//                        portConnectionDatasource.sendCommandVendingMachine(byteArray3)
+//                        delay(1001)
+//                        if(_statusVendingMachine.value) {
+//                            initSetup.temperature = temperature
+//                            baseRepository.addNewSetupLogToLocal(
+//                                machineCode = initSetup.vendCode,
+//                                operationContent = "update temperature to ${initSetup.temperature}",
+//                                operationType = "setup system",
+//                                username = initSetup.username,
+//                            )
+//                            baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+//                            sendEvent(Event.Toast("SUCCESS"))
+//                            _state.update { it.copy(
+//                                initSetup = initSetup,
+//                            ) }
+//                        } else {
+//                            sendEvent(Event.Toast("Set temperature failed!"))
+//                        }
+//                    } else {
+//                        sendEvent(Event.Toast("Set temperature failed!"))
+//                    }
+//                } else {
+//                    sendEvent(Event.Toast("Set temperature failed!"))
+//                }
 
 //                if(_statusVendingMachine.value) {
 //                    initSetup.temperature = temperature

@@ -1224,6 +1224,9 @@ class SetupSlotViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
+                _state.update { it.copy(isLoading = true) }
+                _isRotate.value = true
+                _checkFirst.value = true
                 val byteArraySlot: Byte = slot.toByte()
                 val byteArrayNumberBoard: Byte = numberBoard.toByte()
                 val byteArray: ByteArray = byteArrayOf(
@@ -1235,7 +1238,8 @@ class SetupSlotViewModel @Inject constructor(
                     0xAA.toByte(),
                 )
                 portConnectionDatasource.sendCommandVendingMachine(byteArray)
-
+                delay(3000)
+                _state.update { it.copy(isLoading = false) }
             }
             catch (e: Exception) {
                 sendEvent(Event.Toast("ERROR"))

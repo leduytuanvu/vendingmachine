@@ -3,6 +3,7 @@ package com.combros.vendingmachine.features.home.data.model.request
 import com.google.gson.annotations.SerializedName
 
 data class UpdateDeliveryStatusRequest(
+    @SerializedName("uuid") var uuid: String?,
     @SerializedName("order_code") var orderCode: String?,
     @SerializedName("delivery_status") var deliveryStatus: String?,
     @SerializedName("machine_code") var machineCode: String?,

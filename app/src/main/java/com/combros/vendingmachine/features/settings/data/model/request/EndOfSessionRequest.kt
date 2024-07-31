@@ -7,8 +7,8 @@ data class EndOfSessionRequest (
     @SerializedName("session_type") val sessionType: String?,
     @SerializedName("machine_code") val machineCode: String?,
     @SerializedName("android_id") val androidId: String?,
-    @SerializedName("time_start") val timeStart: Long?,
-    @SerializedName("time_end") val timeEnd: Long?,
+    @SerializedName("time_start") val timeStart: String?,
+    @SerializedName("time_end") val timeEnd: String?,
     @SerializedName("money_data") val moneyData: ArrayList<MoneyDataRequest>?,
     @SerializedName("money_box") val moneyBox: ArrayList<MoneyBoxRequest>?,
 )
