@@ -3,6 +3,7 @@ package com.combros.vendingmachine.features.home.data.model.request
 import com.google.gson.annotations.SerializedName
 
 data class ProductSyncOrderRequest(
+    @SerializedName("uuid") var uuid: String?,
     @SerializedName("product_code") var productCode: String?,
     @SerializedName("product_name") var productName: String?,
     @SerializedName("price") var price: String?,
