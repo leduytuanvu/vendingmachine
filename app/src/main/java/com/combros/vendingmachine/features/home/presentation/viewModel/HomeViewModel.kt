@@ -124,7 +124,7 @@ class HomeViewModel @Inject constructor(
     private var countdownHideCart: CountDownTimer? = null
     private var countdownTimerCallApi: CountDownTimer? = null
 
-    private var debounceDelay = 100L
+    private var debounceDelay = 150L
     private var debounceJob: Job? = null
 
     private var cashBoxJob: Job? = null
@@ -2288,20 +2288,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-//    fun hideDropFailDebounced() {
-//        debounceJob?.cancel()
-//        debounceJob = viewModelScope.launch {
-//            delay(debounceDelay)
-//            hideDropFail()
-//        }
-//    }
-
-//    fun hideDropFail() {
-//        viewModelScope.launch {
-//            _state.update { it.copy(isShowDropFail = false) }
-//        }
-//    }
-
     fun hideAds() {
         viewModelScope.launch {
             _state.update { it.copy(isShowAds = false) }
@@ -2408,7 +2394,6 @@ class HomeViewModel @Inject constructor(
 
     fun showPayment() {
         viewModelScope.launch {
-            delay(50L)
             if(funIsShowPaymentIsRunning) {
 
             } else {
@@ -2763,7 +2748,6 @@ class HomeViewModel @Inject constructor(
 
     fun addProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funAddProductIsRunning) {
 
             } else {
@@ -2811,7 +2795,6 @@ class HomeViewModel @Inject constructor(
 
     fun minusProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funMinusProductIsRunning) {
 
             } else {
@@ -4138,7 +4121,6 @@ class HomeViewModel @Inject constructor(
 
     fun plusProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funPlusProductIsRunning) {
 
             } else {
