@@ -938,6 +938,7 @@ class HomeViewModel @Inject constructor(
                     if (listSlotDropFail.isNotEmpty()) {
                         for (item in listSlotDropFail) {
                             val tmp = ProductSyncOrderRequest(
+                                uuid = LocalDateTime.now().toId(),
                                 productCode = item.productCode,
                                 productName = item.productName,
                                 price = item.price.toString(),
@@ -955,6 +956,7 @@ class HomeViewModel @Inject constructor(
                     if (listAnotherSlotDropFail.isNotEmpty()) {
                         for (item in listAnotherSlotDropFail) {
                             val tmp = ProductSyncOrderRequest(
+                                uuid = LocalDateTime.now().toId(),
                                 productCode = item.productCode,
                                 productName = item.productName,
                                 price = item.price.toString(),
@@ -993,6 +995,7 @@ class HomeViewModel @Inject constructor(
                         )
                         for (item in listSlotDropSuccess) {
                             val tmp = ProductSyncOrderRequest(
+                                uuid = LocalDateTime.now().toId(),
                                 productCode = item.productCode,
                                 productName = item.productName,
                                 price = item.price.toString(),
