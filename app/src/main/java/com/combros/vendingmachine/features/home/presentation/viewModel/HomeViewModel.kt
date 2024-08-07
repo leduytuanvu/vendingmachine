@@ -3178,70 +3178,74 @@ class HomeViewModel @Inject constructor(
 
                             "momo", "vnpay", "zalopay" -> {
                                 _state.update { it.copy(isLoading = true) }
-                                var storeId = ""
-                                for (item in _state.value.listPaymentMethod) {
-                                    if (item.methodName == _state.value.nameMethodPayment) {
-                                        storeId = item.storeId ?: ""
-                                        break
+                                if(_state.value.initSetup!!.typePaymentOnline == "AVF") {
+                                    var storeId = ""
+                                    for (item in _state.value.listPaymentMethod) {
+                                        if (item.methodName == _state.value.nameMethodPayment) {
+                                            storeId = item.storeId ?: ""
+                                            break
+                                        }
                                     }
-                                }
-                                for (item in listProductInCart) {
-                                    val slot = homeRepository.getSlotDrop(item.productCode)
-                                    val productDetailRequest = ProductDetailRequest(
-                                        uuid = LocalDateTime.now().toId(),
-                                        productCode = item.productCode,
-                                        productName = item.productName,
-                                        price = item.price,
-                                        quantity = item.inventory,
-                                        discount = 0,
-                                        amount = item.inventory * item.price,
-                                        slot = if (slot != null) item.slot else 0,
-                                        cabinetCode = "MT01"
-                                    )
-                                    listProductDetailRequest.add(productDetailRequest)
-                                }
-                                val request = GetQrCodeRequest(
-                                    machineCode = _state.value.initSetup!!.vendCode,
-                                    androidId = _state.value.initSetup!!.androidId,
-                                    orderCode = orderCode,
-                                    orderTime = orderTime,
-                                    totalAmount = totalAmount,
-                                    totalDiscount = totalDiscount,
-                                    paymentAmount = paymentAmount,
+                                    for (item in listProductInCart) {
+                                        val slot = homeRepository.getSlotDrop(item.productCode)
+                                        val productDetailRequest = ProductDetailRequest(
+                                            uuid = LocalDateTime.now().toId(),
+                                            productCode = item.productCode,
+                                            productName = item.productName,
+                                            price = item.price,
+                                            quantity = item.inventory,
+                                            discount = 0,
+                                            amount = item.inventory * item.price,
+                                            slot = if (slot != null) item.slot else 0,
+                                            cabinetCode = "MT01"
+                                        )
+                                        listProductDetailRequest.add(productDetailRequest)
+                                    }
+                                    val request = GetQrCodeRequest(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        androidId = _state.value.initSetup!!.androidId,
+                                        orderCode = orderCode,
+                                        orderTime = orderTime,
+                                        totalAmount = totalAmount,
+                                        totalDiscount = totalDiscount,
+                                        paymentAmount = paymentAmount,
 //                                totalAmount = 1000,
 //                                totalDiscount = totalDiscount,
 //                                paymentAmount = 1000,
-                                    paymentMethodId = paymentMethodId,
-                                    storeId = storeId,
-                                    productDetails = listProductDetailRequest,
-                                )
-                                logger.debug("method: $paymentMethodId, storeId: ${storeId}")
-                                val response = homeRepository.getQrCodeFromServer(request)
-                                logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
-                                if (response.qrCodeUrl!!.isNotEmpty()) {
-                                    val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
-                                    val imageBitmap = qrCodeBitmap.asImageBitmap()
-                                    _state.update {
-                                        it.copy(
-                                            isShowCart = false,
-                                            isLoading = false,
-                                            orderCode = orderCode,
-                                            imageBitmap = imageBitmap,
-                                            isShowQrCode = true,
-                                            logSyncOrder = logSyncOrder,
-                                        )
-                                    }
-                                    startCountdownPaymentByOnline(
-                                        orderCode = orderCode,
-                                        storeId = storeId
+                                        paymentMethodId = paymentMethodId,
+                                        storeId = storeId,
+                                        productDetails = listProductDetailRequest,
                                     )
-                                } else {
-                                    _state.update {
-                                        it.copy(
-                                            isLoading = false,
-//                                            isVendingMachineBusy = false,
+                                    logger.debug("method: $paymentMethodId, storeId: ${storeId}")
+                                    val response = homeRepository.getQrCodeFromServer(request)
+                                    logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
+                                    if (response.qrCodeUrl!!.isNotEmpty()) {
+                                        val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
+                                        val imageBitmap = qrCodeBitmap.asImageBitmap()
+                                        _state.update {
+                                            it.copy(
+                                                isShowCart = false,
+                                                isLoading = false,
+                                                orderCode = orderCode,
+                                                imageBitmap = imageBitmap,
+                                                isShowQrCode = true,
+                                                logSyncOrder = logSyncOrder,
+                                            )
+                                        }
+                                        startCountdownPaymentByOnline(
+                                            orderCode = orderCode,
+                                            storeId = storeId
                                         )
+                                    } else {
+                                        _state.update {
+                                            it.copy(
+                                                isLoading = false,
+//                                            isVendingMachineBusy = false,
+                                            )
+                                        }
                                     }
+                                } else {
+                                    // Process call api get qr directly
                                 }
                             }
                         }

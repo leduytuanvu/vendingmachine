@@ -164,6 +164,7 @@ class InitSetupViewModel @Inject constructor(
                                 timeResetOnEveryDay = "00:00",
                                 timeStartSession = "",
                                 timeClosingSession = "",
+                                typePaymentOnline = "AVF",
                                 numberSlot = 60,
                                 role = ""
                             )

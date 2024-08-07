@@ -135,7 +135,7 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(300000)
+            delay(60000)
             if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
             } else {

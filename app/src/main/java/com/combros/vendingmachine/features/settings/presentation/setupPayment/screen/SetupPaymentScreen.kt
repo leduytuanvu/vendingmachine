@@ -156,6 +156,9 @@ fun SetupPaymentContent(
     var selectedItemDefaultPromotion by remember {
         mutableStateOf(AnnotatedString("ON"))
     }
+    var selectedTypePaymentOnline by remember {
+        mutableStateOf(AnnotatedString("AVF"))
+    }
     var selectedItemTimeOutPaymentQrCode by remember {
         mutableStateOf(AnnotatedString("30s"))
     }
@@ -186,6 +189,7 @@ fun SetupPaymentContent(
 
     LaunchedEffect(state.initSetup) {
         selectedItemDefaultPromotion = AnnotatedString(state.initSetup?.initPromotion ?: "ON")
+        selectedTypePaymentOnline = AnnotatedString(state.initSetup?.typePaymentOnline ?: "AVF")
         selectedItemTimeOutPaymentQrCode = AnnotatedString(if(state.initSetup?.timeoutPaymentByQrCode != null) "${state.initSetup.timeoutPaymentByQrCode}s" else "30s")
         selectedItemTimeOutPaymentCash = AnnotatedString(if(state.initSetup?.timeoutPaymentByCash != null) "${state.initSetup.timeoutPaymentByCash}s" else "30s")
     }
@@ -255,6 +259,27 @@ fun SetupPaymentContent(
                             viewModel.refreshRottenBoxBalance()
                         }
                     }
+                }
+
+                BodyTextComposable(title = "Phương thức thanh toán online", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+                TitleAndDropdownComposable(title = "", items = listOf(
+                    AnnotatedString("AVF"),
+                    AnnotatedString("DIRECTLY"),
+                ), selectedItem = selectedTypePaymentOnline, paddingTop = 2.dp, paddingBottom = 12.dp) {
+                    onClick()
+                    selectedTypePaymentOnline = it
+                }
+                CustomButtonComposable(
+                    title = "SAVE",
+                    wrap = true,
+                    cornerRadius = 4.dp,
+                    height = 60.dp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    paddingBottom = 50.dp,
+                ) {
+                    onClick()
+                    viewModel.saveMethodPaymentOnline(selectedTypePaymentOnline.toString())
                 }
 
                 BodyTextComposable(title = "Khuyến mãi", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)

@@ -86,30 +86,42 @@ class SetupSystemViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }
+                Logger.debug("111")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,
                 )!!
+                Logger.debug("222")
                 val serialSimId = settingsRepository.getSerialSimId()
+                Logger.debug("333")
                 portConnectionDatasource.openPortVendingMachine(initSetup.portVendingMachine,initSetup.typeVendingMachine)
+                Logger.debug("444")
                 if(!portConnectionDatasource.checkPortVendingMachineStillStarting()) {
                     portConnectionDatasource.startReadingVendingMachine()
                 }
-                portConnectionDatasource.startReadingVendingMachine()
+                Logger.debug("555")
+//                portConnectionDatasource.startReadingVendingMachine()
+                Logger.debug("666.0")
                 startCollectingData()
+                Logger.debug("777.0")
                 portConnectionDatasource.sendCommandVendingMachine(
                     byteArrays.vmReadTemp,
                 )
+                Logger.debug("666")
                 if (baseRepository.isHaveNetwork(context)) {
                     try {
+                        Logger.debug("777")
                         val informationOfMachine = settingsRepository.getInformationOfMachine()
+                        Logger.debug("888: $serialSimId, $initSetup, $informationOfMachine")
                         _state.update { it.copy(
                             initSetup = initSetup,
                             serialSimId = serialSimId,
                             informationOfMachine = informationOfMachine,
                             isLoading = false,
                         ) }
+                        Logger.debug("999")
                     } catch (e: Exception) {
+                        Logger.debug("errorrrrr: $e")
                         _state.update { it.copy(
                             initSetup = initSetup,
                             serialSimId = serialSimId,
@@ -124,6 +136,7 @@ class SetupSystemViewModel @Inject constructor(
                     ) }
                 }
             } catch (e: Exception) {
+                Logger.debug("errorrrrr 2: $e")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup
