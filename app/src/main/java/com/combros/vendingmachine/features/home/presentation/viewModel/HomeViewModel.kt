@@ -314,6 +314,7 @@ class HomeViewModel @Inject constructor(
         portConnectionDatasource.closeCashBoxPort()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun observePortData() {
         cashBoxJob = viewModelScope.launch {
             portConnectionDatasource.dataFromCashBox.collect { data ->
@@ -1187,6 +1188,7 @@ class HomeViewModel @Inject constructor(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
@@ -2041,6 +2043,7 @@ class HomeViewModel @Inject constructor(
 //        }
 //    }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getNetworkType(): String {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -2055,6 +2058,7 @@ class HomeViewModel @Inject constructor(
         return networkType
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getNetworkStatus(): String {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -2105,6 +2109,7 @@ class HomeViewModel @Inject constructor(
 //        return byteArray.joinToString(",") { "%02X".format(it) }
 //    }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun loadInitData() {
         logger.info("loadInitData")
         viewModelScope.launch {
@@ -2642,6 +2647,7 @@ class HomeViewModel @Inject constructor(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun writeLogStatusNetworkAndPower() {
         logger.debug("writeLogStatusNetworkAndPower")
         viewModelScope.launch {
@@ -2709,6 +2715,7 @@ class HomeViewModel @Inject constructor(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getIpAddress(): String? {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
