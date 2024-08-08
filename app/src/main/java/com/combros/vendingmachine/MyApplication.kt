@@ -17,7 +17,6 @@ class MyApplication : Application(), Application.ActivityLifecycleCallbacks {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d("applicationvendingmachine", "onCreate")
         AndroidThreeTen.init(this)
         registerActivityLifecycleCallbacks(this)
         Thread.setDefaultUncaughtExceptionHandler { _, _ ->
@@ -26,36 +25,29 @@ class MyApplication : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityPaused(activity: Activity) {
-        Log.d("applicationvendingmachine", "onActivityPaused")
         appInForeground = false
     }
 
     override fun onActivityResumed(activity: Activity) {
-        Log.d("applicationvendingmachine", "onActivityResumed")
         appInForeground = true
     }
 
     override fun onActivityStopped(activity: Activity) {
-        Log.d("applicationvendingmachine", "onActivityStopped")
         if (!appInForeground) {
             restartApp()
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        Log.d("applicationvendingmachine", "onActivityCreated")
     }
 
     override fun onActivityStarted(activity: Activity) {
-        Log.d("applicationvendingmachine", "onActivityStarted")
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        Log.d("applicationvendingmachine", "onActivityDestroyed")
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-        Log.d("applicationvendingmachine", "onActivitySaveInstanceState")
     }
 
     private fun restartApp() {

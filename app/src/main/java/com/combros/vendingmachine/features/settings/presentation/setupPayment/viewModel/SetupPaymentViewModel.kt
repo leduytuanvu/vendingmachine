@@ -166,6 +166,39 @@ class SetupPaymentViewModel @Inject constructor(
         }
     }
 
+    fun saveInputDiscount(value: String) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                delay(500)
+                // Get init setup in local
+                val initSetup: InitSetup = baseRepository.getDataFromLocal(
+                    type = object : TypeToken<InitSetup>() {}.type,
+                    path = pathFileInitSetup
+                )!!
+                initSetup.inputDiscount = value
+                baseRepository.addNewSetupLogToLocal(
+                    machineCode = initSetup.vendCode,
+                    operationContent = "save input discount ${value}",
+                    operationType = "setup payment",
+                    username = initSetup.username,
+                )
+                baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)
+                sendEvent(Event.Toast("SUCCESS"))
+                _state.update { it.copy(
+                    initSetup = initSetup,
+                    isLoading = false,
+                ) }
+            } catch (e: Exception) {
+                baseRepository.addNewErrorLogToLocal(
+                    machineCode = _state.value.initSetup!!.vendCode,
+                    errorContent = "save default promotion fail in SetupPaymentViewModel/saveDefaultPromotion(): ${e.message}",
+                )
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     fun saveMethodPaymentOnline(value: String) {
         viewModelScope.launch {
             try {

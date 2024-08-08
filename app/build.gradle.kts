@@ -31,7 +31,7 @@ android {
 
     defaultConfig {
         applicationId = "com.combros.vendingmachine"
-        minSdk = 21
+        minSdk = 22
         targetSdk = 35
         versionCode = 1
         versionName = "0.0.0"

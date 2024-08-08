@@ -418,10 +418,10 @@ fun HomeContent(
                                                         val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
                                                         if(indexCheck == -1) {
                                                             viewModel.addProductDebounced(slot)
-                                                            Logger.debug("${state.listSlotInCard}")
+//                                                            Logger.debug("${state.listSlotInCard}")
                                                         } else {
                                                             viewModel.plusProductDebounced(slot)
-                                                            Logger.debug("${state.listSlotInCard}")
+//                                                            Logger.debug("${state.listSlotInCard}")
                                                         }
                                                     },
                                                     painter = imagePainter,
@@ -932,59 +932,62 @@ fun HomeContent(
 
 
                             }
-                            Row(
-                                modifier = Modifier
-                                    .padding(top = screenHeight * 0.018f)
-                                    .fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                var text by remember { mutableStateOf("") }
-                                OutlinedTextField(
-                                    value = text,
-                                    onValueChange = { text = it },
+                            if(state.initSetup!= null && state.initSetup.inputDiscount == "ON") {
+                                Row(
                                     modifier = Modifier
-                                        .padding(end = screenHeight * 0.01f)
-                                        .height(screenHeight * 0.05f)
-                                        .weight(1f),
-                                    placeholder = {
-                                        Text(
-                                            text = "Mã giảm giá",
-                                            fontSize = 18.sp
-                                        )
-                                    }, // Hint
-                                    shape = RoundedCornerShape(4.dp),
-                                    textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
-                                    colors = outlinedTextFieldColors(
-                                        focusedBorderColor = Color.Gray,
-                                        unfocusedBorderColor = Color.Gray,
-                                    ),
-                                    keyboardOptions = KeyboardOptions.Default.copy(
-                                        keyboardType = KeyboardType.Text,
-                                        imeAction = ImeAction.Done
-                                    ),
-                                    visualTransformation = VisualTransformation.None,
-                                    keyboardActions = KeyboardActions(
-                                        onDone = {
-//                                            keyboardControllerNumberSlot?.hide()
-                                            focusManager.clearFocus()
-                                        }
-                                    )
-
-                                )
-                                CustomButtonComposable(
-                                    title = "Áp dụng",
-                                    cornerRadius = 6.dp,
-                                    fontSize = 20.sp,
-                                    wrap = true,
-                                    height = screenHeight*0.05f,
-                                    fontWeight = FontWeight.Bold,
+                                        .padding(top = screenHeight * 0.018f)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    viewModel.applyPromotionDebounced(text)
+                                    var text by remember { mutableStateOf("") }
+                                    OutlinedTextField(
+                                        value = text,
+                                        onValueChange = { text = it },
+                                        modifier = Modifier
+                                            .padding(end = screenHeight * 0.01f)
+                                            .height(screenHeight * 0.05f)
+                                            .weight(1f),
+                                        placeholder = {
+                                            Text(
+                                                text = "Mã giảm giá",
+                                                fontSize = 18.sp
+                                            )
+                                        }, // Hint
+                                        shape = RoundedCornerShape(4.dp),
+                                        textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
+                                        colors = outlinedTextFieldColors(
+                                            focusedBorderColor = Color.Gray,
+                                            unfocusedBorderColor = Color.Gray,
+                                        ),
+                                        keyboardOptions = KeyboardOptions.Default.copy(
+                                            keyboardType = KeyboardType.Text,
+                                            imeAction = ImeAction.Done
+                                        ),
+                                        visualTransformation = VisualTransformation.None,
+                                        keyboardActions = KeyboardActions(
+                                            onDone = {
+//                                            keyboardControllerNumberSlot?.hide()
+                                                focusManager.clearFocus()
+                                            }
+                                        )
+
+                                    )
+                                    CustomButtonComposable(
+                                        title = "Áp dụng",
+                                        cornerRadius = 6.dp,
+                                        fontSize = 20.sp,
+                                        wrap = true,
+                                        height = screenHeight*0.05f,
+                                        fontWeight = FontWeight.Bold,
+                                    ) {
+                                        viewModel.applyPromotionDebounced(text)
 //                                    viewModel.applyPromotion(text)
-                                    focusManager.clearFocus()
+                                        focusManager.clearFocus()
+                                    }
                                 }
+                                Spacer(modifier = Modifier.height(screenHeight*0.02f))
                             }
-                            Spacer(modifier = Modifier.height(screenHeight*0.02f))
+
                             Row {
                                 Text(
                                     "Khuyến mãi",

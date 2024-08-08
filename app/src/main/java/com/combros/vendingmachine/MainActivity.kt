@@ -49,6 +49,19 @@ import android.view.View
 import androidx.core.view.WindowCompat
 import com.combros.vendingmachine.common.base.domain.repository.BaseRepository
 import kotlin.system.exitProcess
+import android.os.*
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.compose.rememberNavController
+import com.combros.vendingmachine.core.util.*
+import com.combros.vendingmachine.ui.theme.VendingmachineTheme
+import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -69,18 +82,8 @@ class MainActivity : ComponentActivity() {
 
         val localStorageDatasource = LocalStorageDatasource()
         val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-        if(initSetup!=null) {
+        if (initSetup != null) {
             initSetup.autoStartApplication = "ON"
-//            if(initSetup.currentCash > 0) {
-//                baseRepository.addNewDepositWithdrawLogToLocal(
-//                    machineCode = initSetup.vendCode,
-//                    transactionType = "withdraw",
-//                    denominationType = initSetup.currentCash,
-//                    quantity = 1,
-//                    currentBalance = 0,
-//                )
-//                initSetup.currentCash = 0
-//            }
             localStorageDatasource.writeData(pathFileInitSetup, localStorageDatasource.gson.toJson(initSetup))
         }
 
@@ -106,7 +109,6 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            hideStatusBar()
             VendingmachineTheme {
                 val navController = rememberNavController()
                 val lifecycleOwner = LocalLifecycleOwner.current.lifecycle
@@ -134,11 +136,10 @@ class MainActivity : ComponentActivity() {
                     Navigation(navController)
                 }
             }
+            // Ensure the system UI is hidden
+            hideSystemUI()
         }
-
     }
-
-
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
@@ -194,23 +195,19 @@ class MainActivity : ComponentActivity() {
         portConnectionDataSource.closeCashBoxPort()
     }
 
-    private fun hideStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.hide(WindowInsets.Type.statusBars())
-        } else {
-            @Suppress("DEPRECATION")
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-            )
+    private fun hideSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 
     private fun restartApp() {
         val localStorageDatasource = LocalStorageDatasource()
         val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-        if(initSetup!=null) {
-            if(initSetup.autoStartApplication == "ON") {
+        if (initSetup != null) {
+            if (initSetup.autoStartApplication == "ON") {
                 Handler(Looper.getMainLooper()).postDelayed({
                     val intent = intent
                     finish()
@@ -239,8 +236,8 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
         return when (taskName) {
             "TurnOnLightTask" -> {
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-                if(initSetup!=null) {
-                    if(initSetup.autoTurnOnTurnOffLight=="ON") {
+                if (initSetup != null) {
+                    if (initSetup.autoTurnOnTurnOffLight == "ON") {
                         portConnectionDatasource.sendCommandVendingMachine(
                             byteArrays.vmTurnOnLight,
                         )
@@ -250,8 +247,8 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
             }
             "TurnOffLightTask" -> {
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-                if(initSetup!=null) {
-                    if(initSetup.autoTurnOnTurnOffLight=="ON") {
+                if (initSetup != null) {
+                    if (initSetup.autoTurnOnTurnOffLight == "ON") {
                         portConnectionDatasource.sendCommandVendingMachine(
                             byteArrays.vmTurnOffLight,
                         )
@@ -261,8 +258,8 @@ class ScheduledTaskWorker(context: Context, params: WorkerParameters) : Worker(c
             }
             "ResetApp" -> {
                 val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-                if(initSetup != null) {
-                    if(initSetup.autoResetAppEveryday=="ON") {
+                if (initSetup != null) {
+                    if (initSetup.autoResetAppEveryday == "ON") {
                         val appContext = applicationContext
                         val intent = Intent(appContext, MainActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -282,8 +279,8 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val localStorageDatasource = LocalStorageDatasource()
         val initSetup = localStorageDatasource.getDataFromPath<InitSetup>(pathFileInitSetup)
-        if(initSetup!=null) {
-            if(initSetup.autoStartApplication == "ON") {
+        if (initSetup != null) {
+            if (initSetup.autoStartApplication == "ON") {
                 if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
                     val activityIntent = Intent(context, MainActivity::class.java)
                     activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

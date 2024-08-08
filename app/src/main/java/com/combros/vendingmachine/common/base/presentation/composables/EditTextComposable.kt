@@ -133,11 +133,11 @@ fun EditTextComposable(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        Logger.debug("onTap")
+//                        Logger.debug("onTap")
                         keyboardController?.show()
                     },
                     onDoubleTap = {
-                        Logger.debug("onDoubleTap")
+//                        Logger.debug("onDoubleTap")
                         keyboardController?.show()
 //                        focusRequester.requestFocus()
                     }

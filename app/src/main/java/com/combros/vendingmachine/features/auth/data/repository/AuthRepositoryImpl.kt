@@ -53,7 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun encodePassword(decodeString: String): String {
         try {
-            Logger.debug("encodePassword: $decodeString")
+//            Logger.debug("encodePassword: $decodeString")
             val tmpString = decodeString + "567890VENDINGMACHINE"
             val data = tmpString.toByteArray(Charsets.UTF_8)
             return Base64.encodeToString(data, Base64.DEFAULT)

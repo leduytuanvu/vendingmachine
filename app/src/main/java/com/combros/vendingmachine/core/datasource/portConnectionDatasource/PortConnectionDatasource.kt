@@ -114,13 +114,13 @@ class PortConnectionDatasource {
 //            fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 57600)
 //        }
         fdPortVendingMachine = portConnectionHelperDataSource.openPortVendingMachine("/dev/", port, 9600)
-        Logger.debug("open port vending machine: $fdPortVendingMachine")
+//        Logger.debug("open port vending machine: $fdPortVendingMachine")
         return fdPortVendingMachine
     }
 
     fun openUsbPortVendingMachine(port: String, typeVendingMachine: String = "TCN") : Int {
         fdPortVendingMachine = portConnectionHelperDataSource.openUsbPortVendingMachine("/dev/", port, 9600)
-        Logger.debug("open port vending machine: $fdPortVendingMachine")
+//        Logger.debug("open port vending machine: $fdPortVendingMachine")
         return fdPortVendingMachine
     }
 
@@ -139,14 +139,14 @@ class PortConnectionDatasource {
     // Open port cash box
     fun openPortCashBox(port: String) : Int {
         fdPortCashBox = portConnectionHelperDataSource.openPortCashBox("/dev/", port, 9600)
-        Logger.debug("open port cash box: $fdPortCashBox")
+//        Logger.debug("open port cash box: $fdPortCashBox")
         return fdPortCashBox
     }
 
     // Close vending machine ports
     fun closeVendingMachinePort() {
         portConnectionHelperDataSource.closePortVendingMachine()
-        Logger.info("PortConnectionDataSource: port vending machine is disconnected")
+//        Logger.info("PortConnectionDataSource: port vending machine is disconnected")
     }
     // Close cash box ports
     fun closeCashBoxPort() {

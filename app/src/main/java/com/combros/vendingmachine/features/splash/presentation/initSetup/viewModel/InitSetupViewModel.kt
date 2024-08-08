@@ -166,6 +166,7 @@ class InitSetupViewModel @Inject constructor(
                                 timeClosingSession = "",
                                 typePaymentOnline = "AVF",
                                 numberSlot = 60,
+                                inputDiscount = "ON",
                                 role = ""
                             )
                             baseRepository.writeDataToLocal(data = initSetup, path = pathFileInitSetup)

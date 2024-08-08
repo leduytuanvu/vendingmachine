@@ -83,7 +83,7 @@ class AuthViewModel @Inject constructor (
                         if(response.accessToken.isNullOrEmpty()) {
                             sendEvent(Event.Toast("Username, password, or vending machine code fail!"))
                         } else {
-                            Logger.debug("accessToken: ${response.accessToken}")
+//                            Logger.debug("accessToken: ${response.accessToken}")
                             baseRepository.addNewAuthyLogToLocal(
                                 machineCode = initSetup.vendCode,
                                 authyType = "login",
@@ -117,7 +117,7 @@ class AuthViewModel @Inject constructor (
                     }
                 }
             } catch (e: Exception) {
-                Logger.debug("login fail in AuthViewModel/login(): ${e.message}")
+//                Logger.debug("login fail in AuthViewModel/login(): ${e.message}")
                 if(e.message!=null) {
                     if(e.message!!.contains("timeout")) {
                         val initSetup: InitSetup = baseRepository.getDataFromLocal(

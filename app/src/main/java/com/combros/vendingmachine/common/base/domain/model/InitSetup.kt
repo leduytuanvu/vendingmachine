@@ -26,6 +26,7 @@ data class InitSetup (
     var lowestTempWarning: String,
     var temperature: String,
     var initPromotion: String,
+    var inputDiscount: String,
     var currentCash: Int,
     var timeoutJumpToBigAdsScreen: String,
     var timeoutPaymentByCash: String,
