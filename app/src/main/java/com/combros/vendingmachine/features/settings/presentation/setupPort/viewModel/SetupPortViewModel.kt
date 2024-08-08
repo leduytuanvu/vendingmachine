@@ -139,6 +139,7 @@ class SetupPortViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
+                Logger.debug("error: ${e}")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup,

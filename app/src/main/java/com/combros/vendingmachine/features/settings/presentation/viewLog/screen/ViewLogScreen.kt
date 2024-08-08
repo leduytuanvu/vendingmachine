@@ -163,6 +163,7 @@ fun ViewLogContent(
                     items(state.listLogServerLocal.size) {
                         index -> Column {
                             Spacer(modifier = Modifier.height(10.dp))
+                            Text("dfghfghhhh")
                             Text(
                                 "${state.listLogServerLocal[index].eventTime} ${state.listLogServerLocal[index].eventType.uppercase()}",
                                 color = when (state.listLogServerLocal[index].eventType) {

@@ -124,7 +124,7 @@ class HomeViewModel @Inject constructor(
     private var countdownHideCart: CountDownTimer? = null
     private var countdownTimerCallApi: CountDownTimer? = null
 
-    private var debounceDelay = 100L
+    private var debounceDelay = 150L
     private var debounceJob: Job? = null
 
     private var cashBoxJob: Job? = null
@@ -314,6 +314,7 @@ class HomeViewModel @Inject constructor(
         portConnectionDatasource.closeCashBoxPort()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun observePortData() {
         cashBoxJob = viewModelScope.launch {
             portConnectionDatasource.dataFromCashBox.collect { data ->
@@ -1187,6 +1188,7 @@ class HomeViewModel @Inject constructor(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun processDataFromCashBox(dataByteArray: ByteArray) {
         try {
             val dataHexString = byteArrayToHexString(dataByteArray)
@@ -2041,6 +2043,7 @@ class HomeViewModel @Inject constructor(
 //        }
 //    }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getNetworkType(): String {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -2055,6 +2058,7 @@ class HomeViewModel @Inject constructor(
         return networkType
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getNetworkStatus(): String {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -2105,6 +2109,7 @@ class HomeViewModel @Inject constructor(
 //        return byteArray.joinToString(",") { "%02X".format(it) }
 //    }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun loadInitData() {
         logger.info("loadInitData")
         viewModelScope.launch {
@@ -2288,20 +2293,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-//    fun hideDropFailDebounced() {
-//        debounceJob?.cancel()
-//        debounceJob = viewModelScope.launch {
-//            delay(debounceDelay)
-//            hideDropFail()
-//        }
-//    }
-
-//    fun hideDropFail() {
-//        viewModelScope.launch {
-//            _state.update { it.copy(isShowDropFail = false) }
-//        }
-//    }
-
     fun hideAds() {
         viewModelScope.launch {
             _state.update { it.copy(isShowAds = false) }
@@ -2408,7 +2399,6 @@ class HomeViewModel @Inject constructor(
 
     fun showPayment() {
         viewModelScope.launch {
-            delay(50L)
             if(funIsShowPaymentIsRunning) {
 
             } else {
@@ -2657,6 +2647,7 @@ class HomeViewModel @Inject constructor(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun writeLogStatusNetworkAndPower() {
         logger.debug("writeLogStatusNetworkAndPower")
         viewModelScope.launch {
@@ -2724,6 +2715,7 @@ class HomeViewModel @Inject constructor(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun getIpAddress(): String? {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -2763,7 +2755,6 @@ class HomeViewModel @Inject constructor(
 
     fun addProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funAddProductIsRunning) {
 
             } else {
@@ -2811,7 +2802,6 @@ class HomeViewModel @Inject constructor(
 
     fun minusProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funMinusProductIsRunning) {
 
             } else {
@@ -3195,70 +3185,74 @@ class HomeViewModel @Inject constructor(
 
                             "momo", "vnpay", "zalopay" -> {
                                 _state.update { it.copy(isLoading = true) }
-                                var storeId = ""
-                                for (item in _state.value.listPaymentMethod) {
-                                    if (item.methodName == _state.value.nameMethodPayment) {
-                                        storeId = item.storeId ?: ""
-                                        break
+                                if(_state.value.initSetup!!.typePaymentOnline == "AVF") {
+                                    var storeId = ""
+                                    for (item in _state.value.listPaymentMethod) {
+                                        if (item.methodName == _state.value.nameMethodPayment) {
+                                            storeId = item.storeId ?: ""
+                                            break
+                                        }
                                     }
-                                }
-                                for (item in listProductInCart) {
-                                    val slot = homeRepository.getSlotDrop(item.productCode)
-                                    val productDetailRequest = ProductDetailRequest(
-                                        uuid = LocalDateTime.now().toId(),
-                                        productCode = item.productCode,
-                                        productName = item.productName,
-                                        price = item.price,
-                                        quantity = item.inventory,
-                                        discount = 0,
-                                        amount = item.inventory * item.price,
-                                        slot = if (slot != null) item.slot else 0,
-                                        cabinetCode = "MT01"
-                                    )
-                                    listProductDetailRequest.add(productDetailRequest)
-                                }
-                                val request = GetQrCodeRequest(
-                                    machineCode = _state.value.initSetup!!.vendCode,
-                                    androidId = _state.value.initSetup!!.androidId,
-                                    orderCode = orderCode,
-                                    orderTime = orderTime,
-                                    totalAmount = totalAmount,
-                                    totalDiscount = totalDiscount,
-                                    paymentAmount = paymentAmount,
+                                    for (item in listProductInCart) {
+                                        val slot = homeRepository.getSlotDrop(item.productCode)
+                                        val productDetailRequest = ProductDetailRequest(
+                                            uuid = LocalDateTime.now().toId(),
+                                            productCode = item.productCode,
+                                            productName = item.productName,
+                                            price = item.price,
+                                            quantity = item.inventory,
+                                            discount = 0,
+                                            amount = item.inventory * item.price,
+                                            slot = if (slot != null) item.slot else 0,
+                                            cabinetCode = "MT01"
+                                        )
+                                        listProductDetailRequest.add(productDetailRequest)
+                                    }
+                                    val request = GetQrCodeRequest(
+                                        machineCode = _state.value.initSetup!!.vendCode,
+                                        androidId = _state.value.initSetup!!.androidId,
+                                        orderCode = orderCode,
+                                        orderTime = orderTime,
+                                        totalAmount = totalAmount,
+                                        totalDiscount = totalDiscount,
+                                        paymentAmount = paymentAmount,
 //                                totalAmount = 1000,
 //                                totalDiscount = totalDiscount,
 //                                paymentAmount = 1000,
-                                    paymentMethodId = paymentMethodId,
-                                    storeId = storeId,
-                                    productDetails = listProductDetailRequest,
-                                )
-                                logger.debug("method: $paymentMethodId, storeId: ${storeId}")
-                                val response = homeRepository.getQrCodeFromServer(request)
-                                logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
-                                if (response.qrCodeUrl!!.isNotEmpty()) {
-                                    val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
-                                    val imageBitmap = qrCodeBitmap.asImageBitmap()
-                                    _state.update {
-                                        it.copy(
-                                            isShowCart = false,
-                                            isLoading = false,
-                                            orderCode = orderCode,
-                                            imageBitmap = imageBitmap,
-                                            isShowQrCode = true,
-                                            logSyncOrder = logSyncOrder,
-                                        )
-                                    }
-                                    startCountdownPaymentByOnline(
-                                        orderCode = orderCode,
-                                        storeId = storeId
+                                        paymentMethodId = paymentMethodId,
+                                        storeId = storeId,
+                                        productDetails = listProductDetailRequest,
                                     )
-                                } else {
-                                    _state.update {
-                                        it.copy(
-                                            isLoading = false,
-//                                            isVendingMachineBusy = false,
+                                    logger.debug("method: $paymentMethodId, storeId: ${storeId}")
+                                    val response = homeRepository.getQrCodeFromServer(request)
+                                    logger.debug("response neeeeeeeeeeeeeeeeeee: $response")
+                                    if (response.qrCodeUrl!!.isNotEmpty()) {
+                                        val qrCodeBitmap = generateQrCodeBitmap(response.qrCodeUrl!!)
+                                        val imageBitmap = qrCodeBitmap.asImageBitmap()
+                                        _state.update {
+                                            it.copy(
+                                                isShowCart = false,
+                                                isLoading = false,
+                                                orderCode = orderCode,
+                                                imageBitmap = imageBitmap,
+                                                isShowQrCode = true,
+                                                logSyncOrder = logSyncOrder,
+                                            )
+                                        }
+                                        startCountdownPaymentByOnline(
+                                            orderCode = orderCode,
+                                            storeId = storeId
                                         )
+                                    } else {
+                                        _state.update {
+                                            it.copy(
+                                                isLoading = false,
+//                                            isVendingMachineBusy = false,
+                                            )
+                                        }
                                     }
+                                } else {
+                                    // Process call api get qr directly
                                 }
                             }
                         }
@@ -4138,7 +4132,6 @@ class HomeViewModel @Inject constructor(
 
     fun plusProduct(slot: Slot) {
         viewModelScope.launch {
-            delay(50L)
             if(funPlusProductIsRunning) {
 
             } else {

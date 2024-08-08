@@ -135,7 +135,7 @@ internal fun HomeScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(300000)
+            delay(60000)
             if(!state.isVendingMachineBusy) {
                 viewModel.pushLogToServer()
             } else {
@@ -399,15 +399,6 @@ fun HomeContent(
                                                 val imageModifier = Modifier
                                                     .width(screenHeight * 0.12f)
                                                     .height(screenHeight * 0.12f)
-//                                                    .clickable(
-//                                                        onClick = {
-//                                                            val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
-//                                                            if(indexCheck == -1) {
-//                                                                viewModel.addProduct(slot)
-//                                                                Logger.debug("${state.listSlotInCard}")
-//                                                            }
-//                                                        }
-//                                                    )
                                                 val imagePainter =
                                                     if (slot.productCode.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                             pathFolderImageProduct + "/${slot.productCode}.png"
@@ -422,7 +413,17 @@ fun HomeContent(
                                                         painterResource(id = R.drawable.image_error)
                                                     }
                                                 Image(
-                                                    modifier = imageModifier,
+                                                    modifier = imageModifier.clickable {
+                                                        Logger.debug("add product")
+                                                        val indexCheck = state.listSlotInCard.indexOfFirst { it.productCode == slot.productCode }
+                                                        if(indexCheck == -1) {
+                                                            viewModel.addProductDebounced(slot)
+                                                            Logger.debug("${state.listSlotInCard}")
+                                                        } else {
+                                                            viewModel.plusProductDebounced(slot)
+                                                            Logger.debug("${state.listSlotInCard}")
+                                                        }
+                                                    },
                                                     painter = imagePainter,
                                                     contentDescription = "",
                                                 )
@@ -1085,7 +1086,6 @@ fun HomeContent(
                                                             val imageModifier = Modifier
                                                                 .width(screenHeight * 0.034f)
                                                                 .height(screenHeight * 0.034f)
-                                                                .clickable { }
                                                             val imagePainter =
                                                                 if (item.methodName!!.isNotEmpty() && localStorageDatasource.checkFileExists(
                                                                         pathFolderImagePayment + "/${item.methodName}.png"

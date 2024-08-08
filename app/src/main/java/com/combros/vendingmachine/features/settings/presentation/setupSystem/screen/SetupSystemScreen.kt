@@ -413,26 +413,26 @@ fun SetupSystemMainContentComposable(
                     keyboardController?.hide()
                     viewModel.updateVendCodeInLocal(inputVendingMachineCode)
                 }
-
-//        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
-//        TitleAndDropdownComposable(title = "", items = listOf(
-//            AnnotatedString("ON"),
-//            AnnotatedString("OFF"),
-//        ), selectedItem = selectedItemFullScreenAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
-//            selectedItemFullScreenAds = it
-//        }
-//        CustomButtonComposable(
-//            title = "SAVE",
-//            wrap = true,
-//            cornerRadius = 4.dp,
-//            height = 60.dp,
-//            fontWeight = FontWeight.Bold,
-//            fontSize = 20.sp,
-//            paddingBottom = 50.dp,
-//        ) {
-//            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
-//        }
-
+//
+////        BodyTextComposable(title = "Full screen ads", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
+////        TitleAndDropdownComposable(title = "", items = listOf(
+////            AnnotatedString("ON"),
+////            AnnotatedString("OFF"),
+////        ), selectedItem = selectedItemFullScreenAds, paddingTop = 2.dp, paddingBottom = 12.dp) {
+////            selectedItemFullScreenAds = it
+////        }
+////        CustomButtonComposable(
+////            title = "SAVE",
+////            wrap = true,
+////            cornerRadius = 4.dp,
+////            height = 60.dp,
+////            fontWeight = FontWeight.Bold,
+////            fontSize = 20.sp,
+////            paddingBottom = 50.dp,
+////        ) {
+////            viewModel.updateFullScreenAdsInLocal(selectedItemFullScreenAds.toString())
+////        }
+//
                 BodyTextComposable(title = "Trả tiền thừa", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
@@ -497,7 +497,7 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.updateLayoutHomeInLocal(selectedItemLayoutHomeScreen.toString())
                 }
-
+//
                 BodyTextComposable(title = "Tự động bật tắt đèn", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
@@ -518,81 +518,81 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.updateAutoTurnOnTurnOffLightInLocal(selectedItemAutoTurnOnTurnOffLight.toString())
                 }
-
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 18.dp).pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                onClick()
-                            }
-                        )
-                    }) {
-                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                onClick()
-                            }
-                        )
-                    }) {
-                        BodyTextComposable(title = "Thời gian bật đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-//                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
-                        if(state.initSetup!=null) {
-                            TimePickerWrapperComposable(
-                                defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
-                                defaultMinute = state.initSetup.timeTurnOnLight.split(":")[1].toInt(),
-                                onTimeSelected = onTimeSelectedTurnOn
-                            )
-                        } else {
-                            TimePickerWrapperComposable(
-                                defaultHour = 0,
-                                defaultMinute = 0,
-                                onTimeSelected = onTimeSelectedTurnOn
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                onClick()
-                            }
-                        )
-                    }) {
-                        BodyTextComposable(title = "Thời gian tắt đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
-//                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
-                        if(state.initSetup!=null) {
-                            TimePickerWrapperComposable(
-                                defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
-                                defaultMinute = state.initSetup.timeTurnOffLight.split(":")[1].toInt(),
-                                onTimeSelected = onTimeSelectedTurnOff
-                            )
-                        } else {
-                            TimePickerWrapperComposable(
-                                defaultHour = 0,
-                                defaultMinute = 0,
-                                onTimeSelected = onTimeSelectedTurnOff
-                            )
-                        }
-                    }
-                }
-
-                CustomButtonComposable(
-                    title = "Lưu",
-                    titleAlignment = TextAlign.Center,
-                    cornerRadius = 4.dp,
-                    height = 60.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 50.dp,
-                ) {
-                    onClick()
-                    viewModel.updateTimeTurnOnTurnOffLightInLocal(
-                        timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
-                        timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
-                    )
-                }
-
+//
+//                Row(modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(bottom = 18.dp).pointerInput(Unit) {
+//                        detectTapGestures(
+//                            onTap = {
+//                                onClick()
+//                            }
+//                        )
+//                    }) {
+//                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+//                        detectTapGestures(
+//                            onTap = {
+//                                onClick()
+//                            }
+//                        )
+//                    }) {
+//                        BodyTextComposable(title = "Thời gian bật đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+////                Logger.debug("hour turn on: $hourTurnOnLight, minute: $minuteTurnOnLight")
+//                        if(state.initSetup!=null) {
+//                            TimePickerWrapperComposable(
+//                                defaultHour = state.initSetup.timeTurnOnLight.split(":")[0].toInt(),
+//                                defaultMinute = state.initSetup.timeTurnOnLight.split(":")[1].toInt(),
+//                                onTimeSelected = onTimeSelectedTurnOn
+//                            )
+//                        } else {
+//                            TimePickerWrapperComposable(
+//                                defaultHour = 0,
+//                                defaultMinute = 0,
+//                                onTimeSelected = onTimeSelectedTurnOn
+//                            )
+//                        }
+//                    }
+//                    Spacer(modifier = Modifier.width(10.dp))
+//                    Column(modifier = Modifier.width(screenWidthDp/2).pointerInput(Unit) {
+//                        detectTapGestures(
+//                            onTap = {
+//                                onClick()
+//                            }
+//                        )
+//                    }) {
+//                        BodyTextComposable(title = "Thời gian tắt đèn", fontWeight = FontWeight.Bold, paddingBottom = 10.dp)
+////                Logger.debug("hour turn off: $hourTurnOffLight, minute: $minuteTurnOffLight")
+//                        if(state.initSetup!=null) {
+//                            TimePickerWrapperComposable(
+//                                defaultHour = state.initSetup.timeTurnOffLight.split(":")[0].toInt(),
+//                                defaultMinute = state.initSetup.timeTurnOffLight.split(":")[1].toInt(),
+//                                onTimeSelected = onTimeSelectedTurnOff
+//                            )
+//                        } else {
+//                            TimePickerWrapperComposable(
+//                                defaultHour = 0,
+//                                defaultMinute = 0,
+//                                onTimeSelected = onTimeSelectedTurnOff
+//                            )
+//                        }
+//                    }
+//                }
+//
+//                CustomButtonComposable(
+//                    title = "Lưu",
+//                    titleAlignment = TextAlign.Center,
+//                    cornerRadius = 4.dp,
+//                    height = 60.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 50.dp,
+//                ) {
+//                    onClick()
+//                    viewModel.updateTimeTurnOnTurnOffLightInLocal(
+//                        timeTurnOnLight = selectedTimeTurnOn.value.first.toString() + ":" + selectedTimeTurnOn.value.second.toString(),
+//                        timeTurnOffLight = selectedTimeTurnOff.value.first.toString() + ":" + selectedTimeTurnOff.value.second.toString(),
+//                    )
+//                }
+//
                 BodyTextComposable(title = "Tự khởi động ứng dụng hàng ngày", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
@@ -613,39 +613,41 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.updateAutoResetAppEveryDayInLocal(selectedItemAutoResetAppEveryday.toString())
                 }
+// check
 
-                BodyTextComposable(title = "Thời gian khởi động lại hàng ngày", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
-                if(state.initSetup!=null){
-//                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
-                    TimePickerWrapperComposable(
-                        defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
-                        defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
-                        onTimeSelected = onTimeSelectedReset
-                    )
-                } else {
-//                    Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
-                    TimePickerWrapperComposable(
-                        defaultHour = 0,
-                        defaultMinute = 0,
-                        onTimeSelected = onTimeSelectedReset
-                    )
-                }
-                CustomButtonComposable(
-                    title = "Lưu",
-                    cornerRadius = 4.dp,
-                    titleAlignment = TextAlign.Center,
-                    height = 60.dp,
-                    paddingTop = 18.dp,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    paddingBottom = 30.dp,
-                ) {
-                    onClick()
-                    viewModel.saveSetTimeResetOnEveryDay(
-                        hour = selectedTimeReset.value.first,
-                        minute = selectedTimeReset.value.second,
-                    )
-                }
+
+//                BodyTextComposable(title = "Thời gian khởi động lại hàng ngày", fontWeight = FontWeight.Bold, paddingBottom = 16.dp)
+//                if(state.initSetup!=null){
+////                    Logger.info("1hour reset: $hourReset, minute reset: $minuteReset")
+//                    TimePickerWrapperComposable(
+//                        defaultHour = state.initSetup.timeResetOnEveryDay.split(":")[0].toInt(),
+//                        defaultMinute = state.initSetup.timeResetOnEveryDay.split(":")[1].toInt(),
+//                        onTimeSelected = onTimeSelectedReset
+//                    )
+//                } else {
+////                    Logger.info("2hour reset: $hourReset, minute reset: $minuteReset")
+//                    TimePickerWrapperComposable(
+//                        defaultHour = 0,
+//                        defaultMinute = 0,
+//                        onTimeSelected = onTimeSelectedReset
+//                    )
+//                }
+//                CustomButtonComposable(
+//                    title = "Lưu",
+//                    cornerRadius = 4.dp,
+//                    titleAlignment = TextAlign.Center,
+//                    height = 60.dp,
+//                    paddingTop = 18.dp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontSize = 20.sp,
+//                    paddingBottom = 30.dp,
+//                ) {
+//                    onClick()
+//                    viewModel.saveSetTimeResetOnEveryDay(
+//                        hour = selectedTimeReset.value.first,
+//                        minute = selectedTimeReset.value.second,
+//                    )
+//                }
 
                 CustomButtonComposable(
                     title = "Kiểm tra cảm biến rơi",
@@ -705,7 +707,8 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.updateInchingModeInLocal(selectedItemInchingMode.toString())
                 }
-
+//
+// check
                 BodyTextComposable(title = "Quảng cáo toàn màn hình", fontWeight = FontWeight.Bold, paddingBottom = 8.dp)
                 TitleAndDropdownComposable(title = "", items = listOf(
                     AnnotatedString("ON"),
@@ -811,7 +814,8 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.updateGlassHeatingModeInLocal(selectedItemGlassHeatingMode.toString())
                 }
-
+//
+// check
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 18.dp).pointerInput(Unit) {
@@ -928,6 +932,7 @@ fun SetupSystemMainContentComposable(
                     onClick()
                     viewModel.getTemp()
                 }
+//check
             }
             CustomButtonComposable(
                 title = "Bật đèn",

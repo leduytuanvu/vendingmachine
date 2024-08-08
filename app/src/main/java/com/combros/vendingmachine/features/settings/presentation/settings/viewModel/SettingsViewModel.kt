@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import javax.inject.Inject
 
 @SuppressLint("StaticFieldLeak")
@@ -232,9 +233,16 @@ class SettingsViewModel @Inject constructor (
                     type = object : TypeToken<ArrayList<LogsLocal>>() {}.type,
                     path = pathFileLogServer
                 )!!
-                listLogServerLocal.sortByDescending { it.eventTime.toDateTime() }
-                _state.update { it.copy(listLogServerLocal = listLogServerLocal) }
+                for(item in listLogServerLocal) {
+                    Logger.debug("=+=+=+= $item")
+                }
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                val sortedList: ArrayList<LogsLocal> = listLogServerLocal
+                    .sortedByDescending { dateFormat.parse(it.eventTime) }
+                    .toCollection(ArrayList()) //
+                _state.update { it.copy(listLogServerLocal = sortedList) }
             } catch (e: Exception) {
+                Logger.debug("error: $e")
                 val initSetup: InitSetup = baseRepository.getDataFromLocal(
                     type = object : TypeToken<InitSetup>() {}.type,
                     path = pathFileInitSetup

@@ -33,6 +33,7 @@ data class InitSetup (
     var timeoutRemoveCart: String,
     var timeClosingSession: String,
     var timeStartSession: String,
+    var typePaymentOnline: String,
     var numberSlot: Int,
     var role: String,
 )
