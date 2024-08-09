@@ -205,17 +205,17 @@ fun TransactionContent(
                                 viewModel.endOfSession(state.typeConfirm)
                             }
                         }
-                        CustomButtonComposable(
-                            title = "Mở Khóa Tủ",
-                            height = 65.dp,
-                            fontSize = 20.sp,
-                            cornerRadius = 4.dp,
-                            wrap = false,
-                            titleAlignment = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                        ) {
-                            viewModel.autoTurnOnLed()
-                        }
+//                        CustomButtonComposable(
+//                            title = "Mở Khóa Tủ",
+//                            height = 65.dp,
+//                            fontSize = 20.sp,
+//                            cornerRadius = 4.dp,
+//                            wrap = false,
+//                            titleAlignment = TextAlign.Center,
+//                            fontWeight = FontWeight.Bold,
+//                        ) {
+//                            viewModel.autoTurnOnLed()
+//                        }
                     }
                 )
             }

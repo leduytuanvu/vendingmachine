@@ -31,7 +31,7 @@ android {
 
     defaultConfig {
         applicationId = "com.combros.vendingmachine"
-        minSdk = 21
+        minSdk = 22
         targetSdk = 35
         versionCode = 1
         versionName = "0.0.0"
@@ -65,7 +65,7 @@ android {
 
 //            storeFile = file("C:\\leduytuanvu\\develop\\application\\kotlin\\vendingmachine\\keystore\\keystore2.jks")
 //            storeFile = file("C:\\AVF\\vendingmachine\\keystore\\keystore2.jks")
-            storeFile = file("/Users/admin/Documents/develop/vendingmachine/keystore/keystore2.jks")
+            storeFile = file("C:\\AVF\\vendingmachine\\keystore\\keystore2.jks")
             storePassword = "1234567890"
         }
     }

@@ -17,7 +17,7 @@ Prerequisites
 Before you begin, ensure you have met the following requirements:
 - Android Studio (version Arctic Fox or later)
 - Android SDK (API level 21 or higher)
-- A physical vending machine with RS232 serial communication capability
+- A physical vending machine with RS232 serial communication capSability
 - RS232 to USB adapter (if your development machine does not have an RS232 port)
   
 Setup Instructions

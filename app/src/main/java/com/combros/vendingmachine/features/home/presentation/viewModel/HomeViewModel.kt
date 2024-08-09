@@ -254,7 +254,7 @@ class HomeViewModel @Inject constructor(
 //    }
 
     fun sendCommandCashBox(byteArray: ByteArray) {
-//        logger.debug("send cash box: ${byteArrayToHexString(byteArray)}")
+       logger.debug("send cash box: ${byteArrayToHexString(byteArray)}")
         viewModelScope.launch {
             try {
                 portConnectionDatasource.sendCommandCashBox(byteArray)
@@ -1668,7 +1668,7 @@ class HomeViewModel @Inject constructor(
                                     denominationType = item.denominationType.toString(),
                                     quantity = item.quantity.toString(),
                                     currentBalance = item.currentBalance.toString(),
-                                    status = item.status.toString(),
+                                    status = item.status,
                                     synTime = item.synTime,
                                 )
                                 try {
@@ -1730,6 +1730,7 @@ class HomeViewModel @Inject constructor(
                                 )
                                 try {
                                     val response = homeRepository.syncOrder(syncOrderRequest)
+                                    logger.debug("===== request syncOrderRequest: ${syncOrderRequest.toString()}")
                                     logger.debug("===== response sync order: ${response.toString()}")
                                     item.isSent = true
                                     baseRepository.writeDataToLocal(
@@ -1813,6 +1814,7 @@ class HomeViewModel @Inject constructor(
                                 try {
                                     val response =
                                         homeRepository.updateDeliveryStatus(updateDeliveryStatus)
+                                    logger.debug("===== request update delivery status: ${updateDeliveryStatus.toString()}")
                                     logger.debug("===== response update delivery status: ${response.toString()}")
                                     item.isSent = true
                                     baseRepository.writeDataToLocal(
@@ -1855,7 +1857,7 @@ class HomeViewModel @Inject constructor(
                                 denominationType = item.denominationType.toString(),
                                 quantity = item.quantity.toString(),
                                 currentBalance = item.currentBalance.toString(),
-                                status = item.status.toString(),
+                                status = item.status,
                                 synTime = item.synTime,
                             )
                             try {
@@ -2010,6 +2012,7 @@ class HomeViewModel @Inject constructor(
                             try {
                                 val response =
                                     homeRepository.updateDeliveryStatus(updateDeliveryStatus)
+                                logger.debug("===== request update delivery status: ${updateDeliveryStatus.toString()}")
                                 logger.debug("===== response update delivery status: ${response.toString()}")
                                 item.isSent = true
                                 baseRepository.writeDataToLocal(
@@ -3195,18 +3198,22 @@ class HomeViewModel @Inject constructor(
                                     }
                                     for (item in listProductInCart) {
                                         val slot = homeRepository.getSlotDrop(item.productCode)
-                                        val productDetailRequest = ProductDetailRequest(
-                                            uuid = LocalDateTime.now().toId(),
-                                            productCode = item.productCode,
-                                            productName = item.productName,
-                                            price = item.price,
-                                            quantity = item.inventory,
-                                            discount = 0,
-                                            amount = item.inventory * item.price,
-                                            slot = if (slot != null) item.slot else 0,
-                                            cabinetCode = "MT01"
-                                        )
-                                        listProductDetailRequest.add(productDetailRequest)
+                                        val count = item.inventory
+                                        for (i in 0 until count) {
+                                            val productDetailRequest = ProductDetailRequest(
+                                                uuid = LocalDateTime.now().toId(),
+                                                productCode = item.productCode,
+                                                productName = item.productName,
+                                                price = item.price,
+                                                quantity = 1,
+                                                discount = 0,
+                                                amount = item.price,
+                                                slot = if (slot != null) item.slot else 0,
+                                                cabinetCode = "MT01"
+                                            )
+
+                                            listProductDetailRequest.add(productDetailRequest)
+                                        }
                                     }
                                     val request = GetQrCodeRequest(
                                         machineCode = _state.value.initSetup!!.vendCode,

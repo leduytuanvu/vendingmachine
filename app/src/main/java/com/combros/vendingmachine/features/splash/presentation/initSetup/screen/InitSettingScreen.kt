@@ -48,7 +48,7 @@ fun InitSetupContent(
     var inputUsername by remember { mutableStateOf("") }
     var inputPassword by remember { mutableStateOf("") }
     var selectedItemTypeVendingMachine by remember { mutableStateOf(AnnotatedString("TCN")) }
-    var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS2")) }
+    var selectedItemPortCashBox by remember { mutableStateOf(AnnotatedString("ttyS4")) }
     var selectedItemPortVendingMachine by remember { mutableStateOf(AnnotatedString("ttyS1")) }
     viewModel.getAndroidId()
     LoadingDialogComposable(isLoading = state.isLoading)
